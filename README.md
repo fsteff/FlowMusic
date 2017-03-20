@@ -1,6 +1,6 @@
 # FlowPlayer
 Multi-Source Music Player
-
-Copyright ©
+<br>
+Copyright © <br>
 Stefan Fixl <br>
 Michael Ratzenböck <br>
