@@ -1,10 +1,34 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>FlowPlayer</title>
+<meta charset="UTF-8">
+
+<!-- 
+<script src="./js/react/babel.min.js"></script>
+<script src="./js/react/react.js"></script>
+<script src="./js/react/react-dom.js"></script>
+-->
+
+<script src="https://fb.me/react-15.0.0.js"></script>
+<script src="https://fb.me/react-dom-15.0.0.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+<!-- script src="./js/youtube.js"></script> -->
+
+<title>FlowMusic</title>
 </head>
 <body>
-Hello World
+<div id="root"></div>
+<div id="yt"></div>
 </body>
+
+<!-- <script src="./js/jsx/main.js" type="text/babel"></script> -->
+<script type="text/babel">
+const element = <div id="yt2"></div>;
+ReactDOM.render(
+  element,
+  document.getElementById('root')
+);
+
+</script>
+
 </html>
