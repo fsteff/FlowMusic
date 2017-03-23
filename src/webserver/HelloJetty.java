@@ -5,14 +5,23 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.json.JSONObject;
+
+import Central.Central;
+import Central.Component;
+import Central.ThreadedComponent;
 
 /**
  * Simple Jetty FileServer.
  * This is a simple example of Jetty configured as a FileServer.
  */
-public class HelloJetty
+public class HelloJetty extends ThreadedComponent
 {
-    public static void main(String[] args) throws Exception
+    public HelloJetty(Central central) {
+		super(Component.WEBSERVER, central);
+	}
+
+	public void start() throws Exception
     {
         // Create a basic Jetty server object that will listen on port 8080.  Note that if you set this to port 0
         // then a randomly available port will be assigned that you can either look in the logs for the port,
@@ -39,4 +48,15 @@ public class HelloJetty
         server.start();
         server.join();
     }
+
+	@Override
+	public void onMessage(Component sender, JSONObject msg) throws Exception{
+		if(sender == Component.CENTRAL){
+			String command = msg.getString("command");
+			if(command.equalsIgnoreCase("start")){
+				start();
+			}
+		}
+		
+	}
 }

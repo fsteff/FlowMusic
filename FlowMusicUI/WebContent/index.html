@@ -18,12 +18,17 @@
 </head>
 <body>
 <div id="root"></div>
-<div id="yt"></div>
+<div id="audiotest">
+<audio controls>
+  <source src="./test.mp3" type="audio/mpeg">
+Your browser does not support the audio element.
+</audio>
+</div>
 </body>
 
-<script src="./js/jsx/main.js" type="text/babel"></script>
+<script src="./js/jsx/main.jsx" type="text/babel"></script>
 <!--<script type="text/babel">
-const element = <div id="yt2">Hello World!!!</div>;
+const element = <div id="test">Hello World!!!</div>;
 ReactDOM.render(
   element,
   document.getElementById('root')
