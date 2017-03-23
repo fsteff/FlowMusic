@@ -1,4 +1,4 @@
-package Central;
+package central;
 
 /**
  * Centralized Exception handler - use only this for error output.

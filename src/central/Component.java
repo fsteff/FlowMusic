@@ -1,4 +1,4 @@
-package Central;
+package central;
 
 /**
  * Enumeration for recipient/sender handling in the message queue.

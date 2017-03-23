@@ -1,4 +1,4 @@
-package Central;
+package central;
 
 /**
  * Message in the message queue
