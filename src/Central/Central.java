@@ -1,12 +1,14 @@
 package Central;
 
 import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.json.JSONObject;
-
 import webserver.HelloJetty;
 
+/**
+ * Main Class that controls all the other components.
+ * @author Stefan Fixl
+ *
+ */
 public class Central {
 	private Vector<ThreadedComponent> components;
 	
@@ -21,6 +23,8 @@ public class Central {
 			}
 		}
 	}
+	
+	// TODO: implement good system for component loading
 	
 	public static void main(String[] args){
 		Central central = new Central();

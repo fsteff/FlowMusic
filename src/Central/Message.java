@@ -1,5 +1,9 @@
 package Central;
 
+/**
+ * Message in the message queue
+ * @author Stefan Fixl
+ */
 class Message{
 	final Component sender;
 	final Component recipient;
