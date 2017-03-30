@@ -1,0 +1,30 @@
+.PlayBar{
+    position: absolute;
+    height: 50px;
+    width: 100%;
+    float: left;
+    bottom: 0;
+    background-color: #a5a8b7;
+}
+
+.playButton{
+    position: relative;
+    float: left;
+    padding: 10px;
+    left: 40px;
+}
+.playButton img{
+    height: 32px;
+    width: 32px;
+}
+
+.nextButton{
+    position: relative;
+    float: left;
+    padding: 10px;
+    left: 40px;
+}
+.nextButton img{
+    height: 32px;
+    width: 32px;
+}
