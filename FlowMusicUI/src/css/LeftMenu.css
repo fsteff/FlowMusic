@@ -1,8 +1,0 @@
-.LeftMenu{
-    position: absolute;
-    height: calc(100% - 50px);
-    width: 30%;
-    float: left;
-    top: 0;
-    background-color: #c5c9d8;
-}

@@ -1,9 +1,0 @@
-.PlaylistView{
-    position: absolute;
-    height: calc(100% - 50px);
-    width: 70%;
-    float: right;
-    right: 0;
-    top: 0;
-    background-color: #b3d8b4;
-}

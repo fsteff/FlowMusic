@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Browser Upgrade Prompt
+   ========================================================================== */
+
+.browserupgrade {
+    margin: 0.2em 0;
+    background: #ccc;
+    color: #000;
+    padding: 0.2em 0;
+}
+
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+
+#frame{
+
+}
+
+#mainwindow{
+
+}
+
+#sidepanel{
+
+}
+
+#playbar{
+    z-index: 1;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 40px;
+    width: 100%;
+    border-top: #233581 solid 2px;
+}
+
+
+.playbutton{
+    background-image: url("../img/play.png");
+    width: 32px;
+    height: 32px;
+    margin-top: 4px;
+    display: inline-block;
+}
+.pausebutton{
+    background-image: url("../img/pause.png");
+    width: 32px;
+    height: 32px;
+
+    display: inline-block;
+}
+.nextbutton{
+    background-image: url("../img/next.png");
+    width: 32px;
+    height: 32px;
+
+    display: inline-block;
+}
+.playbar-info{
+
+    position: relative;
+    left: 50%;
+    bottom: 10px;
+    display: inline-block;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
