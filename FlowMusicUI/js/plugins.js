@@ -38,7 +38,7 @@ var Config = null;
 $.getJSON("./js/config.json", function(json) {
     Config = json;
 
-    var head = document.getElementsByTagName('head')[0];
+
     for(var i = 0; i < Config.plugins.length; i++){
         var plugin = Config.plugins[i];
         var s = document.createElement("script");
@@ -47,7 +47,7 @@ $.getJSON("./js/config.json", function(json) {
         s.type = "text/javascript";
         s.src = "./js/plugins/"+plugin;
         //$("head").append(s);
-        head.append(s);
+        document.head.appendChild(s);
     };
 
 
