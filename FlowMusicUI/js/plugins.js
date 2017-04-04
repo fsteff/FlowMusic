@@ -23,22 +23,20 @@
 
 // Place any jQuery/helper plugins in here.
 
+var mouseX = 0;
+var mouseY = 0;
+
+jQuery(document).ready(function () {
+    $(document).mousemove(function (e) {
+        var bodyOffsets = document.body.getBoundingClientRect();
+        mouseX = e.pageX - bodyOffsets.left;
+        mouseY = e.pageY;
+    });
+})
+
 var Config = null;
 $.getJSON("./js/config.json", function(json) {
     Config = json;
-
-    var player = Central.getPlayer();
-    player.playlist.add([{
-        artist: "Klaas & Niels Van Gogh",
-        title: "Resurection (In Space)",
-        plugin: "local",
-        source: "test.mp3"
-    },{
-        artist: "Maxim",
-        title: "Meine Soldaten",
-        plugin: "local",
-        source: "test2.mp3"
-    }]);
 
     var head = document.getElementsByTagName('head')[0];
     for(var i = 0; i < Config.plugins.length; i++){
@@ -47,19 +45,14 @@ $.getJSON("./js/config.json", function(json) {
         s.async = false;
         s.defer = false;
         s.type = "text/javascript";
-        s.src = "./js/"+plugin;
+        s.src = "./js/plugins/"+plugin;
         //$("head").append(s);
         head.append(s);
     };
 
 
 
-    /*  this.playlist.add({
-     artist: "DJ Toxic Waste",
-     title: "Feedom 2k14",
-     plugin: "youtube",
-     source: "Do7-LR6Mrsg"
-     });*/
+    /*  this.playlist.add();*/
 
 
 

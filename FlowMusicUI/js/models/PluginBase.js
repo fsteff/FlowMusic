@@ -40,4 +40,7 @@ BaseMusicPlayer.prototype.getTime = function () {
 BaseMusicPlayer.prototype.getDuration = function () {
     return 0;
 }
+BaseMusicPlayer.prototype.stop = function(){
+    this.settings.playing = false;
+}
 

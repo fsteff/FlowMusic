@@ -12,66 +12,111 @@
 /* ==========================================================================
    Author's custom styles
    ========================================================================== */
+html, body{
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    //overflow: hidden;
+}
 
 #frame{
 
 }
 
-#mainwindow{
-
+#mainview{
+    padding: 0;
 }
 
 #sidepanel{
-
+    position: fixed;
 }
 
 #playbar{
     z-index: 1;
-    position: absolute;
+    position: fixed;
+    float: left;
     left: 0;
-    bottom: 0;
+    bottom: 0px;
     height: 40px;
     width: 100%;
-    border-top: #233581 solid 2px;
+    padding: 0;
+    margin: 0;
+   // border-top: #233581 solid 2px;
 }
-
-
-.playbutton{
-    background-image: url("../img/play.png");
+.playbutton,
+.pausebutton,
+.backbutton,
+.nextbutton{
     width: 32px;
     height: 32px;
     margin-top: 4px;
+    float: left;
+    position: relative;
     display: inline-block;
+}
+.playbutton{
+    background-image: url("../img/play.png");
+
 }
 .pausebutton{
     background-image: url("../img/pause.png");
-    width: 32px;
-    height: 32px;
 
-    display: inline-block;
 }
 .nextbutton{
     background-image: url("../img/next.png");
-    width: 32px;
-    height: 32px;
 
-    display: inline-block;
+}
+.backbutton{
+    background-image: url("../img/next.png");
+    transform: scaleX(-1);
 }
 .playbar-info{
-
-    position: relative;
-    left: 50%;
-    bottom: 10px;
+    postion: relative;
+    float: left;
+    left: 40%;
+    padding: 5px;
+    margin-top: 4px;
     display: inline-block;
 }
 
+.maintab{
+    overflow-y: scroll;
+    display: block;
+    position: relative;
+    float: left;
+    background-color: #d3e7e5;
+}
+.playListTable{
+
+}
+
+.playListTable tr:hover,
+.playListTable td:hover{
+    background-color: #a7b5e4;
+}
+
+.contextMenu{
+    position: absolute;
+    min-width: 100px;
+    min-height: 30px;
+    z-index: 2;
+    background-color: #82e476;
+}
 
 
-
-
-
-
-
+#yt-frame{
+    background-color: black;
+    opacity: 0.9;
+    position: fixed;
+    float: right;
+    bottom: 30px;
+    right: 0px;
+}
+/*
+::-webkit-scrollbar {
+    width: 13px;
+    height: 13px;
+}*/
 
 
 

@@ -34,6 +34,9 @@ LocalFilePlayer.prototype.getTime = function () {
 LocalFilePlayer.prototype.getDuration = function () {
     return 0;
 }
+LocalFilePlayer.prototype.stop = function(){
+    this.pause();
+}
 
 
 // Add to main Music Player
