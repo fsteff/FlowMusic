@@ -34,9 +34,14 @@ jQuery(document).ready(function () {
     });
 })
 
-var Config = null;
-$.getJSON("./js/config.json", function(json) {
-    Config = json;
+var Config = {
+    "plugins": [
+        "local.js",
+        "youtube.js"
+    ]
+};
+//$.getJSON("./js/config.json", function(json) {
+//    Config = json;
 
 
     for(var i = 0; i < Config.plugins.length; i++){
@@ -56,4 +61,4 @@ $.getJSON("./js/config.json", function(json) {
 
 
 
-});
+//});
