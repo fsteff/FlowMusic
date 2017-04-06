@@ -112,6 +112,34 @@ html, body{
     bottom: 30px;
     right: 0px;
 }
+#mainview-sidepanel-button{
+    float: left;
+    position: relative;
+}
+#mainview-search-form{
+    position: relative;
+    float:left;
+    left: 150px;
+    margin-top: 5px;
+    display: inline-block;
+    border-radius: 20px;
+
+}
+#mainview-search-form input{
+    width: 300px;
+    height: 40px;
+    background-color: #00ad9f;
+    border-width: 0px;
+    border-style: solid;
+    border-color: #4CAF50;
+    border-radius: 20px;
+    display: inline-block;
+    padding-left: 15px;
+}
+
+#mainview-search-form input[type=text]:focus{
+    box-shadow: none;
+}
 /*
 ::-webkit-scrollbar {
     width: 13px;

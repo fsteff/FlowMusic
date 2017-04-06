@@ -39,6 +39,28 @@ LocalFilePlayer.prototype.stop = function(){
 }
 
 
+LocalSearchEngine = function(){
+
+}
+
+LocalSearchEngine.prototype.search = function(query){
+    return [{
+        title: "test1",
+        artist: "nonone",
+        sources:[
+            {
+                plugin: "local",
+                source: "test.mp3"
+            },{
+                plugin: "youtube",
+                source: "8M6LYarAnRQ"
+            }
+        ]
+    }];
+}
+
+Central.getSearch().addPlugin(extend(BaseSearchEngine, LocalSearchEngine, "local"));
+
 // Add to main Music Player
 Central.getPlayer().addPlugin(extend(BaseMusicPlayer, LocalFilePlayer, "local"));
 

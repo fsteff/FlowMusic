@@ -44,3 +44,12 @@ BaseMusicPlayer.prototype.stop = function(){
     this.settings.playing = false;
 }
 
+//--------------------------------------------- CLASS BaseSearchEngine --------------------------------------
+
+BaseSearchEngine = function(name){
+    this.name = name;
+}
+
+BaseSearchEngine.prototype.search = function(query){
+    return {};
+}

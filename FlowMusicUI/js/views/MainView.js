@@ -1,6 +1,17 @@
 function MainView(){
     this.element = $("#mainview");
     this.tabs = [];
+
+    $("#mainview-search-form").submit(function(data) {
+        var input = $("#mainview-search-form > input[type=text][name=query]");
+        var query = input.val();
+        var res = Central.getSearch().search(query);
+        if (res.length > 0){
+            var tab = PageView.getInstance().mainview.newTab(SearchView, "Search: " + query);
+            tab.setData(res);
+        }
+        return false;
+    });
 }
 
 MainView.prototype.resize = function(){
@@ -27,6 +38,7 @@ MainView.prototype.newTab = function(type, name){
 
     PageView.getInstance().sidepanel.addTab(elem, name);
     //tab.resize();
+    return tab;
 }
 
 MainView.prototype.hideAllTabs = function(){
@@ -101,8 +113,53 @@ function PlaylistView(element){
 
 function SearchView(element){
     this.element = element;
-    this.element.html("no searches yet, sorry");
+    this.element.html("no data yet, sorry");
+    this.data = null;
 }
+
+SearchView.prototype.setData = function(data){
+    this.data = data;
+
+    this.onElementRightClick = function(elem){
+        var ctx = new ContextMenu(null);
+        ctx.addProperty(
+            "<p>add to playlist</p>",
+            function() {
+                console.log(elem);
+                Central.getPlayer().getPlaylist().add({
+                    artist: elem[0],
+                    title: elem[1],
+                    plugin: elem[2][0].plugin,
+                    source: elem[2][0].source
+                });
+            });
+
+        return false;
+    }
+
+    var table = new Table(
+        this.element,
+        ["Artist", "Title"],
+        {
+            visibility: [true, true, false],
+            className: "playListTable",
+            onElementRightClick: this.onElementRightClick
+        }
+    );
+
+    var tableData = [];
+    for(var i = 0; i < this.data.length; i++){
+        tableData[i] = [];
+        tableData[i][0] = this.data[i].artist;
+        tableData[i][1] = this.data[i].title;
+        tableData[i][2] = this.data[i].sources;
+    }
+    table.setData(tableData);
+    table.draw();
+}
+
+
+
 
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
