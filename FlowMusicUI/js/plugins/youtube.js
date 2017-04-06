@@ -49,6 +49,8 @@ $(document).ready(function() {
             this.player.playVideo();
         }
         this.settings.playing = true;
+        var playlist = Central.getPlayer().getPlaylist();
+        playlist.notifyListeners(playlist.current());
     }
     YoutubePlayer.prototype.load = function(videoid){
 

@@ -50,7 +50,7 @@ Playlist.prototype.add = function (song) {
         this.songs.push(song);
     }
 
-    this.notifyListeners(actual);
+    this.notifyListeners(this.current());
 }
 
 Playlist.prototype.addNew = function(artist, title, plugin, source){
@@ -225,6 +225,22 @@ SearchEngine.prototype.search = function(query){
             results.push(res[i2]);
         }
     }
+
+    // TODO: this may fail, also do tests
+    // This removes double entries
+    /*
+    for(var i = 0; i < results.length; i++){
+        for (var i2 = 0; i2 < results.length; i2++){
+            if(i != i2 && results[i].title == results[i2].title && results[i].artist == results[i2].artist){
+                var entry = results[i2];
+                results.splice(i2, 1);
+                for(var i3 = 0; i3 < entry.sources.length; i3++){
+                    results[i].sources.push(entry.sources[i3]);
+                }
+            }
+        }
+    }
+    */
     return results;
 }
 

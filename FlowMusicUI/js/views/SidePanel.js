@@ -36,17 +36,35 @@ SidePanel.prototype.toggle = function(){
     }
 }
 
-SidePanel.prototype.addTab = function(element, name){
-    var tab = $("<div class='w3-bar-item w3-button'>"+name+"</div>");
+SidePanel.prototype.addTab = function(element, name, closebutton){
+    if(closebutton == null){
+        closebutton = true;
+    }
+    const tab = $("<div class='w3-bar-item w3-button sidepanelbutton'></div>");
+    var html = "<div class='buttontext'>"+name+"</div>";
+    tab.html(html);
     tab.appendTo(this.element);
+
+    const closeelem = $("<div class='closebutton'>&#10005;</div>");
+    if(closebutton){
+        closeelem.appendTo(tab);
+    }
+
     this.openTabs.push({
         page: element,
         tab: tab
     });
-    tab.click(function(){
-       PageView.getInstance().mainview.hideAllTabs();
-       element.show();
-       element.resize();
+
+    const elem = this.element;
+    tab.click(function(event){
+       if(event.target == closeelem[0]){
+           tab.remove();
+           PageView.getInstance().mainview.closeTab(element);
+       }else {
+           PageView.getInstance().mainview.hideAllTabs();
+           element.show();
+           element.resize();
+       }
     });
 
     PageView.getInstance().mainview.hideAllTabs();

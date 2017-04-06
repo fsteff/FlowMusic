@@ -45,15 +45,12 @@ LocalSearchEngine = function(){
 
 LocalSearchEngine.prototype.search = function(query){
     return [{
-        title: "test1",
-        artist: "nonone",
+        title: "Resurrection",
+        artist: "Klaas & Niels Van Gogh",
         sources:[
             {
                 plugin: "local",
                 source: "test.mp3"
-            },{
-                plugin: "youtube",
-                source: "8M6LYarAnRQ"
             }
         ]
     }];

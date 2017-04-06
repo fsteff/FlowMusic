@@ -116,6 +116,36 @@ html, body{
     float: left;
     position: relative;
 }
+
+.closebutton{
+    display: inline;
+    width: 7px;
+    height: 7px;
+    position: relative;
+    float: right;
+    right: 15px;
+    top: 0px;
+}
+.closebutton:hover{
+    font-weight: bold;
+    font-size: large;
+    color: #f44336;
+    top: -3px;
+    right: 17px;
+}
+.sidepanelbutton{
+    display: inline-block;
+}
+
+.buttontext{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    float: left;
+    position: relative;
+    width: 100px;
+    display: inline;
+}
+
 #mainview-search-form{
     position: relative;
     float:left;

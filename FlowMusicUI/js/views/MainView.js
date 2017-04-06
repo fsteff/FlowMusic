@@ -5,11 +5,13 @@ function MainView(){
     $("#mainview-search-form").submit(function(data) {
         var input = $("#mainview-search-form > input[type=text][name=query]");
         var query = input.val();
+        input.val("");
         var res = Central.getSearch().search(query);
-        if (res.length > 0){
+        //if (res.length > 0){
             var tab = PageView.getInstance().mainview.newTab(SearchView, "Search: " + query);
-            tab.setData(res);
-        }
+            tab.setData(query, res);
+        //}
+
         return false;
     });
 }
@@ -29,15 +31,17 @@ MainView.prototype.resize = function(){
 
 }
 
-MainView.prototype.newTab = function(type, name){
+MainView.prototype.newTab = function(type, name, closetab){
+    if(closetab == null){
+        closetab = true;
+    }
     const elem = $('<div class="maintab"></div>');
     elem.appendTo(this.element);
 
     const tab = extend(MainTab, type, elem, elem);
     this.tabs.push(tab);
 
-    PageView.getInstance().sidepanel.addTab(elem, name);
-    //tab.resize();
+    PageView.getInstance().sidepanel.addTab(elem, name, closetab);
     return tab;
 }
 
@@ -45,6 +49,21 @@ MainView.prototype.hideAllTabs = function(){
     for(var i = 0; i < this.tabs.length; i++){
         this.tabs[i].hide();
     }
+}
+
+MainView.prototype.closeTab = function(element){
+    var tab = null;
+    var index = -1;
+    for(var i = 0; i < this.tabs.length && index < 0; i++){
+        var t = this.tabs[i];
+        if(t.element == element){
+            index = i;
+        }
+    }
+    if(index > 0) {
+        this.tabs.splice(index, 1);
+    }
+    element.remove();
 }
 // ------------------------------------------------------------ CLASS MainTab ------------------------------------------
 function MainTab(element){
@@ -117,7 +136,7 @@ function SearchView(element){
     this.data = null;
 }
 
-SearchView.prototype.setData = function(data){
+SearchView.prototype.setData = function(query, data){
     this.data = data;
 
     this.onElementRightClick = function(elem){
@@ -136,9 +155,13 @@ SearchView.prototype.setData = function(data){
 
         return false;
     }
+    //const header = $('<p>Results for "'+this.name+'"</p>')
+    this.element.html('<p class="w3-container">Results for "'+query+'":</p>');
+    const elem = $("<div></div>");
+    elem.appendTo(this.element);
 
     var table = new Table(
-        this.element,
+        elem,
         ["Artist", "Title"],
         {
             visibility: [true, true, false],
