@@ -1,18 +1,29 @@
 function MainView(){
+    const self = this;
     this.element = $("#mainview");
     this.tabs = [];
 
-    $("#mainview-search-form").submit(function(data) {
+    function search(data){
         var input = $("#mainview-search-form > input[type=text][name=query]");
         var query = input.val();
         input.val("");
-        var res = Central.getSearch().search(query);
-        //if (res.length > 0){
-            var tab = PageView.getInstance().mainview.newTab(SearchView, "Search: " + query);
+        if(query != null && query.length > 0) {
+            var res = Central.getSearch().search(query);
+            var tab = self.newTab(SearchView, "Search: " + query);
             tab.setData(query, res);
-        //}
-
+        }
         return false;
+    }
+
+    $("#mainview-search-form").submit(search);
+    $('#mainview-search-form > .searchicon').click(search);
+
+    $("#mainview-addsong").click(function(){
+        self.newTab(AddSong, "Add Title");
+    });
+
+    $("#mainview-settings").click(function(){
+        self.newTab(EditSettings, "Settings");
     });
 }
 
@@ -82,6 +93,8 @@ MainTab.prototype.show = function(){
     this.element.show();
 }
 
+
+
 // ------------------------------------------------------------- CLASS Playlist ----------------------------------------
 
 function PlaylistView(element){
@@ -130,6 +143,8 @@ function PlaylistView(element){
 
 }
 
+
+//------------------------------------------------------- CLASS SearchView ---------------------------------------------
 function SearchView(element){
     this.element = element;
     this.element.html("no data yet, sorry");
@@ -181,7 +196,32 @@ SearchView.prototype.setData = function(query, data){
     table.draw();
 }
 
+//------------------------------------------------------------- CLASS AddSong ------------------------------------------
 
+function AddSong(element){
+    const self = this;
+    this.element = element;
+    this.element.addClass("w3-container");
+    $("<h3>Add a new title</h3>").appendTo(this.element);
+
+    const urlInput = $('<input type="text" name="url" value="enter a link">');
+    urlInput.appendTo(this.element);
+    urlInput.on("input", function(){
+        var url = urlInput.val();
+        if( url.search("https://youtube.com") >= 0 ||
+            url.search("https://youtu.be") >= 0 ){
+            //var id = getParameterByName("v", url);
+
+
+        }
+    });
+}
+
+//------------------------------------------------------------- CLASS EditSettings -------------------------------------
+
+function EditSettings(element){
+
+}
 
 
 

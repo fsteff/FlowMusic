@@ -244,9 +244,30 @@ SearchEngine.prototype.search = function(query){
     return results;
 }
 
+// ---------------------------------------------- CLASS Verifier -------------------------------------------------------
 
-// ---------------------------------------------- CLASS CENTRAL -----------------------------------------
+function Verifier(){
+    this.plugins = [];
+}
+
+Verifier.prototype.addPlugin = function(plugin){
+    this.plugins.push(plugin);
+}
+
+Verifier.prototype.verify = function(url){
+    var results = [];
+    for(var i = 0; i < this.plugins.length; i++){
+        var res = this.plugins[i].verify(url);
+        if(res != null){
+            results.push(res);
+        }
+    }
+    return results;
+}
+
+// ---------------------------------------------- CLASS CENTRAL --------------------------------------------------------
 function Central() {
+    this.verifier = new Verifier();
     this.player = new MusicPlayer();
     this.search = new SearchEngine();
     return this;
@@ -269,4 +290,7 @@ Central.getSearch = function(){
     return Central.getInstance().search;
 }
 
+Central.getVerifier = function(){
+    return Central.getInstance().verifier;
+}
 

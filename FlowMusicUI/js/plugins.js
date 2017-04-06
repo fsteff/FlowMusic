@@ -50,10 +50,7 @@ $.getJSON("./js/config.json", function(json) {
         document.head.appendChild(s);
     };
 
-
-
-    /*  this.playlist.add();*/
-
-
-
 });
+
+
+

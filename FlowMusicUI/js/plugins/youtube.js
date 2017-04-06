@@ -65,7 +65,7 @@ $(document).ready(function() {
                 height: '180',
                 width: '320',
                 videoId: videoid,
-                playerVars: {'autoplay': 0, 'controls': 0},
+                playerVars: {'autoplay': 0, 'controls': 1},
                 events: {
                     'onReady': this.onPlayerReady,
                     'onStateChange': this.onPlayerStateChange
@@ -93,6 +93,25 @@ $(document).ready(function() {
     }
 
     ytPlayerInstance = extend(BaseMusicPlayer, YoutubePlayer, "youtube");
+
+    /*
+    function YoutubePreview(element, videoid) {
+        this.element = element;
+
+        this.player = new YT.Player(element, {
+            //default 640x360
+            height: '180',
+            width: '320',
+            videoId: videoid,
+            playerVars: {'autoplay': 0, 'controls': 1},
+        });
+    }
+
+    YoutubePreview.prototype.destroy = function(){
+        this.element.hide();
+        this.player.destroy();
+    }
+    */
 /*
     function YoutubeSearch(){
         this.apikey = "AIzaSyAvxru3VA2YzJxmx1R403Y6KeTPwHrLR_w";
@@ -108,5 +127,5 @@ $(document).ready(function() {
 });
 
 function onYouTubeIframeAPIReady() {
-    Central.getPlayer().addPlugin(ytPlayerInstance);
+    //Central.getPlayer().addPlugin(ytPlayerInstance);
 }
