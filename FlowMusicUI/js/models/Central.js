@@ -204,9 +204,35 @@ MusicPlayer.prototype.lastSong = function () {
 MusicPlayer.prototype.getPlaylist = function(){
     return this.playlist;
 }
+
+
+// ---------------------------------------------- CLASS SearchEngine ------------------------------------
+
+function SearchEngine(){
+    this.plugins = [];
+}
+
+SearchEngine.prototype.addPlugin = function(plugin){
+    this.plugins.push(plugin);
+}
+
+SearchEngine.prototype.search = function(query){
+    var results = [];
+
+    for(var i = 0; i < this.plugins.length; i++){
+        var res = this.plugins[i].search(query);
+        for(var i2 = 0; i2 < res.length; i2++){
+            results.push(res[i2]);
+        }
+    }
+    return results;
+}
+
+
 // ---------------------------------------------- CLASS CENTRAL -----------------------------------------
 function Central() {
     this.player = new MusicPlayer();
+    this.search = new SearchEngine();
     return this;
 }
 
@@ -223,5 +249,8 @@ Central.getPlayer = function () {
     return Central.getInstance().player;
 }
 
+Central.getSearch = function(){
+    return Central.getInstance().search;
+}
 
 
