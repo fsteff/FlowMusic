@@ -127,5 +127,5 @@ $(document).ready(function() {
 });
 
 function onYouTubeIframeAPIReady() {
-    //Central.getPlayer().addPlugin(ytPlayerInstance);
+    Central.getPlayer().addPlugin(ytPlayerInstance);
 }
