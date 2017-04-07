@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 // TODO: Soundcloud API throws error on load!
 
 var scr = document.createElement("script");

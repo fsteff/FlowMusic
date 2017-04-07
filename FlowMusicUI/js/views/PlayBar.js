@@ -1,4 +1,10 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 function PlayBar(){
+    const self = this;
 
     this.root = $('#playbar');
     var playbutton = $('<div class="playbutton"></div>');
@@ -6,26 +12,25 @@ function PlayBar(){
     var backbutton = $('<div class="backbutton"></div>');
     var info = $(' <div class="playbar-info"></div>');
 
+    backbutton.appendTo(this.root);
+    playbutton.appendTo(this.root);
+    nextbutton.appendTo(this.root);
+    info.appendTo(this.root);
+
     this.playbutton = playbutton;
     this.nextbutton = nextbutton;
     this.backbutton = backbutton;
     this.info = info;
-
-    this.backbutton.appendTo(this.root);
-    this.playbutton.appendTo(this.root);
-    this.nextbutton.appendTo(this.root);
-    this.info.appendTo(this.root);
-
 
     this.playbutton.click(function(){
         var player = Central.getPlayer().getCurrentPlayer();
         if(player != null) {
             if (!player.playing()) {
                 player.play();
-                $(this).attr("class", "pausebutton");
+                playbutton.attr("class", "pausebutton");
             } else {
                 player.pause();
-                $(this).attr("class", "playbutton");
+                playbutton.attr("class", "playbutton");
             }
         }
     });
@@ -44,14 +49,14 @@ function PlayBar(){
         }
     });
 
-    Central.getPlayer().getPlaylist().addListener(function(song){
+    Central.getPlayer().getPlayQueue().addListener(function(song){
         if(song !== null) {
             info.html(song.artist + " - " + song.title);
             var player = Central.getPlayer().getCurrentPlayer();
             if(player != null && player.settings.playing) {
-                $(playbutton).attr("class", "pausebutton");
+                playbutton.attr("class", "pausebutton");
             }else{
-                $(playbutton).attr("class", "playbutton");
+                playbutton.attr("class", "playbutton");
             }
         }
     });

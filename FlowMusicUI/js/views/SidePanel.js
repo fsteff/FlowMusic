@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 const SIDEPANEL_WIDTH = 160;
 const SIDEPANEL_WIDTH_PX = SIDEPANEL_WIDTH+"px";
 

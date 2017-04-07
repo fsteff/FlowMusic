@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 function extend(base, sub, baseargs, subargs) {
     var c = new sub(subargs);
     var b = new base(baseargs);

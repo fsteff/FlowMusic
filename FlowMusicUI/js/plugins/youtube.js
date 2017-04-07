@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 var ytPlayerInstance = null;
 $(document).ready(function() {
 
@@ -49,7 +54,7 @@ $(document).ready(function() {
             this.player.playVideo();
         }
         this.settings.playing = true;
-        var playlist = Central.getPlayer().getPlaylist();
+        var playlist = Central.getPlayer().getPlayQueue();
         playlist.notifyListeners(playlist.current());
     }
     YoutubePlayer.prototype.load = function(videoid){

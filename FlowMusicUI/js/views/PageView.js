@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 function PageView(){
     this.playbar = new PlayBar();
     this.mainview = new MainView();
@@ -19,8 +24,8 @@ PageView.getInstance = function(){
 }
 
 $(document).ready(function(){
-    $("body").height($(window).height());
-    $("body").width($(window).width());
+   /* $("body").height($(window).height());
+    $("body").width($(window).width());*/
 
     var view = PageView.getInstance();
     if($(window).width() > 800){
@@ -40,7 +45,7 @@ $(document).ready(function(){
         view.mainview.resize();
     });
 
-    view.mainview.newTab(PlaylistView, "Playlist", false);
+    view.mainview.newTab(PlayQueueView, "Queue", false);
 
 
 });

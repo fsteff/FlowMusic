@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 /* ==========================================================================
    Browser Upgrade Prompt
    ========================================================================== */
@@ -43,6 +48,7 @@ html, body{
     margin: 0;
    // border-top: #233581 solid 2px;
 }
+
 .playbutton,
 .pausebutton,
 .backbutton,
@@ -54,6 +60,14 @@ html, body{
     position: relative;
     display: inline-block;
 }
+
+.playbutton:hover,
+.pausebutton:hover,
+.backbutton:hover,
+.nextbutton:hover{
+    opacity: 0.5;
+}
+
 .playbutton{
     background-image: url("../img/play.png");
 
@@ -100,10 +114,19 @@ html, body{
     min-width: 100px;
     min-height: 30px;
     z-index: 2;
-    background-color: #82e476;
+    background-color: #d6d6d6;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #818181;
 }
 
+.contextMenu .property{
+    padding: 3px;
+}
 
+.contextMenu .property:hover{
+    background-color: #e8e8e8;
+}
 
 #mainview-sidepanel-button{
     float: left;
@@ -159,7 +182,7 @@ html, body{
     background-color: #00ad9f;
     border-width: 0px;
     border-style: solid;
-    border-color: #4CAF50;
+    border-color: #5ed693;
     border-radius: 20px;
     display: inline-block;
     padding-left: 15px;
@@ -167,6 +190,11 @@ html, body{
 
 #mainview-search-form input[type=text]:focus{
     box-shadow: none;
+}
+
+#mainview-search-form input:focus{
+    border-width: 2px;
+    outline: none;
 }
 
 #mainview-addsong,

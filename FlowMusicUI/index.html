@@ -22,7 +22,7 @@
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <div id="sidepanel" class="w3-sidebar w3-bar-block w3-card w3-card w3-green"><div class="w3-bar-item">DEMO</div></div>
+        <div id="sidepanel" class="w3-sidebar w3-bar-block w3-card w3-card w3-green"><div class="w3-bar-item">FlowMusic</div></div>
         <div id="mainview" class="w3-mobile w3-rest w3-container w3-white">
             <div id="mainview-header" class="w3-row w3-teal w3-card">
                 <button id="mainview-sidepanel-button" class="w3-button w3-teal w3-xlarge">&#9776;</button>
@@ -64,7 +64,17 @@
              plugin: "local",
              source: "test2.mp3"
              },*/
-            player.playlist.add([{
+            player.playQueue.add([{
+                artist: "Klaas & Niels Van Gogh",
+                title: "Resurection (In Space)",
+                plugin: "local",
+                source: "test.mp3"
+            },{
+                artist: "Maxim",
+                title: "Meine Soldaten",
+                plugin: "local",
+                source: "test2.mp3"
+            },{
                 artist: "Pizzera & Jaus",
                 title: "Eine ins Lebn",
                 plugin: "youtube",

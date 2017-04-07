@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 function MainView(){
     const self = this;
     this.element = $("#mainview");
@@ -95,22 +100,31 @@ MainTab.prototype.show = function(){
 
 
 
-// ------------------------------------------------------------- CLASS Playlist ----------------------------------------
+// ------------------------------------------------------------- CLASS PlayQueue ----------------------------------------
 
-function PlaylistView(element){
+function PlayQueueView(element){
     this.element = element;
-    var playlist = Central.getPlayer().getPlaylist();
+    var playlist = Central.getPlayer().getPlayQueue();
 
     this.onElementRightClick = function(elem){
         var ctx = new ContextMenu(null);
         ctx.addProperty(
-            "<p>play</p>",
+            "play now",
             function() {
                 Central.getPlayer().playSong({
                     artist: elem[0],
                     title: elem[1]
                 });
-            });
+            }
+        );
+        ctx.addProperty(
+            "remove",
+            function(){
+                var queue = Central.getPlayer().getPlayQueue();
+                var song = queue.getSongNr(elem[0], elem[1]);
+                Central.getPlayer().getPlayQueue().removeSongNr(song);
+            }
+        );
 
         return false;
     }
@@ -157,10 +171,9 @@ SearchView.prototype.setData = function(query, data){
     this.onElementRightClick = function(elem){
         var ctx = new ContextMenu(null);
         ctx.addProperty(
-            "<p>add to playlist</p>",
+            "<p>add to playQueue</p>",
             function() {
-                console.log(elem);
-                Central.getPlayer().getPlaylist().add({
+                Central.getPlayer().getPlayQueue().add({
                     artist: elem[0],
                     title: elem[1],
                     plugin: elem[2][0].plugin,
@@ -275,33 +288,44 @@ Table.prototype.setData = function(data){
 
 //---------------------------------------------- CLASS ContextMenu -----------------------------------------------------
 function ContextMenu(){
-    this.id = Math.random().toString(36).substring(7);
+    if(ContextMenu.instance != null){
+        ContextMenu.instance.close();
+    }
+
+    this.id = "context-menu";//Math.random().toString(36).substring(7);
     this.element = $('<div class="contextMenu w3-card-4" id="'+this.id+'"></div>');
     this.element.css("left", mouseX+"px");
     this.element.css("top", mouseY+"px");
 
     $("body").append(this.element);
 
-    const ctx = this;
-    $(document).click(function(event) {
+    const self = this;
+
+    this.closeHandler = function(event){
         var target = $(event.target);
-        if( target.attr("id") !== ctx.element.attr("id") /*&& ctx.element.find("#"+ctx.id).length == 0*/){
-            ctx.element.remove();
+        if( target.attr("id") !== self.element.attr("id") /*&& ctx.element.find("#"+ctx.id).length == 0*/){
+            self.element.remove();
             $(document).unbind("click", this);
+            ContextMenu.instance = null;
         }
-    });
+    }
+
+    $(document).click(this.closeHandler);
+    ContextMenu.instance = this;
 }
 
 ContextMenu.prototype.addProperty = function(html, handler){
-    var elem = $(html);
+    var elem = $("<div class='property'>"+html+"</div>");
     elem.appendTo(this.element);
 
-    const ctx = this;
     elem.click(handler);
 }
 
+ContextMenu.instance = null;
 
-
+ContextMenu.prototype.close = function () {
+    this.closeHandler({target: $(document)});
+}
 
 
 

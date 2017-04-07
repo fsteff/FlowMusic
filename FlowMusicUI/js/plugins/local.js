@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 function LocalFilePlayer() {
    // this.name = "local";
     var elem = "localaudio-frame";

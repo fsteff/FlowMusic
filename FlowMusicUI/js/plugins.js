@@ -1,3 +1,8 @@
+/**
+ * @author Fixl Stefan
+ * Copyright 2017 Fixl Stefan
+ */
+
 // Avoid `console` errors in browsers that lack a console.
 (function() {
     var method;
@@ -21,7 +26,6 @@
     }
 }());
 
-// Place any jQuery/helper plugins in here.
 
 var mouseX = 0;
 var mouseY = 0;
@@ -52,5 +56,24 @@ $.getJSON("./js/config.json", function(json) {
 
 });
 
+function log(msg, type){
+    if(type == null){
+        type = "warning";
+    }
+    switch(type){
+        case "notice":
+            console.log(msg);
+            break;
+        case "warning":
+            console.warn(msg);
+            break;
+        case "error":
+            console.error(msg);
+            break;
+        default:
+            console.warn(msg);
+            break;
+    }
+}
 
 
