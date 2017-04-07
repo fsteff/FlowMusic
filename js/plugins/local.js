@@ -39,6 +39,25 @@ LocalFilePlayer.prototype.stop = function(){
 }
 
 
+LocalSearchEngine = function(){
+
+}
+
+LocalSearchEngine.prototype.search = function(query){
+    return [{
+        title: "Resurrection",
+        artist: "Klaas & Niels Van Gogh",
+        sources:[
+            {
+                plugin: "local",
+                source: "test.mp3"
+            }
+        ]
+    }];
+}
+
+Central.getSearch().addPlugin(extend(BaseSearchEngine, LocalSearchEngine, "local"));
+
 // Add to main Music Player
 Central.getPlayer().addPlugin(extend(BaseMusicPlayer, LocalFilePlayer, "local"));
 

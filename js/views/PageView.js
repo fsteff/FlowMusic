@@ -40,8 +40,7 @@ $(document).ready(function(){
         view.mainview.resize();
     });
 
-    view.mainview.newTab(SearchView, "Search");
-    view.mainview.newTab(PlaylistView, "Playlist");
+    view.mainview.newTab(PlaylistView, "Playlist", false);
 
 
 });

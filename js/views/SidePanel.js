@@ -36,21 +36,53 @@ SidePanel.prototype.toggle = function(){
     }
 }
 
-SidePanel.prototype.addTab = function(element, name){
-    var tab = $("<div class='w3-bar-item w3-button'>"+name+"</div>");
+SidePanel.prototype.addTab = function(element, name, closebutton){
+    const self = this;
+    if(closebutton == null){
+        closebutton = true;
+    }
+    const tab = $("<div class='sidepanelbutton active w3-bar-item w3-button'></div>");
+    var html = "<div class='buttontext'>"+name+"</div>";
+    tab.html(html);
     tab.appendTo(this.element);
-    this.openTabs.push({
+
+    const closeelem = $("<div class='closebutton'>&#10005;</div>");
+    if(closebutton){
+        closeelem.appendTo(tab);
+    }
+
+    const index = this.openTabs.push({
         page: element,
         tab: tab
-    });
-    tab.click(function(){
-       PageView.getInstance().mainview.hideAllTabs();
-       element.show();
-       element.resize();
-    });
+    }) - 1;
 
+    this.openTab(index);
+
+    tab.click(function(event){
+       if(event.target == closeelem[0]){
+           tab.remove();
+           PageView.getInstance().mainview.closeTab(element);
+           self.openTab(0);
+       }else {
+           self.openTab(index);
+       }
+    });
+}
+
+/**
+ *
+ * @param page jquery element of mainview page
+ * @param tab  jquery element of tab
+ */
+SidePanel.prototype.openTab = function(index){
+    var tab = this.openTabs[index];
     PageView.getInstance().mainview.hideAllTabs();
-    element.show();
-    element.resize();
+    tab.page.show();
+    tab.page.resize();
+
+    for(var i = 0; i < this.openTabs.length; i++){
+        this.openTabs[i].tab.attr("class", "sidepanelbutton w3-bar-item w3-button");
+    }
+    tab.tab.attr("class", "sidepanelbutton active w3-bar-item w3-button ");
 }
 

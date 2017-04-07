@@ -5,6 +5,18 @@ function extend(base, sub, baseargs, subargs) {
     return b;
 }
 
+function getParameterByName(name, url) {
+    if (!url) {
+        url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 //----------------------------------------------- CLASS BaseMusicPlayer --------------------------------
 
 function BaseMusicPlayer(name) {
@@ -44,3 +56,12 @@ BaseMusicPlayer.prototype.stop = function(){
     this.settings.playing = false;
 }
 
+//--------------------------------------------- CLASS BaseSearchEngine --------------------------------------
+
+BaseSearchEngine = function(name){
+    this.name = name;
+}
+
+BaseSearchEngine.prototype.search = function(query){
+    return {};
+}

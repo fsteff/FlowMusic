@@ -1,6 +1,30 @@
 function MainView(){
+    const self = this;
     this.element = $("#mainview");
     this.tabs = [];
+
+    function search(data){
+        var input = $("#mainview-search-form > input[type=text][name=query]");
+        var query = input.val();
+        input.val("");
+        if(query != null && query.length > 0) {
+            var res = Central.getSearch().search(query);
+            var tab = self.newTab(SearchView, "Search: " + query);
+            tab.setData(query, res);
+        }
+        return false;
+    }
+
+    $("#mainview-search-form").submit(search);
+    $('#mainview-search-form > .searchicon').click(search);
+
+    $("#mainview-addsong").click(function(){
+        self.newTab(AddSong, "Add Title");
+    });
+
+    $("#mainview-settings").click(function(){
+        self.newTab(EditSettings, "Settings");
+    });
 }
 
 MainView.prototype.resize = function(){
@@ -18,21 +42,39 @@ MainView.prototype.resize = function(){
 
 }
 
-MainView.prototype.newTab = function(type, name){
+MainView.prototype.newTab = function(type, name, closetab){
+    if(closetab == null){
+        closetab = true;
+    }
     const elem = $('<div class="maintab"></div>');
     elem.appendTo(this.element);
 
     const tab = extend(MainTab, type, elem, elem);
     this.tabs.push(tab);
 
-    PageView.getInstance().sidepanel.addTab(elem, name);
-    //tab.resize();
+    PageView.getInstance().sidepanel.addTab(elem, name, closetab);
+    return tab;
 }
 
 MainView.prototype.hideAllTabs = function(){
     for(var i = 0; i < this.tabs.length; i++){
         this.tabs[i].hide();
     }
+}
+
+MainView.prototype.closeTab = function(element){
+    var tab = null;
+    var index = -1;
+    for(var i = 0; i < this.tabs.length && index < 0; i++){
+        var t = this.tabs[i];
+        if(t.element == element){
+            index = i;
+        }
+    }
+    if(index > 0) {
+        this.tabs.splice(index, 1);
+    }
+    element.remove();
 }
 // ------------------------------------------------------------ CLASS MainTab ------------------------------------------
 function MainTab(element){
@@ -50,6 +92,8 @@ MainTab.prototype.hide = function(){
 MainTab.prototype.show = function(){
     this.element.show();
 }
+
+
 
 // ------------------------------------------------------------- CLASS Playlist ----------------------------------------
 
@@ -99,10 +143,86 @@ function PlaylistView(element){
 
 }
 
+
+//------------------------------------------------------- CLASS SearchView ---------------------------------------------
 function SearchView(element){
     this.element = element;
-    this.element.html("no searches yet, sorry");
+    this.element.html("no data yet, sorry");
+    this.data = null;
 }
+
+SearchView.prototype.setData = function(query, data){
+    this.data = data;
+
+    this.onElementRightClick = function(elem){
+        var ctx = new ContextMenu(null);
+        ctx.addProperty(
+            "<p>add to playlist</p>",
+            function() {
+                console.log(elem);
+                Central.getPlayer().getPlaylist().add({
+                    artist: elem[0],
+                    title: elem[1],
+                    plugin: elem[2][0].plugin,
+                    source: elem[2][0].source
+                });
+            });
+
+        return false;
+    }
+    //const header = $('<p>Results for "'+this.name+'"</p>')
+    this.element.html('<p class="w3-container">Results for "'+query+'":</p>');
+    const elem = $("<div></div>");
+    elem.appendTo(this.element);
+
+    var table = new Table(
+        elem,
+        ["Artist", "Title"],
+        {
+            visibility: [true, true, false],
+            className: "playListTable",
+            onElementRightClick: this.onElementRightClick
+        }
+    );
+
+    var tableData = [];
+    for(var i = 0; i < this.data.length; i++){
+        tableData[i] = [];
+        tableData[i][0] = this.data[i].artist;
+        tableData[i][1] = this.data[i].title;
+        tableData[i][2] = this.data[i].sources;
+    }
+    table.setData(tableData);
+    table.draw();
+}
+
+//------------------------------------------------------------- CLASS AddSong ------------------------------------------
+
+function AddSong(element){
+    const self = this;
+    this.element = element;
+    this.element.addClass("w3-container");
+    $("<h3>Add a new title</h3>").appendTo(this.element);
+
+    const urlInput = $('<input type="text" name="url" value="enter a link">');
+    urlInput.appendTo(this.element);
+    urlInput.on("input", function(){
+        var url = urlInput.val();
+        if( url.search("https://youtube.com") >= 0 ||
+            url.search("https://youtu.be") >= 0 ){
+            //var id = getParameterByName("v", url);
+
+
+        }
+    });
+}
+
+//------------------------------------------------------------- CLASS EditSettings -------------------------------------
+
+function EditSettings(element){
+
+}
+
 
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
