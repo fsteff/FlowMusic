@@ -122,7 +122,13 @@ PlayQueue.prototype.addListener = function(listener){
  * @param the listener function to be removed
  */
 PlayQueue.prototype.removeListener = function(object){
-    this.listeners.remove(object);
+    var i = this.listeners.indexOf(object);
+    if(i >= 0){
+        this.listeners.splice(i, 1);
+    }else{
+        log("cannnot remove listener - not presend", "error");
+    }
+
 }
 /**
  * Calls all listeners
