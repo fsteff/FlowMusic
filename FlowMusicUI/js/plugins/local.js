@@ -58,6 +58,15 @@ LocalSearchEngine.prototype.search = function(query){
                 source: "test.mp3"
             }
         ]
+    },{
+        title: "Resurrection",
+        artist: "Klaas & Niels Van Gogh",
+        sources:[
+            {
+                plugin: "youtube",
+                source: "s6E5lCctlHs"
+            }
+        ]
     }];
 }
 
