@@ -11,11 +11,13 @@ function PlayBar(){
     var nextbutton = $('<div class="nextbutton"></div>');
     var backbutton = $('<div class="backbutton"></div>');
     var info = $(' <div class="playbar-info"></div>');
+    var progressbar = $('<div class="progressbar"></div>')
 
     backbutton.appendTo(this.root);
     playbutton.appendTo(this.root);
     nextbutton.appendTo(this.root);
     info.appendTo(this.root);
+    progressbar.appendTo(this.root);
 
     this.playbutton = playbutton;
     this.nextbutton = nextbutton;
@@ -60,5 +62,15 @@ function PlayBar(){
             }
         }
     });
+
+    window.setInterval(function(){
+        var player = Central.getPlayer().currentPlayer;
+        var part = player.getDuration() / player.getTime();
+        var pixels = 0;
+        if(part != 0){
+            pixels = self.root.width() / part;
+        }
+        progressbar.animate({width: pixels+'px'}, 1000);
+    }, 1000);
 }
 

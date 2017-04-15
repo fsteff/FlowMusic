@@ -3,10 +3,12 @@
  * Copyright 2017 Fixl Stefan
  */
 
+// TODO: implement https://github.com/audiocogs/aurora.js or offline decoder to wav
+
 function LocalFilePlayer() {
    // this.name = "local";
     var elem = "localaudio-frame";
-    $("body").append("<audio id=" + elem + "></audio>");
+    $("body").append("<audio id=" + elem + " controls></audio>");
     this.audio = document.getElementById(elem);
     $(this.audio).on("ended", function () {
         Central.getPlayer().nextSong();
@@ -23,6 +25,7 @@ LocalFilePlayer.prototype.pause = function () {
 }
 LocalFilePlayer.prototype.load = function (source) {
     this.audio.src = source;
+
 }
 
 LocalFilePlayer.prototype.setVolume = function (volume) {
@@ -34,10 +37,10 @@ LocalFilePlayer.prototype.getVolume = function () {
     return this.settings.volume;
 }
 LocalFilePlayer.prototype.getTime = function () {
-    return 0;
+    return this.audio.currentTime;
 }
 LocalFilePlayer.prototype.getDuration = function () {
-    return 0;
+    return this.audio.duration;
 }
 LocalFilePlayer.prototype.stop = function(){
     this.pause();

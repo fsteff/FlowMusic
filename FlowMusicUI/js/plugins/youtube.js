@@ -29,11 +29,11 @@ $(document).ready(function() {
 
     // 4. The API will call this function when the video player is ready.
     YoutubePlayer.prototype.onPlayerReady = function (event) {
+        ytPlayerInstance.playerReady = true;
         ytPlayerInstance.setVolume(100);
         if(ytPlayerInstance.settings.playing) {
             event.target.playVideo();
         }
-        ytPlayerInstance.playerReady = true;
     }
 
     YoutubePlayer.prototype.onPlayerStateChange = function (event) {
@@ -93,8 +93,26 @@ $(document).ready(function() {
     }
 
     YoutubePlayer.prototype.setVolume = function(percent){
-        this.player.setVolume(percent);
+        if(this.playerReady) {
+            this.player.setVolume(percent);
+        }
         this.settings.volume = percent;
+    }
+
+    YoutubePlayer.prototype.getTime = function(){
+        if(this.playerReady) {
+            return this.player.getCurrentTime();
+        }else{
+            return 0;
+        }
+    }
+
+    YoutubePlayer.prototype.getDuration = function(){
+        if(this.playerReady) {
+            return this.player.getDuration();
+        }else{
+            return 0;
+        }
     }
 
     ytPlayerInstance = extend(BaseMusicPlayer, YoutubePlayer, "youtube");

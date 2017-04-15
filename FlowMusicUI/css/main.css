@@ -93,6 +93,17 @@ html, body{
     display: inline-block;
 }
 
+.progressbar{
+    height: 1px;
+    background-color: #00f64f;
+    position: absolute;
+    float: left;
+    top: 0px;
+    left: 0px;
+    display: flex;
+
+}
+
 .maintab{
     overflow-y: scroll;
     display: block;
