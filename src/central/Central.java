@@ -83,7 +83,7 @@ public class Central extends ThreadedComponent{
 			central.sendMessage(Component.CRAWLER, json, msg -> System.out.println("Crawler started: "+msg));
 			central.sendMessage(Component.DATABASE, json, msg -> System.out.println("Database started: "+msg));
 		} catch (InterruptedException e) {
-			ExceptionHandler.onException(e);
+			ExceptionHandler.showErrorDialog(e);
 		}
 		
 	}
