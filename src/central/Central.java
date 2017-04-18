@@ -55,7 +55,7 @@ public class Central extends ThreadedComponent{
 		
 	}
 	
-	void newMessage(Message msg){
+	void newMessage(Message msg) throws InterruptedException{
 		for(ThreadedComponent component : components){
 			if(msg.recipient == component.componentType || msg.recipient == Component.ANY){
 				component.addMessage(msg);
@@ -78,9 +78,14 @@ public class Central extends ThreadedComponent{
 		JSONObject json = new JSONObject();
 		json.put("command", "start");
 		
-		central.sendMessage(Component.WEBSERVER, json, msg -> System.out.println("Webserver started: "+msg));
-		central.sendMessage(Component.CRAWLER, json, msg -> System.out.println("Crawler started: "+msg));
-		central.sendMessage(Component.DATABASE, json, msg -> System.out.println("Database started: "+msg));
+		try {
+			central.sendMessage(Component.WEBSERVER, json, msg -> System.out.println("Webserver started: "+msg));
+			central.sendMessage(Component.CRAWLER, json, msg -> System.out.println("Crawler started: "+msg));
+			central.sendMessage(Component.DATABASE, json, msg -> System.out.println("Database started: "+msg));
+		} catch (InterruptedException e) {
+			ExceptionHandler.onException(e);
+		}
+		
 	}
 
 	@Override
