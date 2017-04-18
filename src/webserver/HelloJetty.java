@@ -36,7 +36,7 @@ public class HelloJetty extends ThreadedComponent
         // In this example it is the current directory but it can be configured to anything that the jvm has access to.
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
-        resource_handler.setResourceBase("./FlowMusicUI/WebContent/");
+        resource_handler.setResourceBase("./FlowMusicUI/");
 
         // Add the ResourceHandler to the server.
         HandlerList handlers = new HandlerList();
@@ -46,17 +46,18 @@ public class HelloJetty extends ThreadedComponent
         // Start things up! By using the server.join() the server thread will join with the current thread.
         // See "http://docs.oracle.com/javase/1.5.0/docs/api/java/lang/Thread.html#join()" for more details.
         server.start();
-        server.join();
+        //server.join();
     }
 
 	@Override
-	public void onMessage(Component sender, JSONObject msg) throws Exception{
+	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception{
 		if(sender == Component.CENTRAL){
 			String command = msg.getString("command");
 			if(command.equalsIgnoreCase("start")){
 				start();
+				return new JSONObject("{\"answer\":\"ready\"}");
 			}
 		}
-		
+		return null;
 	}
 }

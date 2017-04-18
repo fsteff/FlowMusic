@@ -1,7 +1,9 @@
 package central;
 
 import java.util.Vector;
+
 import org.json.JSONObject;
+
 import webserver.HelloJetty;
 
 /**
@@ -9,11 +11,15 @@ import webserver.HelloJetty;
  * @author Stefan Fixl
  *
  */
-public class Central {
+public class Central extends ThreadedComponent{
 	private Vector<ThreadedComponent> components;
 	
 	Central(){
-		components = new Vector<ThreadedComponent>();
+		super(Component.CENTRAL, null);
+		this.components = new Vector<ThreadedComponent>();
+		this.setCentral(this);
+		this.components.addElement(this);
+		
 	}
 	
 	void newMessage(Message msg){
@@ -31,7 +37,13 @@ public class Central {
 		central.components.addElement(new HelloJetty(central));
 		JSONObject json = new JSONObject();
 		json.put("command", "start");
-		central.newMessage(
-				new Message(Component.CENTRAL, Component.WEBSERVER, json.toString()));
+		
+		central.sendMessage(Component.WEBSERVER, json, msg -> System.out.println("Webserver started: "+msg.getString("answer")));
+	}
+
+	@Override
+	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
+		System.out.println(msg);
+		return null;
 	}
 }
