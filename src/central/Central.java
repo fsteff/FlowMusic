@@ -12,7 +12,10 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
+import crawler.Crawler;
+import database.Database;
 import webserver.Webserver;
+
 
 /**
  * Main Class that controls all the other components.
@@ -20,7 +23,6 @@ import webserver.Webserver;
  *
  */
 public class Central extends ThreadedComponent{
-	
 	static
 	{
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -28,10 +30,10 @@ public class Central extends ThreadedComponent{
 		JoranConfigurator configurator = new JoranConfigurator();
 		try
 		{
-		InputStream configStream = FileUtils.newInputStream("res/Logger_Properties.xml");
-		configurator.setContext(loggerContext);
-		configurator.doConfigure(configStream);
-		configStream.close();
+			InputStream configStream = FileUtils.newInputStream("res/Logger_Properties.xml");
+			configurator.setContext(loggerContext);
+			configurator.doConfigure(configStream);
+			configStream.close();
 		}
 		catch (IOException | JoranException e)
 		{
@@ -40,7 +42,9 @@ public class Central extends ThreadedComponent{
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private static final Logger logger = LoggerFactory.getLogger(Central.class);
+	
 	private Vector<ThreadedComponent> components;
 	
 	Central(){
@@ -59,15 +63,24 @@ public class Central extends ThreadedComponent{
 		}
 	}
 	
+	void addComponent(ThreadedComponent component){
+		this.components.addElement(component);
+	}
+	
 	// TODO: implement good system for component loading
 	
 	public static void main(String[] args){
 		Central central = new Central();
-		central.components.addElement(new Webserver(central));
+		central.addComponent(new Webserver(central));
+		central.addComponent(new Crawler(central));
+		central.addComponent(new Database(central));
+		
 		JSONObject json = new JSONObject();
 		json.put("command", "start");
 		
-		central.sendMessage(Component.WEBSERVER, json, msg -> System.out.println("Webserver started: "+msg.getString("answer")));
+		central.sendMessage(Component.WEBSERVER, json, msg -> System.out.println("Webserver started: "+msg));
+		central.sendMessage(Component.CRAWLER, json, msg -> System.out.println("Crawler started: "+msg));
+		central.sendMessage(Component.DATABASE, json, msg -> System.out.println("Database started: "+msg));
 	}
 
 	@Override
