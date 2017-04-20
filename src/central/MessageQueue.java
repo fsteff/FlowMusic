@@ -12,7 +12,7 @@ class MessageQueue {
 	
 	/**
 	 * Retrieves the first element in the message queue and blocks the thread until one is available
-	 * @return
+	 * @return next Message
 	 * @throws InterruptedException
 	 */
 	Message getNext() throws InterruptedException{
@@ -21,7 +21,7 @@ class MessageQueue {
 	
 	/**
 	 * Puts an element to the end of the queue and blocks the tread until the operation is possible.
-	 * @param msg
+	 * @param msg Message to add
 	 * @throws InterruptedException
 	 */
 	void add(Message msg) throws InterruptedException{
