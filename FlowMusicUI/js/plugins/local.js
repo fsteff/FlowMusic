@@ -10,6 +10,8 @@ function LocalFilePlayer() {
     var elem = "localaudio-frame";
     $("body").append("<audio id=" + elem + " controls></audio>");
     this.audio = document.getElementById(elem);
+
+    // go to next song if the currend one ended
     $(this.audio).on("ended", function () {
         Central.getPlayer().nextSong();
     });
@@ -52,13 +54,15 @@ LocalSearchEngine = function(){
 }
 
 LocalSearchEngine.prototype.search = function(query){
+    $.post( "jsontest", {varname: "this is a test"});
+
     return [{
         title: "Resurrection",
         artist: "Klaas & Niels Van Gogh",
         sources:[
             {
                 plugin: "local",
-                source: "test.mp3"
+                source: "testx.mp3"
             }
         ]
     },{
