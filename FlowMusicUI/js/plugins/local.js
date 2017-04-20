@@ -47,16 +47,23 @@ LocalFilePlayer.prototype.getDuration = function () {
 LocalFilePlayer.prototype.stop = function(){
     this.pause();
 }
+LocalFilePlayer.prototype.tryLoadSource = function(source, callback){
+    $.ajax({
+        type: "HEAD",
+        async: true,
+        url: source,
+        success: function(){callback(true)},
+        error: function(){callback(false)}
+    });
+}
 
 
 LocalSearchEngine = function(){
 
 }
 
-LocalSearchEngine.prototype.search = function(query){
-    $.post( "jsontest", {varname: "this is a test"});
-
-    return [{
+LocalSearchEngine.prototype.search = function(query, callback){
+    var retval =  [{
         title: "Resurrection",
         artist: "Klaas & Niels Van Gogh",
         sources:[
@@ -75,7 +82,10 @@ LocalSearchEngine.prototype.search = function(query){
             }
         ]
     }];
+
+    callback(retval);
 }
+
 
 Central.getSearch().addPlugin(extend(BaseSearchEngine, LocalSearchEngine, "local"));
 

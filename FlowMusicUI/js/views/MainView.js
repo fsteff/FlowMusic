@@ -9,13 +9,15 @@ function MainView(){
     this.tabs = [];
 
     function search(data){
-        var input = $("#mainview-search-form > input[type=text][name=query]");
-        var query = input.val();
+        const input = $("#mainview-search-form > input[type=text][name=query]");
+        const query = input.val();
         input.val("");
         if(query != null && query.length > 0) {
-            var res = Central.getSearch().search(query);
-            var tab = self.newTab(SearchView, "Search: " + query);
-            tab.setData(query, res);
+
+            const tab = self.newTab(SearchView, "Search: " + query);
+            Central.getSearch().search(query, function(result){
+                tab.setData(query, result);
+            });
         }
         return false;
     }
@@ -173,12 +175,41 @@ SearchView.prototype.setData = function(query, data){
         ctx.addProperty(
             "<p>add to playQueue</p>",
             function() {
-                Central.getPlayer().getPlayQueue().add({
-                    artist: elem[0],
-                    title: elem[1],
-                    plugin: elem[2][0].plugin,
-                    source: elem[2][0].source
-                });
+                const playable = [];
+                const src = elem[2];
+                for(var i = 0; i < src.length; i++){
+                    const ci = i;
+                    playable[i] = null;
+                    Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
+                        playable[ci] = valid;
+                        var waiting = false;
+                        for(var i2 = 0; i2 < src.length && !waiting; i2++){
+                            if(playable[i2] === null){
+                                waiting = true;
+                            }
+                        }
+
+                        if(!waiting){
+                            var chosen = -1;
+                            for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
+                                if(playable[i2] === true){
+                                    chosen = i2;
+                                }
+                            }
+                            if(chosen > 0) {
+                                Central.getPlayer().getPlayQueue().add({
+                                    artist: elem[0],
+                                    title: elem[1],
+                                    plugin: elem[2][chosen].plugin,
+                                    source: elem[2][chosen].source
+                                });
+                            }else{
+                                Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
+                            }
+                        }
+                    });
+                }
+
             });
 
         return false;

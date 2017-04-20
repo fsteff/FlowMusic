@@ -21,48 +21,52 @@ SearchEngine.prototype.addPlugin = function(plugin){
     this.plugins.push(plugin);
 }
 /**
- * Searches songs by calling all plugins
- * @param (string) query
- * @returns Array of found songs
+ * Searches all plugins with the given query
+ * @param query
+ * @param callback is called every time the results are updated (every time a plugin answered the query)
+ * @returns {Array} the (empty) array that will be updated when the results arrive
  */
-SearchEngine.prototype.search = function(query){
-    var results = [];
+SearchEngine.prototype.search = function(query, callback){
+    const results = [];
+    const filtered = [];
 
-    for(var i = 0; i < this.plugins.length; i++){
-        var res = this.plugins[i].search(query);
-        for(var i2 = 0; i2 < res.length; i2++){
-            results.push(res[i2]);
-        }
-    }
-
-    var filtered = [];
-
-    // Search for double entries and append the sources of one to the other
-    for(var i = 0; i < results.length; i++){
-        var found = false;
-        var outer = results[i];
-        for(var i2 = 0; i2 < filtered.length && !found; i2++){
-            var inner = filtered[i2];
-            if(outer.title == inner.title && outer.artist == inner.artist){
-                found = true;
-                for(var i3 = 0; i3 < outer.sources.length; i3++){
-                    var sourceFound = false;
-                    for(var i4 = 0; i4 < inner.sources.length; i4++){
-                        if(inner.sources[i4].plugin == outer.sources[i3].plugin){
-                            sourceFound = true;
+    function filter(){
+        // Search for double entries and append the sources of one to the other
+        for(var i = 0; i < results.length; i++){
+            var found = false;
+            var outer = results[i];
+            for(var i2 = 0; i2 < filtered.length && !found; i2++){
+                var inner = filtered[i2];
+                if(outer.title == inner.title && outer.artist == inner.artist){
+                    found = true;
+                    for(var i3 = 0; i3 < outer.sources.length; i3++){
+                        var sourceFound = false;
+                        for(var i4 = 0; i4 < inner.sources.length; i4++){
+                            if(inner.sources[i4].plugin == outer.sources[i3].plugin){
+                                sourceFound = true;
+                            }
                         }
-                    }
-                    if(! sourceFound){
-                        inner.sources[inner.sources.length] = outer.sources[i3];
+                        if(! sourceFound){
+                            inner.sources[inner.sources.length] = outer.sources[i3];
+                        }
                     }
                 }
             }
-        }
-        if(! found){
-            filtered[filtered.length] = results[i];
+            if(! found){
+                filtered[filtered.length] = results[i];
+            }
         }
     }
 
+    for(var i = 0; i < this.plugins.length; i++){
+        this.plugins[i].search(query, function(result){
+            for(var i2 = 0; i2 < result.length; i2++){
+                results.push(result[i2]);
+            }
+        });
+        filter();
+        callback(filtered);
+    }
     return filtered;
 }
 

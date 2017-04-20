@@ -42,7 +42,6 @@ var Config = null;
 $.getJSON("./js/config.json", function(json) {
     Config = json;
 
-
     for(var i = 0; i < Config.plugins.length; i++){
         var plugin = Config.plugins[i];
         var s = document.createElement("script");
@@ -52,6 +51,7 @@ $.getJSON("./js/config.json", function(json) {
         s.src = "./js/plugins/"+plugin;
         //$("head").append(s);
         document.head.appendChild(s);
+        Log.info("Loading plugin: " + plugin);
     };
 
 });
@@ -61,7 +61,10 @@ function log(msg, type){
         type = "warning";
     }
     switch(type){
-        case "notice":
+        case "info":
+            console.info(msg);
+            break;
+        case "debug":
             console.log(msg);
             break;
         case "warning":
@@ -72,8 +75,27 @@ function log(msg, type){
             break;
         default:
             console.warn(msg);
+            type="warning";
             break;
     }
+
+    Log.post(msg, type);
 }
 
+function Log(){}
+Log.info = function(msg){
+    log(msg, "info");
+}
+Log.debug = function(msg){
+    log(msg, "debug");
+}
+Log.warning = function(msg){
+    log(msg, "warning");
+}
+Log.error = function(msg){
+    log(msg, "error");
+}
 
+Log.post = function(msg, type){
+    $.post("/log", {msg: msg, level: type.toUpperCase()});
+}

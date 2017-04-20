@@ -61,12 +61,16 @@ BaseMusicPlayer.prototype.stop = function(){
     this.settings.playing = false;
 }
 
+BaseMusicPlayer.prototype.tryLoadSource = function(source, callback){
+    callback(true);
+}
 //--------------------------------------------- CLASS BaseSearchEngine --------------------------------------
 
 BaseSearchEngine = function(name){
     this.name = name;
 }
 
-BaseSearchEngine.prototype.search = function(query){
-    return {};
+BaseSearchEngine.prototype.search = function(query, callback){
+    callback({});
 }
+

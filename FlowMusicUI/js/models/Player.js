@@ -286,7 +286,7 @@ MusicPlayer.prototype.playSong = function (song) {
 }
 /**
  * Play the next song
- * @param if true, play a random song from the queue (optional, default is true)
+ * @param {boolean} if true, play a random song from the queue (optional, default is true)
  */
 MusicPlayer.prototype.nextSong = function (random) {
     if(random !== true){
@@ -303,8 +303,28 @@ MusicPlayer.prototype.lastSong = function () {
     this.playSong(this.currentSong);
 }
 /**
- * @returns the playQueue
+ * @returns {PlayQueue} the playQueue
  */
 MusicPlayer.prototype.getPlayQueue = function(){
     return this.playQueue;
+}
+
+/**
+ * Tries to load a source and calls the callback afterwards with true or false
+ * (the callback has to have exactly one parameter, which accepts boolean)
+ * @param plugin {string} name of the plugin
+ * @param source {string} source, id or whatever the plugin understands
+ * @param callback {function(boolean)}
+ */
+MusicPlayer.prototype.tryLoadSource = function(plugin, source, callback){
+    var found = false;
+    for(var i = 0; i < this.players.length && !found; i++){
+        if(this.players[i].getName() === plugin){
+            this.players[i].tryLoadSource(source, callback);
+            found = true;
+        }
+    }
+    if(! found) {
+        callback(false);
+    }
 }
