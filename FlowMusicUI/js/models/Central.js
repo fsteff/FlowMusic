@@ -141,3 +141,14 @@ Central.getVerifier = function(){
     return Central.getInstance().verifier;
 }
 
+Central.newMessage = function(message, recipient,success){
+    var data = {
+        msg: JSON.stringify(message),
+        recipient: recipient.toUpperCase()
+    }
+
+    $.post("/msg", data, function(json){
+        var obj = JSON.parse(json);
+        success(obj);
+    }, "application/json");
+}

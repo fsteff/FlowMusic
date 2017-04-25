@@ -172,45 +172,8 @@ SearchView.prototype.setData = function(query, data){
 
     this.onElementRightClick = function(elem){
         var ctx = new ContextMenu(null);
-        ctx.addProperty(
-            "<p>add to playQueue</p>",
-            function() {
-                const playable = [];
-                const src = elem[2];
-                for(var i = 0; i < src.length; i++){
-                    const ci = i;
-                    playable[i] = null;
-                    Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
-                        playable[ci] = valid;
-                        var waiting = false;
-                        for(var i2 = 0; i2 < src.length && !waiting; i2++){
-                            if(playable[i2] === null){
-                                waiting = true;
-                            }
-                        }
-
-                        if(!waiting){
-                            var chosen = -1;
-                            for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
-                                if(playable[i2] === true){
-                                    chosen = i2;
-                                }
-                            }
-                            if(chosen > 0) {
-                                Central.getPlayer().getPlayQueue().add({
-                                    artist: elem[0],
-                                    title: elem[1],
-                                    plugin: elem[2][chosen].plugin,
-                                    source: elem[2][chosen].source
-                                });
-                            }else{
-                                Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
-                            }
-                        }
-                    });
-                }
-
-            });
+        ctx.addPredefinedProperty("playNow", elem);
+        ctx.addPredefinedProperty("addToPlayQueue", elem);
 
         return false;
     }
@@ -268,7 +231,6 @@ function EditSettings(element){
 }
 
 
-
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
 
 function Table(element, head, options){
@@ -290,7 +252,7 @@ Table.prototype.draw = function(){
 
     var rowelem;
     for(var row = 0; row < this.data.length; row++){
-        rowelem = $("<tr></tr>");
+        rowelem = $("<tr class='tablerow'></tr>");
         html = "";
         for(var col = 0; col < this.data[row].length; col++){
             if(this.options.visibility[col] === true){
@@ -357,7 +319,102 @@ ContextMenu.instance = null;
 ContextMenu.prototype.close = function () {
     this.closeHandler({target: $(document)});
 }
+/**
+ * Adds a preconfigured property, thought to be used within a song table
+ * "addToPlayQueue" - adds an "add to playqueue" property
+ * "playNow" - adds an "play now" property
+ * @param {string} property template name
+ * @param {Array} has to have following structure: [0]: artist, [1]: title, [2] sources {array}
+ */
+ContextMenu.prototype.addPredefinedProperty = function(name, elem){
+    const self = this;
+    switch(name){
+        case "addToPlayQueue":
+            this.addProperty(
+                "<div>add to playQueue</div>",
+                function() {
+                    const playable = [];
+                    const src = elem[2];
+                    for(var i = 0; i < src.length; i++){
+                        const ci = i;
+                        playable[i] = null;
+                        Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
+                            playable[ci] = valid;
+                            var waiting = false;
+                            for(var i2 = 0; i2 < src.length && !waiting; i2++){
+                                if(playable[i2] === null){
+                                    waiting = true;
+                                }
+                            }
 
+                            if(!waiting){
+                                var chosen = -1;
+                                for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
+                                    if(playable[i2] === true){
+                                        chosen = i2;
+                                    }
+                                }
+                                if(chosen >= 0) {
+                                    Central.getPlayer().getPlayQueue().add({
+                                        artist: elem[0],
+                                        title: elem[1],
+                                        plugin: elem[2][chosen].plugin,
+                                        source: elem[2][chosen].source
+                                    });
+                                }else{
+                                    Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
+                                }
+                            }
+                        });
+                    }
 
+                });
+            break;
+        case "playNow":
+            this.addProperty(
+                "<div>play now</div>",
+                function() {
+                    const playable = [];
+                    const src = elem[2];
+                    for(var i = 0; i < src.length; i++){
+                        const ci = i;
+                        playable[i] = null;
+                        Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
+                            playable[ci] = valid;
+                            var waiting = false;
+                            for(var i2 = 0; i2 < src.length && !waiting; i2++){
+                                if(playable[i2] === null){
+                                    waiting = true;
+                                }
+                            }
+
+                            if(!waiting){
+                                var chosen = -1;
+                                for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
+                                    if(playable[i2] === true){
+                                        chosen = i2;
+                                    }
+                                }
+                                if(chosen >= 0) {
+                                    var song = {
+                                        artist: elem[0],
+                                        title: elem[1],
+                                        plugin: elem[2][chosen].plugin,
+                                        source: elem[2][chosen].source
+                                    };
+                                    Central.getPlayer().getPlayQueue().add(song);
+                                   // Central.getPlayer().getPlayQueue().playSong(song);
+                                    Central.getPlayer().playSong(song);
+                                }else{
+                                    Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
+                                }
+                            }
+                        });
+                    }
+
+                });
+            break;
+    }
+}
 
 

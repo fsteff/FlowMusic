@@ -144,7 +144,7 @@ PlayQueue.prototype.notifyListeners = function(song){
  * Get the internal array index of a song with given artist and title
  * @param artist
  * @param title
- * @returns index number
+ * @returns {Integer} index number
  */
 PlayQueue.prototype.getSongNr = function(artist, title){
     var nr = 0;
@@ -154,6 +154,7 @@ PlayQueue.prototype.getSongNr = function(artist, title){
             return nr;
         }
     }
+    return -1;
 }
 /**
  * Get the song of a given index number
@@ -260,9 +261,7 @@ MusicPlayer.prototype.addPlugin = function (player) {
  * @param song (at least {artist, title})
  */
 MusicPlayer.prototype.playSong = function (song) {
-    if(song.source == null || song.plugin == null){
-        song = this.playQueue.playSong(song);
-    }
+    song = this.playQueue.playSong(song);
 
     this.currentSong = song;
     if(this.currentPlayer != null){
@@ -280,6 +279,7 @@ MusicPlayer.prototype.playSong = function (song) {
     if(foundPlayer) {
         this.currentPlayer.load(this.currentSong.source);
         this.currentPlayer.play();
+        this.playQueue.notifyListeners(song);
     }else{
         log("Cannot find a plugin for "+song, "warning");
     }

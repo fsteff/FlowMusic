@@ -45,6 +45,7 @@ $(document).ready(function(){
         view.mainview.resize();
     });
 
+
     view.mainview.newTab(PlayQueueView, "Queue", false);
 
 

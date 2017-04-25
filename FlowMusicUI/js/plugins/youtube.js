@@ -44,18 +44,19 @@ $(document).ready(function() {
         }
     }
     YoutubePlayer.prototype.pause = function () {
+        this.settings.playing = false;
         if(this.player != null && this.playerReady) {
             this.player.pauseVideo();
         }
-        this.settings.playing = false;
     }
     YoutubePlayer.prototype.play = function(){
+        this.settings.playing = true;
         if(this.player != null && this.playerReady) {
             this.player.playVideo();
         }
-        this.settings.playing = true;
-        var playlist = Central.getPlayer().getPlayQueue();
-        playlist.notifyListeners(playlist.current());
+
+   //      var playlist = Central.getPlayer().getPlayQueue();
+   //     playlist.notifyListeners(playlist.current());
     }
     YoutubePlayer.prototype.load = function(videoid){
 
@@ -115,7 +116,7 @@ $(document).ready(function() {
         }
     }
     YoutubePlayer.prototype.tryLoadSource = function(source, callback){
-        var elem = $("<div style='visibility: hidden'></div>");
+    /*    var elem = $("<div style='visibility: hidden'></div>");
         // TODO: check if neccessary
         elem.appendTo("body");
 
@@ -130,7 +131,8 @@ $(document).ready(function() {
 
                 }
             }
-        });
+        });*/
+        callback(true);
 
     }
 
@@ -164,8 +166,8 @@ $(document).ready(function() {
             artist: "Martin Garrix & Bebe Rexha",
             title: "In the Name of Love",
             sources: [{
-                plugin: "local",
-                source: "test3.mp3"
+                plugin: "youtube",
+                source: "AeGfss2vsZg"
             }]
         }];
 
