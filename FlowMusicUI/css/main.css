@@ -111,12 +111,8 @@ html, body{
     float: left;
     background-color: #d3e7e5;
 }
-.playListTable{
 
-}
-
-.playListTable tr:hover,
-.playListTable td:hover{
+.tablerow:hover{
     background-color: #a7b5e4;
 }
 

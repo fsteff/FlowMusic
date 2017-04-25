@@ -97,7 +97,10 @@ LocalSearchEngine.prototype.search = function(query, callback){
             source: "test3.mp3"
         }]
     }];
-    callback(foundSongs);
+    window.setTimeout(function(){
+        callback(foundSongs);
+    }, 500);
+
 }
 
 
@@ -183,18 +186,8 @@ BrowseMusic.prototype.initSongs = function () {
     }
 
     engine.search("*", function(data){
+
         var table = self.songsView.table;
-        if(table == null) {
-            table = new Table(
-                self.songsView,
-                ["Artist", "Title"],
-                {
-                    visibility: [true, true, false],
-                    className: "playListTable",
-                    onElementRightClick: onElementRightClick
-                }
-            );
-        }
         var tableData = [];
         for(var i = 0; i < data.length; i++){
             tableData[i] = [];
@@ -206,6 +199,23 @@ BrowseMusic.prototype.initSongs = function () {
         table.setData(tableData);
         table.draw();
     });
+
+    var table = self.songsView.table;
+    if(table == null) {
+        table = new Table(
+            self.songsView,
+            ["Artist", "Title"],
+            {
+                visibility: [true, true, false],
+                className: "playListTable",
+                onElementRightClick: onElementRightClick
+            }
+        );
+        self.songsView.table = table;
+        table.setData([]);
+        table.draw();
+    }
+
 }
 
 BrowseMusic.prototype.initArtists = function () {

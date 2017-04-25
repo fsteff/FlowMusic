@@ -252,7 +252,7 @@ Table.prototype.draw = function(){
 
     var rowelem;
     for(var row = 0; row < this.data.length; row++){
-        rowelem = $("<tr></tr>");
+        rowelem = $("<tr class='tablerow'></tr>");
         html = "";
         for(var col = 0; col < this.data[row].length; col++){
             if(this.options.visibility[col] === true){
