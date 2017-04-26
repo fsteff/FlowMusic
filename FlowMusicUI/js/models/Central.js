@@ -98,6 +98,74 @@ Verifier.prototype.verify = function(url){
     return results;
 }
 
+// ---------------------------------------------- CLASS Message --------------------------------------------------------
+/**
+ *
+ * @param obj
+ * Either an incoming json string as obj.json = "..."
+ * or the object's members:
+ * - id
+ * - answer to // an other messages' id
+ * - recipient
+ * - sender
+ * - msg (JSON String or JS Object)
+ * defined (if id is not defined, it is randomly chosen)
+ * @constructor
+ */
+function Message(obj){
+    if(obj !== null && obj.json !== null &&
+        (typeof obj.json === 'string' || obj.json instanceof String)){
+        obj = JSON.parse(obj.json);
+    }
+
+    if((typeof obj.id !== 'undefined') && obj.id !== null){
+        this.id = obj.id;
+    }else{
+        // use random id, because good synchronisation of incrementing the id is impossible
+        this.id = Math.floor(Math.random()*10000000+1);
+    }
+
+    if((typeof obj.answerTo !== 'undefined') && obj.answerTo !== null){
+        this.answerTo = obj.answerTo;
+    }else{
+        this.answerTo = 0;
+    }
+
+    if((typeof obj.recipient !== 'undefined') && obj.recipient !== null){
+        this.recipient = obj.recipient;
+    }else{
+        this.recipient = Message.Components.ANY;
+    }
+
+    if((typeof obj.sender !== 'undefined') && obj.sender !== null){
+        this.sender = obj.sender;
+    }else{
+        this.sender = Message.Components.GUI;
+    }
+
+    if((typeof obj.msg !== 'undefined') && obj.msg !== null){
+        this.msg = obj.msg;
+        if(typeof this.msg === 'string' || this.msg instanceof String){
+            this.msg = JSON.parse(this.msg);
+        }
+    }else{
+        this.msg = {};
+    }
+
+}
+
+Message.Components = {
+    ANY : "ANY",
+    WEBSERVER : "WEBSERVER",
+    DATABASE : "DATABASE",
+    GUI : "GUI",
+    CRAWLER : "CRAWLER"
+}
+
+
+
+
+
 // ---------------------------------------------- CLASS CENTRAL --------------------------------------------------------
 /**
  * Singleton class that handles all internal (model in MVC) classes
@@ -105,9 +173,41 @@ Verifier.prototype.verify = function(url){
  * @constructor
  */
 function Central() {
+    const self = this;
     this.verifier = new Verifier();
     this.player = new MusicPlayer();
     this.search = new SearchEngine();
+
+    this.messageCallbacks = [];
+    this.outMessageQueue = [];
+
+    this.openWebSocket = function(){
+        this.webSocket = new WebSocket("ws://localhost/websocket");
+        this.webSocket.onopen = function(event){
+            Log.info("Websocket connection ready");
+            for(var i = 0; i < this.outMessageQueue.length; i++){
+                var msg = this.outMessageQueue[i];
+                self.webSocket.send(JSON.stringify(msg));
+            }
+            self.outMessageQueue = [];
+        };
+        this.webSocket.onclose = this.openWebSocket;
+
+        this.webSocket.onmessage = function(event){
+            var msg = new Message({json: event.data});
+            var answerTo = msg.answerTo;
+            if(answerTo !== null && answerTo > 0
+                && self.messageCallbacks[answerTo] !== null){
+                self.messageCallbacks[answerTo](msg);
+                delete self.messageCallbacks[answerTo];
+            }
+        }
+    }
+
+    this.openWebSocket();
+
+
+
     return this;
 }
 
@@ -142,7 +242,8 @@ Central.getVerifier = function(){
 }
 
 Central.newMessage = function(message, recipient,success){
-    var data = {
+    const self = Central.getInstance();
+  /*  var data = {
         msg: JSON.stringify(message),
         recipient: recipient.toUpperCase()
     }
@@ -150,5 +251,19 @@ Central.newMessage = function(message, recipient,success){
     $.post("/msg", data, function(json){
         var obj = JSON.parse(json);
         success(obj);
-    }, "application/json");
+    }, "application/json");*/
+
+    var msg = new Message({
+        msg: JSON.stringify(message),
+        recipient: recipient
+    });
+
+    self.messageCallbacks[msg.id] = success;
+    if(self.webSocket.readyState === self.webSocket.OPENED) {
+        self.webSocket.send(JSON.stringify(msg));
+    }else{
+        self.outMessageQueue[self.outMessageQueue.length] = msg;
+    }
 }
+
+
