@@ -1,5 +1,9 @@
 package central;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
@@ -46,13 +50,71 @@ public class Central extends ThreadedComponent{
 	private static final Logger logger = LoggerFactory.getLogger(Central.class);
 	
 	private Vector<ThreadedComponent> components;
+	private JSONObject config;
+	private File configFile = null;
 	
-	Central(){
+	Central(File configFile){
 		super(Component.CENTRAL, null);
+		this.configFile = configFile;
 		this.components = new Vector<ThreadedComponent>();
 		this.setCentral(this);
 		this.components.addElement(this);
 		
+		if(configFile.isDirectory()){
+			ExceptionHandler.showErrorDialog("Error", "Config file is a directory!");
+			configFile = new File("./config.json");
+		}
+		
+		if(! configFile.exists()){
+			this.createDefaultConfig();
+		}else{
+			try(
+					BufferedReader in = new BufferedReader(new FileReader(configFile));
+					){			
+				String json = "";
+				String line = null;
+				while((line = in.readLine()) != null){
+					json += line;
+				}
+				in.close();
+				
+				if(json.length() > 0){
+					this.config = new JSONObject(json);
+				}
+			}catch(Exception e){
+				ExceptionHandler.showErrorDialog(e);
+				
+				this.createDefaultConfig();
+			}
+		}	
+	}
+	
+	void createDefaultConfig(){
+		this.config = new JSONObject();
+		try{
+			String str = this.config.toString(2);
+			FileWriter writer = new FileWriter(this.configFile);
+			writer.write(str);
+			writer.close();
+		}catch(IOException e){
+			ExceptionHandler.showErrorDialog(e);
+		}
+	}
+	
+	void configChanged() throws InterruptedException{
+		try{
+			String str = this.config.toString(2);
+			FileWriter writer = new FileWriter(this.configFile);
+			writer.write(str);
+			writer.close();
+		}catch(IOException e){
+			ExceptionHandler.showErrorDialog(e);
+		}
+		
+		JSONObject json = new JSONObject();
+		json.put("command", "config changed");
+		json.put("config", this.config);
+		sendMessage(Component.ANY, json);
 	}
 	
 	void newMessage(Message msg) throws InterruptedException{
@@ -68,9 +130,18 @@ public class Central extends ThreadedComponent{
 	}
 	
 	// TODO: implement good system for component loading
-	
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args){
-		Central central = new Central();
+		File configPath = null;
+		if(args.length > 0 && args[0].length() > 0){
+			configPath = new File(args[0]);
+		}else{
+			configPath = new File(System.getProperty("user.home") + "/.FlowMusic/config.json");
+		}
+		Central central = new Central(configPath);
 		central.addComponent(new Webserver(central));
 		central.addComponent(new Crawler(central));
 		central.addComponent(new Database(central));
@@ -90,7 +161,25 @@ public class Central extends ThreadedComponent{
 
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
-		System.out.println(msg);
+		switch(msg.getString("command")){
+		case "get config": 
+			JSONObject json = new JSONObject();
+			json.put("config", this.config);
+			return json;		
+			
+		case "set config":
+			JSONObject newConfig = msg.optJSONObject("config");
+			if(newConfig == null){
+				throw new Exception("Invalid message does not contain 'config': "+msg.toString());
+			}else{
+				this.config = newConfig;
+				this.configChanged();
+			}
+			
+			JSONObject answer = new JSONObject();
+			answer.put("answer", "done");
+			return answer;
+		}
 		return null;
 	}
 }
