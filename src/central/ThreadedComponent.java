@@ -14,7 +14,7 @@ import org.json.JSONObject;
 public abstract class ThreadedComponent
 {
 	private final MessageQueue messageQueue;
-	private volatile Central central;
+	protected volatile Central central;
 	private volatile boolean running = false;
 	private final ConcurrentHashMap<Long, Consumer<JSONObject>> answerCallbacks;
 

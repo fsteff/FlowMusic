@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 import org.h2.store.fs.FileUtils;
 import org.json.JSONObject;
@@ -181,5 +182,17 @@ public class Central extends ThreadedComponent{
 			return answer;
 		}
 		return null;
+	}
+	
+	@Override
+	public void sendMessage(Component component, JSONObject msg, Consumer<JSONObject> onAnswer) throws InterruptedException
+	{
+		super.sendMessage(component, msg, onAnswer);
+	}
+	
+	@Override
+	public void sendMessage(Component component, JSONObject msg) throws InterruptedException
+	{
+		super.sendMessage(component, msg);
 	}
 }

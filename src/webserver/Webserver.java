@@ -19,8 +19,10 @@ import central.ThreadedComponent;
  */
 public class Webserver extends ThreadedComponent
 {
-	private static final Logger logger = LoggerFactory.getLogger(Webserver.class);
+	private static final Logger logger = LoggerFactory
+			.getLogger(Webserver.class);
 	private Server server;
+
 	public Webserver(Central central)
 	{
 		super(Component.WEBSERVER, central);
@@ -51,8 +53,8 @@ public class Webserver extends ThreadedComponent
 
 		// Add the ResourceHandler to the server.
 		HandlerList handlers = new HandlerList();
-		handlers.setHandlers(
-				new Handler[] { resource_handler, new MyHandler() });
+		handlers.setHandlers(new Handler[] { resource_handler,
+				new MyHandler(central) });
 		server.setHandler(handlers);
 
 		// Start things up! By using the server.join() the server thread
@@ -82,7 +84,7 @@ public class Webserver extends ThreadedComponent
 				return new JSONObject("{\"answer\":\"done\"}");
 			}
 		}
-		
+
 		return null;
 	}
 
