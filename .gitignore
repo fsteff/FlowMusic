@@ -2,6 +2,8 @@
 /target/
 /.classpath
 /.settings/
+/.idea/
 /samples/
 /logs/
 *.mp3
+*.iml

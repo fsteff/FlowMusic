@@ -63,7 +63,7 @@ LocalSearchEngine = function(){
 }
 
 LocalSearchEngine.prototype.search = function(query, callback){
-    Central.newMessage({
+    LocalComm.newMessage({
         "command" : "get",
         "what": "song",
         "filter" : {"title" : query, "artist" : query}
@@ -87,21 +87,9 @@ LocalSearchEngine.prototype.search = function(query, callback){
             callback(result);
         }
     });
-
-    // DEBUG Data:
-   /* var foundSongs = [{
-        artist: "Martin Garrix & Bebe Rexha",
-        title: "In the Name of Love",
-        sources: [{
-            plugin: "local",
-            source: "test3.mp3"
-        }]
-    }];
-    window.setTimeout(function(){
-        callback(foundSongs);
-    }, 500);*/
-
 }
+
+
 
 
 Central.getSearch().addPlugin(extend(BaseSearchEngine, LocalSearchEngine, "local"));
@@ -114,6 +102,7 @@ Central.getPlayer().addPlugin(extend(BaseMusicPlayer, LocalFilePlayer, "local"))
 function BrowseMusic(element){
     const self = this;
     this.element = $(element);
+    this.songs = [];
 
     this.categoryBar = $("<div class='topmenu'></div>");
     this.categoryBar.appendTo(element);
@@ -138,8 +127,6 @@ function BrowseMusic(element){
     this.viewSongs();
 
     this.initSongs();
-    this.initAlbums();
-    this.initArtists();
 }
 
 BrowseMusic.prototype.viewSongs = function(){
@@ -186,7 +173,7 @@ BrowseMusic.prototype.initSongs = function () {
     }
 
     engine.search("*", function(data){
-
+        self.songs = data;
         var table = self.songsView.table;
         var tableData = [];
         for(var i = 0; i < data.length; i++){
@@ -198,6 +185,9 @@ BrowseMusic.prototype.initSongs = function () {
 
         table.setData(tableData);
         table.draw();
+
+        self.initAlbums();
+        self.initArtists();
     });
 
     var table = self.songsView.table;
@@ -212,7 +202,7 @@ BrowseMusic.prototype.initSongs = function () {
             }
         );
         self.songsView.table = table;
-        table.setData([]);
+        table.setData(self.songs);
         table.draw();
     }
 

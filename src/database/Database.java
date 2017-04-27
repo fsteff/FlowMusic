@@ -52,6 +52,8 @@ public class Database extends ThreadedComponent {
 		String command = msg.getString("command");
 		switch(command){
 		case "get":
+
+
 			// TODO: further selection, filtering, joining, ...
 			// For debugging purposes and until the database works, we return a fixed value:
 			JSONObject ret = new JSONObject();

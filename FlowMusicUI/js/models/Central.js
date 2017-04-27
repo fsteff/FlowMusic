@@ -173,58 +173,10 @@ Message.Components = {
  * @constructor
  */
 function Central() {
-    const self = this;
+
     this.verifier = new Verifier();
     this.player = new MusicPlayer();
     this.search = new SearchEngine();
-
-    this.messageCallbacks = [];
-    /*this.outMessageQueue = [];
-
-    this.openWebSocket = function(){
-        this.webSocket = new WebSocket("ws://localhost/websocket");
-        this.webSocket.onopen = function(event){
-            Log.info("Websocket connection ready");
-            for(var i = 0; i < this.outMessageQueue.length; i++){
-                var msg = this.outMessageQueue[i];
-                self.webSocket.send(JSON.stringify(msg));
-            }
-            self.outMessageQueue = [];
-        };
-        this.webSocket.onclose = this.openWebSocket;
-
-        this.webSocket.onmessage = function(event){
-            var msg = new Message({json: event.data});
-            var answerTo = msg.answerTo;
-            if(answerTo !== null && answerTo > 0
-                && self.messageCallbacks[answerTo] !== null){
-                self.messageCallbacks[answerTo](msg);
-                delete self.messageCallbacks[answerTo];
-            }
-        }
-    }
-
-    this.openWebSocket();
-    */
-
-    this.getMessage = function(){
-        $.get("/inmsg", function (data){
-            var msg = new Message({json: data});
-            var answerTo = msg.answerTo;
-            if((typeof answerTo !== 'undefined')    	
-            	&&	answerTo !== null && answerTo > 0
-            	&& 	(typeof self.messageCallbacks[answerTo] !== 'undefined')
-                && 	self.messageCallbacks[answerTo] !== null){
-                self.messageCallbacks[answerTo](msg.msg);
-                delete self.messageCallbacks[answerTo];
-            }
-
-            self.getMessage();
-        }/*, "application/json"*/);
-    }
-
-    this.getMessage();
-
 
     return this;
 }
@@ -259,27 +211,5 @@ Central.getVerifier = function(){
     return Central.getInstance().verifier;
 }
 
-Central.newMessage = function(message, recipient,success){
-    const self = Central.getInstance();
-    var msg = new Message({
-        msg: JSON.stringify(message),
-        recipient: recipient
-    });
-    self.messageCallbacks[msg.id] = success;
-
-    $.post("/msg", {msg: JSON.stringify(msg)}/*, function(json){
-        var obj = JSON.parse(json);
-        success(obj);
-    }, "application/json"*/);
-    /*
-
-
-    self.messageCallbacks[msg.id] = success;
-    if(self.webSocket.readyState === self.webSocket.OPENED) {
-        self.webSocket.send(JSON.stringify(msg));
-    }else{
-        self.outMessageQueue[self.outMessageQueue.length] = msg;
-    }*/
-}
 
 
