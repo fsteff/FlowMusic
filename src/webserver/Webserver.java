@@ -1,5 +1,7 @@
 package webserver;
 
+import java.util.function.Consumer;
+
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -22,7 +24,9 @@ public class Webserver extends ThreadedComponent
 	private static final Logger logger = LoggerFactory
 			.getLogger(Webserver.class);
 	private Server server;
-
+	private Gui gui;
+	private MyHandler handler;
+	
 	public Webserver(Central central)
 	{
 		super(Component.WEBSERVER, central);
@@ -53,8 +57,9 @@ public class Webserver extends ThreadedComponent
 
 		// Add the ResourceHandler to the server.
 		HandlerList handlers = new HandlerList();
-		handlers.setHandlers(new Handler[] { resource_handler,
-				new MyHandler(central) });
+		handler = new MyHandler(this);
+		handlers.setHandlers(
+				new Handler[] { resource_handler, handler});
 		server.setHandler(handlers);
 
 		// Start things up! By using the server.join() the server thread
@@ -70,7 +75,7 @@ public class Webserver extends ThreadedComponent
 	protected JSONObject onMessage(Component sender, JSONObject msg)
 			throws Exception
 	{
-		if (sender == Component.CENTRAL)
+		if (sender == Component.WEBSERVER)
 		{
 			String command = msg.getString("command");
 			if (command.equalsIgnoreCase("start"))
@@ -84,7 +89,6 @@ public class Webserver extends ThreadedComponent
 				return new JSONObject("{\"answer\":\"done\"}");
 			}
 		}
-
 		return null;
 	}
 
@@ -102,5 +106,34 @@ public class Webserver extends ThreadedComponent
 				logger.error("", e);
 			}
 		}
+	}
+
+	@Override
+	protected void sendMessage(Component component, JSONObject msg,
+			Consumer<JSONObject> onAnswer) throws InterruptedException
+	{
+		super.sendMessage(component, msg, onAnswer);
+	}
+
+	@Override
+	protected void sendMessage(Component component, JSONObject msg)
+			throws InterruptedException
+	{
+		super.sendMessage(component, msg);
+	}
+	
+	public void setGui(Gui gui)
+	{
+		this.gui = gui;
+	}
+	
+	Gui getGui()
+	{
+		return gui;
+	}
+	
+	public MyHandler getHandler()
+	{
+		return handler;
 	}
 }

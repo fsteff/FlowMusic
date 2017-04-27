@@ -1,4 +1,4 @@
-package webserver.utils;
+package utils;
 
 import java.util.function.Consumer;
 

@@ -47,5 +47,25 @@
 		  <artifactId>logback-classic</artifactId>
 		  <version>1.2.3</version>
 		</dependency>
+		<!--dependency>
+ 		 <groupId>org.eclipse.jetty.websocket</groupId>
+ 		 <artifactId>websocket-client</artifactId>
+ 		 <version>9.4.4.v20170414</version>
+		</dependency-->
+		<dependency>
+  		     <groupId>org.eclipse.jetty</groupId>
+   			 <artifactId>jetty-servlet</artifactId>
+   			 <version>9.4.4.v20170414</version>
+		</dependency>
+		<!--dependency>
+  		  <groupId>org.eclipse.jetty</groupId>
+  		  <artifactId>jetty-websocket</artifactId>
+    	  <version>8.2.0.v20160908</version>
+		</dependency-->
+		<dependency>
+   		 <groupId>org.eclipse.jetty.websocket</groupId>
+   		 <artifactId>websocket-servlet</artifactId>
+   		 <version>9.4.4.v20170414</version>
+		</dependency>
 	</dependencies>
 </project>

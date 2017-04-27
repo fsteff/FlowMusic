@@ -9,5 +9,6 @@ public enum Component{
 	DATABASE,
 	CRAWLER,
 	WEBSERVER,
+	GUI,
 	CENTRAL
 };
