@@ -179,7 +179,7 @@ function Central() {
     this.search = new SearchEngine();
 
     this.messageCallbacks = [];
-    this.outMessageQueue = [];
+    /*this.outMessageQueue = [];
 
     this.openWebSocket = function(){
         this.webSocket = new WebSocket("ws://localhost/websocket");
@@ -205,7 +205,23 @@ function Central() {
     }
 
     this.openWebSocket();
+    */
 
+    this.getMessage = function(){
+        $.get("/inmsg", {}, function (data){
+            var msg = new Message({json: data});
+            var answerTo = msg.answerTo;
+            if(answerTo !== null && answerTo > 0
+                && self.messageCallbacks[answerTo] !== null){
+                self.messageCallbacks[answerTo](msg);
+                delete self.messageCallbacks[answerTo];
+            }
+
+            self.getMessage();
+        }, "application/json");
+    }
+
+    this.getMessage();
 
 
     return this;
@@ -243,27 +259,24 @@ Central.getVerifier = function(){
 
 Central.newMessage = function(message, recipient,success){
     const self = Central.getInstance();
-  /*  var data = {
-        msg: JSON.stringify(message),
-        recipient: recipient.toUpperCase()
-    }
-
-    $.post("/msg", data, function(json){
-        var obj = JSON.parse(json);
-        success(obj);
-    }, "application/json");*/
-
     var msg = new Message({
         msg: JSON.stringify(message),
         recipient: recipient
     });
+
+    $.post("/msg", msg/*, function(json){
+        var obj = JSON.parse(json);
+        success(obj);
+    }, "application/json"*/);
+    /*
+
 
     self.messageCallbacks[msg.id] = success;
     if(self.webSocket.readyState === self.webSocket.OPENED) {
         self.webSocket.send(JSON.stringify(msg));
     }else{
         self.outMessageQueue[self.outMessageQueue.length] = msg;
-    }
+    }*/
 }
 
 
