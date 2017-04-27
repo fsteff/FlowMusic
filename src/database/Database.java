@@ -53,9 +53,28 @@ public class Database extends ThreadedComponent {
 		switch(command){
 		case "get":
 			// TODO: further selection, filtering, joining, ...
-			JSONArray res = query("SELECT * FROM songs");
+			// For debugging purposes and until the database works, we return a fixed value:
 			JSONObject ret = new JSONObject();
-			ret.put("answer", res);
+			JSONArray found = new JSONArray();
+			JSONObject song = new JSONObject();
+			/*
+			 *  artist: "Martin Garrix & Bebe Rexha",
+		        title: "In the Name of Love",
+		        sources: [{
+		            plugin: "local",
+		            source: "test3.mp3"
+		        }]
+			 */
+			song.put("artist", "Martin Garrix & Bebe Rexha");
+			song.put("title", "In the Name of Love");
+			JSONArray sources = new JSONArray();
+			sources.put(new JSONObject("{\"plugin\": \"local\", \"source\":\"test.mp3\"}"));
+			song.put("sources", sources);
+			found.put(song);
+			ret.put("answer", found);
+	/*		JSONArray res = query("SELECT * FROM songs");
+			JSONObject ret = new JSONObject();
+			ret.put("answer", res);*/
 			return ret;
 		
 		case "...":

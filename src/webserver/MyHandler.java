@@ -23,24 +23,28 @@ import utils.JSLogger;
 
 public class MyHandler extends AbstractHandler
 {
-	protected static final String LOG = "/log";
-	protected static final String MSG = "/msg";
-	protected static final String IN_MSG = "/inmsg";
+	protected static final String URL_LOG = "/log";
+	protected static final String URL_MSG = "/msg";
+	protected static final String URL_IN_MSG = "/inmsg";
+	protected static final String URL_SONG = "/song";
+	protected static final String MESSAGE = "msg";
 	protected static final String RECEIVER = "receiver";
 	protected static final String POST = "POST";
-	protected static final String GET = "GET";
-	protected static final String SONG = "/song";
+	protected static final String GET = "GET";	
 	protected static final String ID = "id";
 	private final Webserver webserver;
+	private final Gui gui;
 	
-	protected final LinkedBlockingDeque<JSONObject> toBrowserQueue = new LinkedBlockingDeque<>();
+	
+	
 	
 	private static final Logger logger = LoggerFactory
 			.getLogger(MyHandler.class);
 
-	public MyHandler(Webserver webserver)
+	public MyHandler(Webserver webserver, Gui gui)
 	{
 		this.webserver = webserver;
+		this.gui = gui;
 	}
 
 	public void handle(String target, Request baseRequest,
@@ -52,12 +56,13 @@ public class MyHandler extends AbstractHandler
 		System.out.println(target);
 		System.out.println(method);
 
+		boolean handled = false;
 		if (method.equals(GET))
 		{
-			handleGet(target, baseRequest, request, response);
+			handled = handleGet(target, baseRequest, request, response);
 		}
 
-		if (method.equals("GET"))
+		if (method.equals("GET") && !handled)
 		{
 			try
 			{
@@ -90,19 +95,19 @@ public class MyHandler extends AbstractHandler
 		baseRequest.setHandled(true);
 	}
 
-	private void handleGet(String target, Request baseRequest,
+	private boolean handleGet(String target, Request baseRequest,
 			HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
-		if (target.equals(SONG))
+		if (target.equals(URL_SONG))
 		{
 			String id = request.getParameter(ID);
 		}
-		else if (target.equals(IN_MSG))
+		else if (target.equals(URL_IN_MSG))
 		{
 			try
 			{
-				JSONObject obj = toBrowserQueue.poll(5L, TimeUnit.SECONDS);
+				JSONObject obj = gui.toBrowserQueue.poll(5L, TimeUnit.SECONDS);
 				OutputStream os = response.getOutputStream();
 				
 				if (obj == null)
@@ -114,24 +119,26 @@ public class MyHandler extends AbstractHandler
 				os.flush();
 				
 				os.close();
+				return true;
 			}
 			catch (InterruptedException e)
 			{
 				logger.error("", e);
 			}
 		}
+		return false;
 	}
 
 	private void handlePost(String target, Request baseRequest,
 			HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException
 	{
-		if (target.equals(LOG))
+		if (target.equals(URL_LOG))
 		{
 			logMessage(request);
 		}
 
-		if (target.equals(MSG))
+		if (target.equals(URL_MSG))
 		{
 			sendMessage(request);
 		}
@@ -147,10 +154,10 @@ public class MyHandler extends AbstractHandler
 
 	private void sendMessage(HttpServletRequest request)
 	{
-		String msg = request.getParameter(MSG);
+		String msg = request.getParameter(MESSAGE);
 		try
 		{
-			webserver.getGui().messageIncoming(new JSONObject(msg));
+			gui.messageIncoming(new JSONObject(msg));
 		}
 		catch (JSONException | InterruptedException e)
 		{

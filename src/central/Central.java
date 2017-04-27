@@ -174,14 +174,13 @@ public class Central extends ThreadedComponent
 					+ "/.FlowMusic/config.json");
 		}
 		Central central = new Central(configPath);
-		Webserver webserver = new Webserver(central);
-		Gui gui = new Gui(central, webserver.getHandler());
-		webserver.setGui(gui);
-
+		Gui gui = new Gui(central);
+		Webserver webserver = new Webserver(central, gui);
 		central.addComponent(webserver);
+		central.addComponent(gui);
 		central.addComponent(new Crawler(central));
 		central.addComponent(new Database(central));
-		central.addComponent(gui);
+		
 
 		JSONObject json = new JSONObject();
 		json.put("command", "start");
@@ -189,14 +188,13 @@ public class Central extends ThreadedComponent
 		try
 		{
 			central.sendMessage(Component.WEBSERVER, json,
-					msg -> System.out
-							.println("Webserver started: " + msg));
+					msg -> System.out.println("Webserver started: " + msg));
 			central.sendMessage(Component.CRAWLER, json,
 					msg -> System.out.println("Crawler started: " + msg));
 			central.sendMessage(Component.DATABASE, json,
 					msg -> System.out.println("Database started: " + msg));
 			central.sendMessage(Component.GUI, json,
-					msg -> System.out.println("Database started: " + msg));
+					msg -> System.out.println("GUI started: " + msg));
 		}
 		catch (InterruptedException e)
 		{

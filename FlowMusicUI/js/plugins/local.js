@@ -64,7 +64,7 @@ LocalSearchEngine = function(){
 
 LocalSearchEngine.prototype.search = function(query, callback){
     Central.newMessage({
-        "commando" : "get",
+        "command" : "get",
         "what": "song",
         "filter" : {"title" : query, "artist" : query}
     },"DATABASE", function(data){
@@ -89,7 +89,7 @@ LocalSearchEngine.prototype.search = function(query, callback){
     });
 
     // DEBUG Data:
-    var foundSongs = [{
+   /* var foundSongs = [{
         artist: "Martin Garrix & Bebe Rexha",
         title: "In the Name of Love",
         sources: [{
@@ -99,7 +99,7 @@ LocalSearchEngine.prototype.search = function(query, callback){
     }];
     window.setTimeout(function(){
         callback(foundSongs);
-    }, 500);
+    }, 500);*/
 
 }
 

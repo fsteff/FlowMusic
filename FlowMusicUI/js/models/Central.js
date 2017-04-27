@@ -208,17 +208,19 @@ function Central() {
     */
 
     this.getMessage = function(){
-        $.get("/inmsg", {}, function (data){
+        $.get("/inmsg", function (data){
             var msg = new Message({json: data});
             var answerTo = msg.answerTo;
-            if(answerTo !== null && answerTo > 0
-                && self.messageCallbacks[answerTo] !== null){
-                self.messageCallbacks[answerTo](msg);
+            if((typeof answerTo !== 'undefined')    	
+            	&&	answerTo !== null && answerTo > 0
+            	&& 	(typeof self.messageCallbacks[answerTo] !== 'undefined')
+                && 	self.messageCallbacks[answerTo] !== null){
+                self.messageCallbacks[answerTo](msg.msg);
                 delete self.messageCallbacks[answerTo];
             }
 
             self.getMessage();
-        }, "application/json");
+        }/*, "application/json"*/);
     }
 
     this.getMessage();
@@ -263,6 +265,7 @@ Central.newMessage = function(message, recipient,success){
         msg: JSON.stringify(message),
         recipient: recipient
     });
+    self.messageCallbacks[msg.id] = success;
 
     $.post("/msg", {msg: JSON.stringify(msg)}/*, function(json){
         var obj = JSON.parse(json);

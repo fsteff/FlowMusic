@@ -24,12 +24,13 @@ public class Webserver extends ThreadedComponent
 	private static final Logger logger = LoggerFactory
 			.getLogger(Webserver.class);
 	private Server server;
-	private Gui gui;
+	private final Gui gui;
 	private MyHandler handler;
 	
-	public Webserver(Central central)
+	public Webserver(Central central, Gui gui)
 	{
 		super(Component.WEBSERVER, central);
+		this.gui = gui;
 	}
 
 	public void start() throws Exception
@@ -57,7 +58,7 @@ public class Webserver extends ThreadedComponent
 
 		// Add the ResourceHandler to the server.
 		HandlerList handlers = new HandlerList();
-		handler = new MyHandler(this);
+		handler = new MyHandler(this, gui);
 		handlers.setHandlers(
 				new Handler[] { resource_handler, handler});
 		server.setHandler(handlers);
@@ -75,8 +76,8 @@ public class Webserver extends ThreadedComponent
 	protected JSONObject onMessage(Component sender, JSONObject msg)
 			throws Exception
 	{
-		if (sender == Component.WEBSERVER)
-		{
+	//	if (sender == Component.WEBSERVER)
+	//	{
 			String command = msg.getString("command");
 			if (command.equalsIgnoreCase("start"))
 			{
@@ -88,7 +89,7 @@ public class Webserver extends ThreadedComponent
 				shutdown();
 				return new JSONObject("{\"answer\":\"done\"}");
 			}
-		}
+	//	}
 		return null;
 	}
 
@@ -122,18 +123,4 @@ public class Webserver extends ThreadedComponent
 		super.sendMessage(component, msg);
 	}
 	
-	public void setGui(Gui gui)
-	{
-		this.gui = gui;
-	}
-	
-	Gui getGui()
-	{
-		return gui;
-	}
-	
-	public MyHandler getHandler()
-	{
-		return handler;
-	}
 }

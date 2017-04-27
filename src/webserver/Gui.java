@@ -1,5 +1,6 @@
 package webserver;
 
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Consumer;
 
 import org.json.JSONException;
@@ -14,15 +15,16 @@ import central.ThreadedComponent;
 public class Gui extends ThreadedComponent
 {
 	public static final String SEND_TO = "sendTo";
+	private static volatile long browserMsgId = 10000001;
+	
 	private static final Logger logger = LoggerFactory
 			.getLogger(Gui.class);
 
-	private MyHandler handler;
+	protected final LinkedBlockingDeque<JSONObject> toBrowserQueue = new LinkedBlockingDeque<>();
 	
-	public Gui(Central central, MyHandler handler)
+	public Gui(Central central)
 	{
 		super(Component.GUI, central);
-		this.handler = handler;
 	}
 
 	@Override
@@ -33,12 +35,12 @@ public class Gui extends ThreadedComponent
 		
 		JSONObject obj = new JSONObject();
 		obj.put("msg", msg);
-		obj.put("id", (int) Math.random() * 10000000 + 10000000);
+		obj.put("id", browserMsgId++);
 		obj.put("answerTo", 0);
 		obj.put("recipient", "GUI");
 		obj.put("sender", sender.toString());
 		
-		//handlerToBrowserQueue.putLast(obj);
+		toBrowserQueue.putLast(obj);
 
 		return null;
 	}
@@ -52,14 +54,14 @@ public class Gui extends ThreadedComponent
 		{
 			JSONObject obj = new JSONObject();
 			obj.put("msg", jsonMsg);
-			obj.put("id", (int) Math.random() * 10000000 + 10000000);
+			obj.put("id", browserMsgId++);
 			obj.put("answerTo", browserId);
 			obj.put("recipient", "GUI");
 			obj.put("sender", recipient);
 			
 			try
 			{
-				handler.toBrowserQueue.putLast(obj);
+				toBrowserQueue.putLast(obj);
 			}
 			catch (InterruptedException e)
 			{
