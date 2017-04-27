@@ -26,7 +26,7 @@ LocalFilePlayer.prototype.pause = function () {
     this.audio.pause();
 }
 LocalFilePlayer.prototype.load = function (source) {
-    this.audio.src = source;
+    this.audio.src = "/song?id="+source;
 
 }
 

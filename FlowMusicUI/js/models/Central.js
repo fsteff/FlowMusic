@@ -264,7 +264,7 @@ Central.newMessage = function(message, recipient,success){
         recipient: recipient
     });
 
-    $.post("/msg", msg/*, function(json){
+    $.post("/msg", {msg: JSON.stringify(msg)}/*, function(json){
         var obj = JSON.parse(json);
         success(obj);
     }, "application/json"*/);
