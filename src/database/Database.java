@@ -29,7 +29,7 @@ public class Database extends ThreadedComponent {
 			// Save tha database at the user home directory, subdirectory .Flowmusic
 			String dbName = "~/.FlowMusic/data";
 			// or, if specified, use this instead
-			if(folder != null){
+			if(folder != null && folder.getParentFile().exists()){
 				dbName = folder.getAbsolutePath();
 			}
 

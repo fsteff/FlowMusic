@@ -161,18 +161,19 @@ public abstract class ThreadedComponent
 	protected void sendMessage(Component recipient, JSONObject msg,
 			Consumer<JSONObject> onAnswer) throws InterruptedException
 	{
-		Message message = new Message(componentType, recipient,
+        if (recipient == Component.ANY && onAnswer != null)
+        {
+            ExceptionHandler.showErrorDialog(new Exception(
+                    "Messages with multiple recipients and answer callbacks are not allowed!"));
+            onAnswer = null;
+        }
+
+	    Message message = new Message(componentType, recipient,
 				msg.toString(), 0);
+        if (onAnswer != null)
+        {
+            this.answerCallbacks.put(message.id, onAnswer);
+        }
 		central.newMessage(message);
-		if (recipient == Component.ANY && onAnswer != null)
-		{
-			ExceptionHandler.showErrorDialog(new Exception(
-					"Messages with multiple recipients and answer callbacks are not allowed!"));
-			onAnswer = null;
-		}
-		if (onAnswer != null)
-		{
-			this.answerCallbacks.put(message.id, onAnswer);
-		}
 	}
 }
