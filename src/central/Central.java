@@ -30,6 +30,27 @@ import webserver.Webserver;
  */
 public class Central extends ThreadedComponent
 {
+    public static class Messages{
+        public final static String GET_CONFIG = "get config";
+        public final static String SET_CONFIG = "set config";
+        public final static String COMMAND = "command";
+        public final static String CONFIG = "config";
+        public final static String ANSWER = "answer";
+        public static JSONObject getConfig(){
+            return new JSONObject("{\""+COMMAND+"\":\""+GET_CONFIG+"\"}");
+        }
+        public static JSONObject setConfig(JSONObject cfg){
+            JSONObject obj = new JSONObject();
+            obj.put(COMMAND, SET_CONFIG);
+            obj.put(CONFIG, cfg);
+            return obj;
+        }
+    }
+
+    public static class Config{
+        public final static String DB_LOCATION = "DBLocation";
+    }
+
 	static
 	{
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory
@@ -109,7 +130,7 @@ public class Central extends ThreadedComponent
 	void createDefaultConfig()
 	{
 		this.config = new JSONObject();
-		this.config.put("DBLocation", this.configFile.getParent() + File.separator + "data");
+		this.config.put(Config.DB_LOCATION, this.configFile.getParent() + File.separator + "data");
 		try
 		{
 			String str = this.config.toString(2);
@@ -193,7 +214,7 @@ public class Central extends ThreadedComponent
 		
 
 		JSONObject json = new JSONObject();
-		json.put("command", "start");
+		json.put(Messages.COMMAND, "start");
 
 		try
 		{
@@ -218,15 +239,15 @@ public class Central extends ThreadedComponent
 	protected JSONObject onMessage(Component sender, JSONObject msg)
 			throws Exception
 	{
-		switch (msg.getString("command"))
+		switch (msg.getString(Messages.COMMAND))
 		{
-		case "get config":
+		case Messages.GET_CONFIG:
 			JSONObject json = new JSONObject();
-			json.put("config", this.config);
+			json.put(Messages.CONFIG, this.config);
 			return json;
 
-		case "set config":
-			JSONObject newConfig = msg.optJSONObject("config");
+		case Messages.SET_CONFIG:
+			JSONObject newConfig = msg.optJSONObject(Messages.CONFIG);
 			if (newConfig == null)
 			{
 				throw new Exception(
@@ -240,7 +261,7 @@ public class Central extends ThreadedComponent
 			}
 
 			JSONObject answer = new JSONObject();
-			answer.put("answer", "done");
+			answer.put(Messages.ANSWER, "done");
 			return answer;
 		}
 		return null;
