@@ -15,9 +15,12 @@ import central.Central;
 import central.Component;
 import central.ExceptionHandler;
 import central.ThreadedComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Database extends ThreadedComponent {
 	Connection databaseConnection;
+	private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
 	public Database(Central central, File folder) {
 		super(Component.DATABASE, central);
@@ -27,23 +30,21 @@ public class Database extends ThreadedComponent {
 			String dbName = "~/.FlowMusic/data";
 			// or, if specified, use this instead
 			if(folder != null){
-				dbName = folder.getName();
+				dbName = folder.getAbsolutePath();
 			}
-			
+
 			Class.forName("org.h2.Driver");
 			databaseConnection = DriverManager.getConnection("jdbc:h2:"+dbName);
-			
+
 			// TODO: create Database if empty
 			
 		}catch( ClassNotFoundException e){
 			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		}catch (SQLException e) {
 			ExceptionHandler.showErrorDialog(e);
+            logger.error("", e);
 		}
-	}
-	
-	public Database(Central central) {
-		this(central, null);
 	}
 	
 
@@ -111,6 +112,7 @@ public class Database extends ThreadedComponent {
 			}
 		}catch(SQLException e){
 			ExceptionHandler.showErrorDialog(e);
+            logger.error("", e);
 		}
 		
 		return result;

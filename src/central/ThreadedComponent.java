@@ -3,7 +3,10 @@ package central;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
+import database.Database;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base class for components. The constructor starts a thread that handles
@@ -33,11 +36,14 @@ public abstract class ThreadedComponent
 		this.central = central;
 		this.messageQueue = new MessageQueue();
 		this.answerCallbacks = new ConcurrentHashMap<>();
+		final ThreadedComponent self = this;
+
 
 		Thread t = new Thread(componentType.toString())
 		{
 			public void run()
 			{
+			    Logger logger = LoggerFactory.getLogger("ThreadedComponent:"+self.componentType.name());
 				running = true;
 				while (running)
 				{
@@ -64,7 +70,7 @@ public abstract class ThreadedComponent
 								answer = new JSONObject();
 							}
 							// return answer message
-							central.newMessage(
+							self.central.newMessage(
 									new Message(componentType, msg.sender,
 											answer.toString(), msg.id));
 						}
@@ -72,6 +78,7 @@ public abstract class ThreadedComponent
 					catch (Exception e)
 					{
 						ExceptionHandler.showErrorDialog(e);
+                        logger.error("", e);
 					}
 				}
 			}

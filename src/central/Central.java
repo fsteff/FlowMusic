@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Vector;
 import java.util.function.Consumer;
 
@@ -61,15 +62,16 @@ public class Central extends ThreadedComponent
 	Central(File configFile)
 	{
 		super(Component.CENTRAL, null);
+        this.setCentral(this);
 		this.configFile = configFile;
 		this.components = new Vector<ThreadedComponent>();
-		this.setCentral(this);
 		this.components.addElement(this);
 
 		if (configFile.isDirectory())
 		{
 			ExceptionHandler.showErrorDialog("Error",
 					"Config file is a directory!");
+            logger.error("Config file is a directory");
 			configFile = new File("./config.json");
 		}
 
@@ -98,7 +100,7 @@ public class Central extends ThreadedComponent
 			catch (Exception e)
 			{
 				ExceptionHandler.showErrorDialog(e);
-
+                logger.error("", e);
 				this.createDefaultConfig();
 			}
 		}
@@ -107,6 +109,7 @@ public class Central extends ThreadedComponent
 	void createDefaultConfig()
 	{
 		this.config = new JSONObject();
+		this.config.put("DBLocation", this.configFile.getParent() + File.separator + "data");
 		try
 		{
 			String str = this.config.toString(2);
@@ -117,6 +120,7 @@ public class Central extends ThreadedComponent
 		catch (IOException e)
 		{
 			ExceptionHandler.showErrorDialog(e);
+            logger.error("", e);
 		}
 	}
 
@@ -132,6 +136,7 @@ public class Central extends ThreadedComponent
 		catch (IOException e)
 		{
 			ExceptionHandler.showErrorDialog(e);
+            logger.error("", e);
 		}
 
 		JSONObject json = new JSONObject();
@@ -170,8 +175,12 @@ public class Central extends ThreadedComponent
 		}
 		else
 		{
-			configPath = new File(System.getProperty("user.home")
-					+ "/.FlowMusic/config.json");
+			File parentFolder = new File(System.getProperty("user.home") + File.separator + ".FlowMusic");
+			if(! parentFolder.exists()){
+				parentFolder.mkdir();
+			}
+			configPath = new File(parentFolder.getPath() + File.separator
+					+ "config.json");
 		}
 		Central central = new Central(configPath);
 		Gui gui = new Gui(central);
@@ -179,7 +188,8 @@ public class Central extends ThreadedComponent
 		central.addComponent(webserver);
 		central.addComponent(gui);
 		central.addComponent(new Crawler(central));
-		central.addComponent(new Database(central));
+		central.addComponent(new Database(central,
+                new File(central.config.getString("DBLocation")).getAbsoluteFile()));
 		
 
 		JSONObject json = new JSONObject();
@@ -199,6 +209,7 @@ public class Central extends ThreadedComponent
 		catch (InterruptedException e)
 		{
 			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		}
 
 	}
