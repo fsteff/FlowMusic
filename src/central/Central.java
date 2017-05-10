@@ -11,6 +11,7 @@ import java.util.Vector;
 import java.util.function.Consumer;
 
 import org.h2.store.fs.FileUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ public class Central extends ThreadedComponent
 
     public static class Config{
         public final static String DB_LOCATION = "DBLocation";
+        public final static String MUSIC_DIRS = "MusicDirectories";
     }
 
 	static
@@ -98,7 +100,8 @@ public class Central extends ThreadedComponent
 
 		if (!configFile.exists())
 		{
-			this.createDefaultConfig();
+            checkAndFixConfig();
+            writeConfig();
 		}
 		else
 		{
@@ -122,47 +125,50 @@ public class Central extends ThreadedComponent
 			{
 				ExceptionHandler.showErrorDialog(e);
                 logger.error("", e);
-				this.createDefaultConfig();
-			}
-		}
+
+			}finally {
+                checkAndFixConfig();
+                writeConfig();
+            }
+        }
 	}
 
-	void createDefaultConfig()
-	{
-		this.config = new JSONObject();
-		this.config.put(Config.DB_LOCATION, this.configFile.getParent() + File.separator + "data");
-		try
-		{
-			String str = this.config.toString(2);
-			FileWriter writer = new FileWriter(this.configFile);
-			writer.write(str);
-			writer.close();
-		}
-		catch (IOException e)
-		{
-			ExceptionHandler.showErrorDialog(e);
+	void checkAndFixConfig(){
+	    if(this.config == null){
+	        this.config = new JSONObject();
+        }
+        if(this.config.opt(Config.DB_LOCATION) == null){
+            this.config.put(Config.DB_LOCATION, this.configFile.getParent() + File.separator + "data");
+        }
+        if(this.config.opt(Config.MUSIC_DIRS) == null){
+            this.config.put(Config.MUSIC_DIRS, new JSONArray());
+        }
+    }
+
+    void writeConfig(){
+        try
+        {
+            String str = this.config.toString(2);
+            FileWriter writer = new FileWriter(this.configFile);
+            writer.write(str);
+            writer.close();
+            logger.info("Config successfully written to file");
+        }
+        catch (IOException e)
+        {
+            ExceptionHandler.showErrorDialog(e);
             logger.error("", e);
-		}
-	}
+        }
+    }
 
 	void configChanged() throws InterruptedException
 	{
-		try
-		{
-			String str = this.config.toString(2);
-			FileWriter writer = new FileWriter(this.configFile);
-			writer.write(str);
-			writer.close();
-		}
-		catch (IOException e)
-		{
-			ExceptionHandler.showErrorDialog(e);
-            logger.error("", e);
-		}
+	    checkAndFixConfig();
+		writeConfig();
 
 		JSONObject json = new JSONObject();
-		json.put("command", "config changed");
-		json.put("config", this.config);
+		json.put(Messages.COMMAND, "config changed");
+		json.put(Messages.CONFIG, this.config);
 		sendMessage(Component.ANY, json);
 	}
 
@@ -176,6 +182,7 @@ public class Central extends ThreadedComponent
 				component.addMessage(msg);
 			}
 		}
+		logger.info("Message from "+msg.sender + " to " + msg.recipient + ": "+ msg.message);
 	}
 
 	void addComponent(ThreadedComponent component)
@@ -219,13 +226,13 @@ public class Central extends ThreadedComponent
 		try
 		{
 			central.sendMessage(Component.WEBSERVER, json,
-					msg -> System.out.println("Webserver started: " + msg));
+					msg -> logger.info("webserver started"));
 			central.sendMessage(Component.CRAWLER, json,
-					msg -> System.out.println("Crawler started: " + msg));
+					msg -> logger.info("crawler started"));
 			central.sendMessage(Component.DATABASE, json,
-					msg -> System.out.println("Database started: " + msg));
+					msg -> logger.info("database started"));
 			central.sendMessage(Component.GUI, json,
-					msg -> System.out.println("GUI started: " + msg));
+					msg -> logger.info("gui started"));
 		}
 		catch (InterruptedException e)
 		{
@@ -239,7 +246,8 @@ public class Central extends ThreadedComponent
 	protected JSONObject onMessage(Component sender, JSONObject msg)
 			throws Exception
 	{
-		switch (msg.getString(Messages.COMMAND))
+	    String cmd = msg.optString(Messages.COMMAND);
+		switch (cmd)
 		{
 		case Messages.GET_CONFIG:
 			JSONObject json = new JSONObject();
@@ -263,6 +271,13 @@ public class Central extends ThreadedComponent
 			JSONObject answer = new JSONObject();
 			answer.put(Messages.ANSWER, "done");
 			return answer;
+		default:
+		    if(cmd == null){
+                logger.error("Message does not have 'command' :"+msg.toString());
+            }else {
+                logger.error("Unhandled message command:" + cmd);
+            }
+            break;
 		}
 		return null;
 	}
