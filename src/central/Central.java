@@ -258,9 +258,10 @@ public class Central extends ThreadedComponent
 			JSONObject newConfig = msg.optJSONObject(Messages.CONFIG);
 			if (newConfig == null)
 			{
-				throw new Exception(
-						"Invalid message does not contain 'config': "
-								+ msg.toString());
+                logger.error("'set config' - message does not contain 'config':" + msg.toString());
+                ExceptionHandler.showErrorDialog(new Exception(
+                        "Invalid message does not contain 'config': "
+                                + msg.toString()));
 			}
 			else
 			{
