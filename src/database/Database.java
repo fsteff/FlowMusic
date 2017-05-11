@@ -20,16 +20,19 @@ import org.slf4j.LoggerFactory;
 
 public class Database extends ThreadedComponent {
 	Connection databaseConnection;
+	Statement statement;
 	private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
 	public Database(Central central, File folder) {
 		super(Component.DATABASE, central);
-		
+
+		// DataBase creation:
 		try {
-			// Save tha database at the user home directory, subdirectory .Flowmusic
+			// Save the database at the user home directory, subdirectory
+			// .Flowmusic
 			String dbName = "~/.FlowMusic/data";
 			// or, if specified, use this instead
-			if(folder != null && folder.getParentFile().exists()){
+		if(folder != null && folder.getParentFile().exists()){
 				dbName = folder.getAbsolutePath();
 			}
 
@@ -37,26 +40,101 @@ public class Database extends ThreadedComponent {
 			databaseConnection = DriverManager.getConnection("jdbc:h2:"+dbName);
 
 			// TODO: create Database if empty
-			
-		}catch( ClassNotFoundException e){
+			statement = databaseConnection.createStatement();
+			statement.executeUpdate("CREATE DATABASE FLOWMUSIC");
+			//
+		} catch (ClassNotFoundException e) {
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
-		}catch (SQLException e) {
+		} catch (SQLException e) {
 			ExceptionHandler.showErrorDialog(e);
-            logger.error("", e);
+			logger.error("", e);
+		} finally {// TODO test
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+			}
+		}
+
+		// Table creation:
+		try {//TODO test if more statements in a row without closing works
+			String table = "CREATE TABLE playlists " + 
+							"( playlistId int NOT NULL AUTO_INCREMENT, "+
+							"playlistname varchar(255) NOT NULL, " + 
+							"PRIMARY KEY(playlistId))";
+			statement.getConnection().createStatement();
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE playlistentry "+
+					"( playlistId int NOT NULL AUTO_INCREMENT, "+
+					"songId int NOT NULL, "+
+					"nr int(4), "+
+					"PRIMARY KEY (playlistId, songId))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE artist "+
+					"( artistId int NOT NULL AUTO_INCREMENT, "+
+					"artist varchar(255), "+
+					"PRIMARY KEY (artistId))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE songs "+
+					"( songId int NOT NULL AUTO_INCREMENT, "+
+					"artistId int NOT NULL, "+
+					"year int(4), "+
+					"title varchar(255), "+
+					"PRIMARY KEY (songId))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE album "+
+					"(albumId int NOT NULL AUTO_INCREMENT, "+
+					"albumname varchar(255), "+
+					"PRIMARY KEY (albumId))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE albumentry "+
+					"(albumId int NOT NULL, "+
+					"songId int NOT NULL)";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE source "+
+					"(sourceId int NOT NULL AUTO_INCREMENT, "+
+					"songId int NOT NULL, "+
+					"type varchar(255), "+
+					"value varchar(255), "+
+					"PRIMARY KEY (sourceId))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE tag "+
+					"(tagname varchar(255), "+
+					"songId int NOT NULL)";
+			statement.executeUpdate(table);
+		} catch (SQLException e) {
+		}catch(Exception e){
+		}finally{
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+			}
+			
+			//Adding information from Crawler to DB
+			
 		}
 	}
-	
 
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
 		String command = msg.getString("command");
-		switch(command){
+		switch (command) {
 		case "get":
 
-
 			// TODO: further selection, filtering, joining, ...
-			// For debugging purposes and until the database works, we return a fixed value:
+			// For debugging purposes and until the database works, we return a
+			// fixed value:
 			JSONObject ret = new JSONObject();
 			JSONArray found = new JSONArray();
 			JSONObject song = new JSONObject();
@@ -79,11 +157,11 @@ public class Database extends ThreadedComponent {
 			JSONObject ret = new JSONObject();
 			ret.put("answer", res);*/
 			return ret;
-		
+
 		case "...":
 			// TODO: other messages
 			break;
-		
+
 		default:
 			// TODO: error
 		}
@@ -114,8 +192,60 @@ public class Database extends ThreadedComponent {
 			ExceptionHandler.showErrorDialog(e);
             logger.error("", e);
 		}
-		
+
 		return result;
+	}
+	
+	//TODO
+	private void addSong(){//unknown source type
+		String insert;
+		int songId;
+		int sourceId;
+		int albumId;
+		int artistId;
+		String year = null;
+		String title = null;
+		String type = null;
+		String value = null;
+		String album = null;
+		String artist = null;
+		String tag = null;
+		
+		try {
+			statement.getConnection().createStatement();
+			
+			insert = "INSERT INTO artist (artist)"+
+					"VALUES ("+artist+")";
+			artistId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			
+			insert = "INSERT INTO songs (year, title)"+
+					"VALUES ("+artistId+", "+ year+", "+ title+")";
+			songId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			
+			insert = "INSERT INTO source (type, value)"+
+					"VALUES ("+songId+", "+type+", "+ value+")";
+			sourceId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			
+			insert = "INSERT INTO album (albumname)"+
+					"VALUES ("+album+")";
+			albumId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			
+			insert = "INSERT INTO tag (tagname, songId)"+
+					"VALUES ("+songId+", "+tag+")";
+			statement.executeUpdate(insert);
+			
+			insert = "INSERT INTO albumentry (albumId, songId)"+
+					"VALUES ("+albumId+", "+songId+")";
+		} catch (SQLException e) {
+		} catch (Exception e){
+		}finally{
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+			}
+		}
 	}
 
 }
