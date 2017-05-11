@@ -43,7 +43,7 @@ public class Database extends ThreadedComponent {
 			statement = databaseConnection.createStatement();
 			statement.executeUpdate("CREATE DATABASE FLOWMUSIC");
 			//
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) { 
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
 		} catch (SQLException e) {
