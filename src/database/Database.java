@@ -35,14 +35,10 @@ public class Database extends ThreadedComponent {
 		if(folder != null && folder.getParentFile().exists()){
 				dbName = folder.getAbsolutePath();
 			}
-
+ 
 			Class.forName("org.h2.Driver");
 			databaseConnection = DriverManager.getConnection("jdbc:h2:"+dbName);
-
-			// TODO: create Database if empty
-			statement = databaseConnection.createStatement();
-			statement.executeUpdate("CREATE DATABASE FLOWMUSIC");
-			//
+			
 		} catch (ClassNotFoundException e) { 
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
@@ -55,75 +51,85 @@ public class Database extends ThreadedComponent {
 					statement.close();
 				}
 			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
 			}
 		}
 
 		// Table creation:
 		try {//TODO test if more statements in a row without closing works
-			String table = "CREATE TABLE playlists " + 
-							"( playlistId int NOT NULL AUTO_INCREMENT, "+
-							"playlistname varchar(255) NOT NULL, " + 
-							"PRIMARY KEY(playlistId))";
-			statement.getConnection().createStatement();
+			String table = "CREATE TABLE "+DBTables.Playlist + 
+							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+							DBAttributes.NAME+" varchar(255) NOT NULL, " + 
+							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
+			statement= databaseConnection.createStatement();
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE playlistentry "+
-					"( playlistId int NOT NULL AUTO_INCREMENT, "+
-					"songId int NOT NULL, "+
-					"nr int(4), "+
-					"PRIMARY KEY (playlistId, songId))";
+			table = "CREATE TABLE "+DBTables.PlaylistEntry+
+					"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.SONG_ID+" int NOT NULL, "+
+					DBAttributes.NR+" int(4), "+
+					"PRIMARY KEY ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+"))";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE artist "+
-					"( artistId int NOT NULL AUTO_INCREMENT, "+
-					"artist varchar(255), "+
-					"PRIMARY KEY (artistId))";
+			table = "CREATE TABLE "+DBTables.Artist+
+					"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.NAME+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE songs "+
-					"( songId int NOT NULL AUTO_INCREMENT, "+
-					"artistId int NOT NULL, "+
-					"year int(4), "+
-					"title varchar(255), "+
-					"PRIMARY KEY (songId))";
+			table = "CREATE TABLE "+DBTables.Song +
+					"( "+DBAttributes.SONG_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.ARTIST_ID+" int NOT NULL, "+
+					DBAttributes.YEAR+" int(4), "+
+					DBAttributes.TITLE+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.SONG_ID+"))";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE album "+
-					"(albumId int NOT NULL AUTO_INCREMENT, "+
-					"albumname varchar(255), "+
-					"PRIMARY KEY (albumId))";
+			table = "CREATE TABLE "+DBTables.Album+
+					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBTables.NAME+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE albumentry "+
-					"(albumId int NOT NULL, "+
-					"songId int NOT NULL)";
+			table = "CREATE TABLE "+DBTables.AlbumEntry+
+					"("+DBAttributes.ALBUM_ID+" int NOT NULL, "+
+					DBAttributes.SONG_ID+" int NOT NULL)";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE source "+
-					"(sourceId int NOT NULL AUTO_INCREMENT, "+
-					"songId int NOT NULL, "+
-					"type varchar(255), "+
-					"value varchar(255), "+
-					"PRIMARY KEY (sourceId))";
+			table = "CREATE TABLE "+DBTables.Source+
+					"("+DBAttributes.ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.SONG_ID+" int NOT NULL, "+
+					DBAttributes.TYPE+" varchar(255), "+
+					DBAttributes.VALUE+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.ID+"))";
 			statement.executeUpdate(table);
 			
-			table = "CREATE TABLE tag "+
-					"(tagname varchar(255), "+
-					"songId int NOT NULL)";
+			table = "CREATE TABLE "+DBTables.Tag+
+					"("+DBAttributes.NAME+" varchar(255), "+
+					DBAttributes.SONG_ID+" int NOT NULL)";
 			statement.executeUpdate(table);
 		} catch (SQLException e) {
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		}catch(Exception e){
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		}finally{
 			try {
 				if (statement != null) {
 					statement.close();
 				}
 			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
 			}
 			
 			//Adding information from Crawler to DB
 			
 		}
+		
+		
 	}
 
 	@Override
@@ -237,13 +243,19 @@ public class Database extends ThreadedComponent {
 			insert = "INSERT INTO albumentry (albumId, songId)"+
 					"VALUES ("+albumId+", "+songId+")";
 		} catch (SQLException e) {
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		} catch (Exception e){
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
 		}finally{
 			try {
 				if (statement != null) {
 					statement.close();
 				}
 			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
 			}
 		}
 	}
