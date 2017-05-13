@@ -102,4 +102,70 @@ Log.post = function(msg, type){
 }
 
 
+function Map(){
+    this.keys = [];
+    this.values = [];
+}
+
+Map.prototype.put = function(key, value){
+    var found = false;
+    for(var i = 0; i < this.keys.length && ! found; i++){
+        if(this.keys[i] == key){
+            this.values[i] = value;
+            found = true;
+        }
+    }
+    if(! found){
+        const index = this.keys.length;
+        this.keys[index] = key;
+        this.values[index] = value;
+    }
+}
+
+Map.prototype.get = function(key){
+    for(var i = 0; i < this.keys.length; i++){
+        if(this.keys[i] == key){
+            return this.values[i];
+        }
+    }
+    return null;
+}
+
+Map.prototype.remove = function(key){
+    for(var i = 0; i < this.keys.length; i++){
+        if(this.keys[i] == key){
+            delete this.keys[i];
+        }
+    }
+}
+
+Map.prototype.removeAll = function(value, comparator){
+    if(comparator == null){
+        comparator = function(a,b){return a == b};
+    }
+    for(var i = 0; i < this.keys.length; i++){
+        if(comparator(this.values[i], value)){
+            delete this.keys[i];
+            delete this.values[i];
+        }
+    }
+}
+
+
+/**
+ * An easily compareable function wrapper
+ * @param foo arbitrary function
+ * @constructor
+ */
+function Callable(foo){
+    this.call = foo;
+    this.id = Callable.idCounter++;
+}
+
+Callable.prototype.equal = function(other){
+    return other.id === this.id;
+}
+
+Callable.idCounter = 0;
+
 

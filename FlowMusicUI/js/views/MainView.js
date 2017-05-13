@@ -74,11 +74,12 @@ MainView.prototype.closeTab = function(element){
     var index = -1;
     for(var i = 0; i < this.tabs.length && index < 0; i++){
         var t = this.tabs[i];
-        if(t.element == element){
+        if(t.element[0] == element[0]){
             index = i;
         }
     }
-    if(index > 0) {
+    if(index >= 0) {
+        this.tabs[index].cleanUp();
         this.tabs.splice(index, 1);
     }
     element.remove();
@@ -98,6 +99,10 @@ MainTab.prototype.hide = function(){
 }
 MainTab.prototype.show = function(){
     this.element.show();
+}
+
+MainTab.prototype.cleanUp = function(){
+    
 }
 
 
@@ -227,7 +232,62 @@ function AddSong(element){
 //------------------------------------------------------------- CLASS EditSettings -------------------------------------
 
 function EditSettings(element){
+    const self = this;
+    this.element = $(element);
+    $("<h2>Settings</h2>").appendTo(this.element);
+    this.dirBox = $("<div class='settingsBox'></div>")
+    this.dirBox.appendTo(this.element);
 
+    this.render = function(msg){
+        var d = [];
+        if(typeof msg.config === 'object'
+            && typeof msg.config.MusicDirectories === 'object'){
+            d = msg.config.MusicDirectories;
+        }
+        self.dirBox.html("Music Directories<br>");
+        const dirs = d;
+        const cfg = msg.config;
+        for(var i = 0; i < dirs.length; i++){
+            const box = $("<div class='settingsBox entry'>"+dirs[i]+"</div>");
+            const choose = $("<div class='settingsBox entry choose'>...</div>");
+            const remove = $("<div class='settingsBox entry remove'>delete</div>");
+            remove.appendTo(box);
+            choose.appendTo(box);
+            box.appendTo(self.dirBox);
+
+            const num = i;
+            choose.click(function(){
+                LocalComm.newMessage({command: "browse directory", number: num},
+                    Message.Components.GUI);
+            });
+
+            remove.click(function(){
+                dirs.splice(num, 1);
+                cfg.MusicDirectories = dirs;
+                LocalComm.newMessage({command: "set config",
+                    config: cfg}, Message.Components.CENTRAL);
+            });
+        }
+        const box = $("<div class='settingsBox add'>+</div>");
+        box.appendTo(self.dirBox);
+        const num = -1;
+        box.click(function(){
+            LocalComm.newMessage({command: "browse directory", number: num},
+                Message.Components.GUI);
+        });
+    }
+
+    this.renderCallable = new Callable(this.render);
+
+    LocalComm.newMessage(
+        {command: "get config"},
+        Message.Components.CENTRAL, this.render);
+
+    LocalComm.registerListener("config changed", this.renderCallable);
+}
+
+EditSettings.prototype.cleanUp = function () {
+    LocalComm.unregisterListener(this.renderCallable);
 }
 
 

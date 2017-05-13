@@ -1,5 +1,6 @@
 package central;
 
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -69,10 +70,14 @@ public abstract class ThreadedComponent
 							{
 								answer = new JSONObject();
 							}
-							// return answer message
-							self.central.newMessage(
-									new Message(componentType, msg.sender,
-											answer.toString(), msg.id));
+
+							// TODO: implement multi-message communication without callbacks
+							if(msg.answerTo == 0) {
+								// return answer message
+								self.central.newMessage(
+										new Message(componentType, msg.sender,
+												answer.toString(), msg.id));
+							}
 						}
 					}
 					catch (Exception e)
@@ -89,10 +94,9 @@ public abstract class ThreadedComponent
 	/**
 	 * Only used when the Central class is instantiated
 	 * 
-	 * @param Central
-	 *            instance
+	 * @param central
 	 */
-	void setCentral(Central central)
+	void _setCentral(Central central)
 	{
 		this.central = central;
 	}
@@ -145,8 +149,8 @@ public abstract class ThreadedComponent
 	}
 
 	/**
-	 * Sends a request message to an other component It is safe to use the
-	 * JSONObject later. Messages to Component.ANY are NOT allowed
+	 * Sends a request message to an other component (or all components by using Component.ANY)
+     * It is safe to use the JSONObject later.
 	 * 
 	 * @param recipient
 	 *            Component
@@ -156,24 +160,29 @@ public abstract class ThreadedComponent
 	 *            Callback function that will be called instead of
 	 *            onMessage
 	 * @throws InterruptedException
-	 * @throws Exception
 	 */
 	protected void sendMessage(Component recipient, JSONObject msg,
 			Consumer<JSONObject> onAnswer) throws InterruptedException
 	{
-        if (recipient == Component.ANY && onAnswer != null)
+        ArrayList<Component> recs = new ArrayList<>();
+        if (recipient == Component.ANY )
         {
-            ExceptionHandler.showErrorDialog(new Exception(
-                    "Messages with multiple recipients and answer callbacks are not allowed!"));
-            onAnswer = null;
+            for(Component c :Component.values()) {
+                if(c != componentType && c != Component.ANY) recs.add(c);
+            }
+        }else {
+            recs.add(recipient);
         }
 
-	    Message message = new Message(componentType, recipient,
-				msg.toString(), 0);
-        if (onAnswer != null)
-        {
-            this.answerCallbacks.put(message.id, onAnswer);
+        String msgStr = msg.toString();
+        for(Component r : recs){
+            Message message = new Message(componentType, r, msgStr, 0);
+            if (onAnswer != null)
+            {
+                this.answerCallbacks.put(message.id, onAnswer);
+            }
+            central.newMessage(message);
         }
-		central.newMessage(message);
+
 	}
 }

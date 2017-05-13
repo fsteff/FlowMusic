@@ -6,9 +6,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.util.Vector;
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Spliterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.h2.store.fs.FileUtils;
 import org.json.JSONArray;
@@ -78,17 +79,17 @@ public class Central extends ThreadedComponent
 	private static final Logger logger = LoggerFactory
 			.getLogger(Central.class);
 
-	private Vector<ThreadedComponent> components;
+	private ConcurrentHashMap<Component, ThreadedComponent> components;
 	private JSONObject config;
 	private File configFile = null;
 
 	Central(File configFile)
 	{
 		super(Component.CENTRAL, null);
-        this.setCentral(this);
+        this._setCentral(this);
 		this.configFile = configFile;
-		this.components = new Vector<ThreadedComponent>();
-		this.components.addElement(this);
+		this.components = new ConcurrentHashMap<>();
+		this.components.put(Component.CENTRAL, this);
 
 		if (configFile.isDirectory())
 		{
@@ -140,9 +141,31 @@ public class Central extends ThreadedComponent
         if(this.config.opt(Config.DB_LOCATION) == null){
             this.config.put(Config.DB_LOCATION, this.configFile.getParent() + File.separator + "data");
         }
-        if(this.config.opt(Config.MUSIC_DIRS) == null){
-            this.config.put(Config.MUSIC_DIRS, new JSONArray());
+
+        JSONArray dirs = this.config.optJSONArray(Config.MUSIC_DIRS);
+        ArrayList<String> entries = new ArrayList<>();
+        // check double entries
+        if(dirs != null && dirs.length() > 0) {
+            for (Object obj : dirs) {
+                if (obj instanceof String) {
+                    String str = (String) obj;
+                    boolean found = false;
+                    for(String s : entries){
+                        if(s.equals(str)){
+                            found = true;
+                        }
+                    }
+                    if(!found) {
+                        entries.add((String) obj);
+                    }
+                }
+            }
         }
+        dirs = new JSONArray();
+        for(String s : entries){
+            dirs.put(s);
+        }
+        this.config.put(Config.MUSIC_DIRS, dirs);
     }
 
     void writeConfig(){
@@ -169,25 +192,21 @@ public class Central extends ThreadedComponent
 		JSONObject json = new JSONObject();
 		json.put(Messages.COMMAND, "config changed");
 		json.put(Messages.CONFIG, this.config);
-		sendMessage(Component.ANY, json);
+		sendMessage(Component.ANY, json, m -> {});
 	}
 
 	void newMessage(Message msg) throws InterruptedException
-	{
-		for (ThreadedComponent component : components)
-		{
-			if (msg.recipient == component.componentType
-					|| msg.recipient == Component.ANY)
-			{
-				component.addMessage(msg);
-			}
-		}
-		logger.info("Message from "+msg.sender + " to " + msg.recipient + ": "+ msg.message);
+    {
+        ThreadedComponent comp = components.get(msg.recipient);
+        if(comp != null) {
+            comp.addMessage(msg);
+            logger.info("Message from " + msg.sender + " to " + msg.recipient + ": " + msg.message);
+        }
 	}
 
 	void addComponent(ThreadedComponent component)
 	{
-		this.components.addElement(component);
+	    this.components.put(component.componentType, component);
 	}
 
 	// TODO: implement good system for component loading
