@@ -9,12 +9,12 @@ public enum DBTables implements DBAttributes
 {
 	Playlist(PLAYLIST_ID, NAME),
 	PlaylistEntry(PLAYLIST_ID, SONG_ID, NR),
-	Artist(ID, NAME),
-	Song(ID, ARTIST_ID, YEAR, TITLE),
-	Album(ID, NAME),
+	Artist(ARTIST_ID, ARTIST_NAME),
+	Song(SONG_ID, ARTIST_ID, YEAR, TITLE),
+	Album(ALBUM_ID, ALBUM_NAME),
 	AlbumEntry(ALBUM_ID, SONG_ID),
-	Source(ID, SONG_ID, TYPE, VALUE),
-	Tag(NAME, SONG_ID);
+	Source(SOURCE_ID, SONG_ID, TYPE, VALUE),
+	Tag(TAG_NAME, SONG_ID);
 
 	private final List<String> attributes;
 	

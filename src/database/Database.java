@@ -57,6 +57,7 @@ public class Database extends ThreadedComponent {
 		}
 
 		// Table creation:
+		
 		try {//TODO test if more statements in a row without closing works
 			String table = "CREATE TABLE "+DBTables.Playlist + 
 							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
@@ -64,6 +65,8 @@ public class Database extends ThreadedComponent {
 							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
 			statement= databaseConnection.createStatement();
 			statement.executeUpdate(table);
+			
+			
 			
 			table = "CREATE TABLE "+DBTables.PlaylistEntry+
 					"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
@@ -74,7 +77,7 @@ public class Database extends ThreadedComponent {
 			
 			table = "CREATE TABLE "+DBTables.Artist+
 					"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.NAME+" varchar(255), "+
+					DBAttributes.ARTIST_NAME+" varchar(255), "+
 					"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
 			statement.executeUpdate(table);
 			
@@ -88,7 +91,7 @@ public class Database extends ThreadedComponent {
 			
 			table = "CREATE TABLE "+DBTables.Album+
 					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBTables.NAME+" varchar(255), "+
+					DBTables.ALBUM_NAME+" varchar(255), "+
 					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
 			statement.executeUpdate(table);
 			
@@ -98,17 +101,18 @@ public class Database extends ThreadedComponent {
 			statement.executeUpdate(table);
 			
 			table = "CREATE TABLE "+DBTables.Source+
-					"("+DBAttributes.ID+" int NOT NULL AUTO_INCREMENT, "+
+					"("+DBAttributes.SOURCE_ID+" int NOT NULL AUTO_INCREMENT, "+
 					DBAttributes.SONG_ID+" int NOT NULL, "+
 					DBAttributes.TYPE+" varchar(255), "+
 					DBAttributes.VALUE+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.ID+"))";
+					"PRIMARY KEY ("+DBAttributes.SOURCE_ID+"))";
 			statement.executeUpdate(table);
 			
 			table = "CREATE TABLE "+DBTables.Tag+
-					"("+DBAttributes.NAME+" varchar(255), "+
+					"("+DBAttributes.TAG_NAME+" varchar(255), "+
 					DBAttributes.SONG_ID+" int NOT NULL)";
 			statement.executeUpdate(table);
+			logger.info("All Tables sucessfully created...");
 		} catch (SQLException e) {
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
@@ -128,7 +132,6 @@ public class Database extends ThreadedComponent {
 			//Adding information from Crawler to DB
 			
 		}
-		
 		
 	}
 
@@ -203,45 +206,89 @@ public class Database extends ThreadedComponent {
 	}
 	
 	//TODO
-	private void addSong(){//unknown source type
+	private void addSong(JSONObject song){//unknown source type
 		String insert;
+		
 		int songId;
 		int sourceId;
 		int albumId;
 		int artistId;
-		String year = null;
-		String title = null;
-		String type = null;
-		String value = null;
-		String album = null;
-		String artist = null;
-		String tag = null;
+		String year = "";
+		String type = "";
+		String title = song.getString(DBAttributes.TITLE);;
+		String value = "";
+		String album = "";
+		String artist = "";
+		String tag = "";
+		if(song.getString(DBAttributes.YEAR)!=null){
+			year = song.getString(DBAttributes.YEAR);
+		}
+		if(song.getString(DBAttributes.TYPE)!=null){
+			type = song.getString(DBAttributes.TYPE);
+		}
+		if(song.getString(DBAttributes.VALUE)!=null){
+			value = song.getString(DBAttributes.VALUE);
+		}
+		if(song.getString(DBAttributes.ALBUM_NAME)!=null){
+			album = song.getString(DBAttributes.ALBUM_NAME);
+		}
+		if(song.getString(DBAttributes.ARTIST_NAME)!=null){
+			artist = song.getString(DBAttributes.ARTIST_NAME);
+		}
+		if(song.getString(DBAttributes.TAG_NAME)!=null){
+			tag = song.getString(DBAttributes.TAG_NAME);
+		}
 		
+
 		try {
-			statement.getConnection().createStatement();
+			statement= databaseConnection.createStatement();
 			
-			insert = "INSERT INTO artist (artist)"+
-					"VALUES ("+artist+")";
-			artistId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			//TODO
+			//better request for song existence needed
+			insert= "SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE '"+title+"'";
+			ResultSet information=statement.executeQuery(insert);
 			
-			insert = "INSERT INTO songs (year, title)"+
-					"VALUES ("+artistId+", "+ year+", "+ title+")";
-			songId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			if(information==null){
+				insert= "SELECT "+DBAttributes.ARTIST_NAME+" FROM "+DBTables.Artist+" WHERE "+DBAttributes.ARTIST_NAME+" LIKE '"+artist+"'";
+				information=statement.executeQuery(insert);
+				if(information==null){
+					insert = "INSERT INTO "+DBTables.Artist+" ("+DBAttributes.NAME+")"+
+							"VALUES ("+artist+")";
+					artistId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				}else{
+					artistId = information.getInt(DBAttributes.ARTIST_ID);
+				}
+				
+				insert = "INSERT INTO "+DBTables.Song+" ("+DBAttributes.YEAR+","+DBAttributes.TITLE+")"+
+						"VALUES ("+artistId+", "+ year+", "+ title+")";
+				songId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				
+				insert = "INSERT INTO "+DBTables.Source+" ("+DBAttributes.TYPE+","+DBAttributes.VALUE+")"+
+						"VALUES ("+songId+", "+type+", "+ value+")";
+				sourceId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				
+				insert= "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album+" WHERE "+DBAttributes.ALBUM_NAME+" LIKE '"+album+"'";
+				information=statement.executeQuery(insert);
+				if(information==null){
+					insert = "INSERT INTO "+DBTables.Album+" ("+DBAttributes.ALBUM_NAME+")"+
+							"VALUES ("+album+")";
+					albumId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				}else{
+					albumId = information.getInt(DBAttributes.ALBUM_ID);
+				}
+				
+				insert = "INSERT INTO "+DBTables.Tag+" ("+DBAttributes.TAG_NAME+","+DBAttributes.SONG_ID+")"+
+						"VALUES ("+songId+", "+tag+")";
+				statement.executeUpdate(insert);
+				
+				insert = "INSERT INTO "+DBTables.AlbumEntry+" ("+DBAttributes.ALBUM_ID+","+DBAttributes.SONG_ID+")"+
+						"VALUES ("+albumId+", "+songId+")";
+				logger.info("Song "+title+" was added to tables.");
+			}else{
+				logger.info("Song "+title+" is already in the tables.");
+			}
 			
-			insert = "INSERT INTO source (type, value)"+
-					"VALUES ("+songId+", "+type+", "+ value+")";
-			sourceId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
-			
-			insert = "INSERT INTO album (albumname)"+
-					"VALUES ("+album+")";
-			albumId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
-			
-			insert = "INSERT INTO tag (tagname, songId)"+
-					"VALUES ("+songId+", "+tag+")";
-			statement.executeUpdate(insert);
-			
-			insert = "INSERT INTO albumentry (albumId, songId)"+
-					"VALUES ("+albumId+", "+songId+")";
+		
 		} catch (SQLException e) {
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
