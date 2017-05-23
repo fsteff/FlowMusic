@@ -15,6 +15,8 @@ import central.Central;
 import central.Component;
 import central.ExceptionHandler;
 import central.ThreadedComponent;
+import ch.qos.logback.core.net.SyslogOutputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +40,13 @@ public class Database extends ThreadedComponent {
  
 			Class.forName("org.h2.Driver");
 			databaseConnection = DriverManager.getConnection("jdbc:h2:"+dbName);
-			
 		} catch (ClassNotFoundException e) { 
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
 		} catch (SQLException e) {
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
-		} finally {// TODO test
+		} finally {
 			try {
 				if (statement != null) {
 					statement.close();
@@ -57,81 +58,19 @@ public class Database extends ThreadedComponent {
 		}
 
 		// Table creation:
+		addAllTables();
+	
 		
-		try {//TODO test if more statements in a row without closing works
-			String table = "CREATE TABLE "+DBTables.Playlist + 
-							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-							DBAttributes.NAME+" varchar(255) NOT NULL, " + 
-							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
-			statement= databaseConnection.createStatement();
-			statement.executeUpdate(table);
-			
-			
-			
-			table = "CREATE TABLE "+DBTables.PlaylistEntry+
-					"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.SONG_ID+" int NOT NULL, "+
-					DBAttributes.NR+" int(4), "+
-					"PRIMARY KEY ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Artist+
-					"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.ARTIST_NAME+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Song +
-					"( "+DBAttributes.SONG_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.ARTIST_ID+" int NOT NULL, "+
-					DBAttributes.YEAR+" int(4), "+
-					DBAttributes.TITLE+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.SONG_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Album+
-					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBTables.ALBUM_NAME+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.AlbumEntry+
-					"("+DBAttributes.ALBUM_ID+" int NOT NULL, "+
-					DBAttributes.SONG_ID+" int NOT NULL)";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Source+
-					"("+DBAttributes.SOURCE_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.SONG_ID+" int NOT NULL, "+
-					DBAttributes.TYPE+" varchar(255), "+
-					DBAttributes.VALUE+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.SOURCE_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Tag+
-					"("+DBAttributes.TAG_NAME+" varchar(255), "+
-					DBAttributes.SONG_ID+" int NOT NULL)";
-			statement.executeUpdate(table);
-			logger.info("All Tables sucessfully created...");
-		} catch (SQLException e) {
-			ExceptionHandler.showErrorDialog(e);
-			logger.error("", e);
-		}catch(Exception e){
-			ExceptionHandler.showErrorDialog(e);
-			logger.error("", e);
-		}finally{
-			try {
-				if (statement != null) {
-					statement.close();
-				}
-			} catch (SQLException e) {
-				ExceptionHandler.showErrorDialog(e);
-				logger.error("", e);
-			}
-			
-			//Adding information from Crawler to DB
-			
-		}
+		//Adding information from Crawler to DB
+		
+		//DB test and information
+		
+		
+		
+		
+		//Drop Tables
+		
+	
 		
 	}
 
@@ -186,7 +125,7 @@ public class Database extends ThreadedComponent {
 			while(rs.next()){
 				JSONObject line = new JSONObject();
 				
-				for(int i = 0; i < meta.getColumnCount(); i++){
+				for(int i = 1; i <= meta.getColumnCount(); i++){
 					Object obj = rs.getObject(i);
 					String columnName = meta.getColumnName(i);
 					if(obj instanceof String){
@@ -205,8 +144,7 @@ public class Database extends ThreadedComponent {
 		return result;
 	}
 	
-	//TODO
-	private void addSong(JSONObject song){//unknown source type
+	private void addSong(JSONObject song){
 		String insert;
 		
 		int songId;
@@ -245,40 +183,41 @@ public class Database extends ThreadedComponent {
 			
 			//TODO
 			//better request for song existence needed
-			insert= "SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE '"+title+"'";
-			ResultSet information=statement.executeQuery(insert);
 			
-			if(information==null){
+			insert= "SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE '"+title+"'";
+			JSONArray information=query(insert);
+		
+			if(information.isNull(0)){
 				insert= "SELECT "+DBAttributes.ARTIST_NAME+" FROM "+DBTables.Artist+" WHERE "+DBAttributes.ARTIST_NAME+" LIKE '"+artist+"'";
-				information=statement.executeQuery(insert);
-				if(information==null){
-					insert = "INSERT INTO "+DBTables.Artist+" ("+DBAttributes.NAME+")"+
-							"VALUES ("+artist+")";
+				information=query(insert);
+				if(information.isNull(0)){
+					insert = "INSERT INTO "+DBTables.Artist+" ("+DBAttributes.ARTIST_NAME+")"+
+							"VALUES ('"+artist+"')";
 					artistId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
 				}else{
-					artistId = information.getInt(DBAttributes.ARTIST_ID);
+					artistId = information.getInt(0);
 				}
 				
-				insert = "INSERT INTO "+DBTables.Song+" ("+DBAttributes.YEAR+","+DBAttributes.TITLE+")"+
-						"VALUES ("+artistId+", "+ year+", "+ title+")";
+				insert = "INSERT INTO "+DBTables.Song+" ("+DBAttributes.ARTIST_ID+","+DBAttributes.YEAR+","+DBAttributes.TITLE+")"+
+						"VALUES ("+artistId+", "+ year+", '"+ title+"')";
 				songId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
 				
-				insert = "INSERT INTO "+DBTables.Source+" ("+DBAttributes.TYPE+","+DBAttributes.VALUE+")"+
-						"VALUES ("+songId+", "+type+", "+ value+")";
+				insert = "INSERT INTO "+DBTables.Source+" ("+DBAttributes.SONG_ID+","+DBAttributes.TYPE+","+DBAttributes.VALUE+")"+
+						"VALUES ("+songId+", '"+type+"', '"+ value+"')";
 				sourceId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
 				
 				insert= "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album+" WHERE "+DBAttributes.ALBUM_NAME+" LIKE '"+album+"'";
-				information=statement.executeQuery(insert);
-				if(information==null){
+				information=query(insert);
+				if(information.isNull(0)){
 					insert = "INSERT INTO "+DBTables.Album+" ("+DBAttributes.ALBUM_NAME+")"+
-							"VALUES ("+album+")";
+							"VALUES ('"+album+"')";
 					albumId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
 				}else{
-					albumId = information.getInt(DBAttributes.ALBUM_ID);
+					albumId = information.getInt(0);
 				}
-				
+
 				insert = "INSERT INTO "+DBTables.Tag+" ("+DBAttributes.TAG_NAME+","+DBAttributes.SONG_ID+")"+
-						"VALUES ("+songId+", "+tag+")";
+						"VALUES ('"+tag+"',"+songId+")";
 				statement.executeUpdate(insert);
 				
 				insert = "INSERT INTO "+DBTables.AlbumEntry+" ("+DBAttributes.ALBUM_ID+","+DBAttributes.SONG_ID+")"+
@@ -306,5 +245,153 @@ public class Database extends ThreadedComponent {
 			}
 		}
 	}
+	
+	private void addPlaylist(){//TODO
+		
+	}
+	
+	private void addSongToPlaylist(){//TODO
+		
+	}
+	
+	private JSONArray getPlaylists(){//TODO
+		return null;
+	}
+	
+	private JSONArray getSongs(){//TODO
+		return null;
+	}
+	
+	private JSONArray getSong(int ID){//TODO
+		String get="SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE 'Alle meine Tests'";
+		return null;
+	}
+	
+	private void addAllTables(){
+		try {
+			String table = "CREATE TABLE "+DBTables.Playlist + 
+							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+							DBAttributes.NAME+" varchar(255) NOT NULL, " + 
+							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(table);
+			
+			
+			
+			table = "CREATE TABLE "+DBTables.PlaylistEntry+
+					"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.SONG_ID+" int NOT NULL, "+
+					DBAttributes.NR+" int(4), "+
+					"PRIMARY KEY ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+"))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.Artist+
+					"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.ARTIST_NAME+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.Song +
+					"( "+DBAttributes.SONG_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.ARTIST_ID+" int NOT NULL, "+
+					DBAttributes.YEAR+" int(4), "+
+					DBAttributes.TITLE+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.SONG_ID+"))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.Album+
+					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBTables.ALBUM_NAME+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.AlbumEntry+
+					"("+DBAttributes.ALBUM_ID+" int NOT NULL, "+
+					DBAttributes.SONG_ID+" int NOT NULL)";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.Source+
+					"("+DBAttributes.SOURCE_ID+" int NOT NULL AUTO_INCREMENT, "+
+					DBAttributes.SONG_ID+" int NOT NULL, "+
+					DBAttributes.TYPE+" varchar(255), "+
+					DBAttributes.VALUE+" varchar(255), "+
+					"PRIMARY KEY ("+DBAttributes.SOURCE_ID+"))";
+			statement.executeUpdate(table);
+			
+			table = "CREATE TABLE "+DBTables.Tag+
+					"("+DBAttributes.TAG_NAME+" varchar(255), "+
+					DBAttributes.SONG_ID+" int NOT NULL)";
+			statement.executeUpdate(table);
+			logger.info("All tables sucessfully created...");
+		} catch (SQLException e) {
+			logger.info("Tables found...");
+		}catch(Exception e){
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
+		}finally{
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
+			}
+		}
+	}
+	
+	private void dropAllTables(){
+		String drop;
+		try {
+			drop="DROP TABLE "+DBTables.Playlist;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.PlaylistEntry;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.Artist;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.Song;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.Album;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.AlbumEntry;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.Source;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			
+			drop="DROP TABLE "+DBTables.Tag;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(drop);
+			logger.info("All tables droped...");
+		} catch (SQLException e) {
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
+		} catch (Exception e){
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
+		} finally{
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
+			}
+		}
+	}
+	
 
 }
