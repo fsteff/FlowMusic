@@ -238,22 +238,36 @@ function AddSong(element){
             urlInput.val("");
         }
     });
+    const songdata = {
+        title: null,
+        artist: null,
+        sources: null
+    }
     urlInput.on("input", function(){
         var url = urlInput.val().trim();
         if(url == ""){
             return;
         }
         preview.html("");
-        Central.getUrlPreview().preview(preview, url, function(data){console.log(data)});
+        Central.getUrlPreview().preview(preview, url, function(data){
+            songdata.sources = [{type: data.type, value: data.value}];
+        });
     });
 
 
-/*
 
-*/
     form.submit(function(event){
         event.preventDefault();
+        var msg = {
+            command: "insertSong",
+            artist: artistInput.val(),
+            title: titleInput.val(),
+            sources: songdata.sources
+        }
 
+        LocalComm.newMessage(msg, Message.Components.DATABASE, function(){
+            submitButton.val("saved");
+        });
     });
 }
 

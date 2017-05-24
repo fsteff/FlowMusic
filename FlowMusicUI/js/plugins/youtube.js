@@ -159,13 +159,14 @@ $(document).ready(function() {
             var split = url.split(".be/");
             videoid = split[1];
         }
+        const title = $('<div>loading title...</div>');
+        title.appendTo(this.element);
 
-        const imgUrl = "http://img.youtube.com/vi/"+videoid+"/2.jpg";
+        const imgUrl = "http://img.youtube.com/vi/"+videoid+"/0.jpg";
         const img = $('<img src="'+imgUrl+'"/>');
         img.appendTo(this.element);
 
-        const title = $('<div>loading title...</div>');
-        title.appendTo(this.element);
+
         LocalComm.newMessage({command: "get url",url: url},
             Message.Components.GUI, function(data){
                 if(typeof data.answer !== 'undefined' && data.answer !== null){
@@ -174,7 +175,7 @@ $(document).ready(function() {
                     const doc = document.implementation.createHTMLDocument('yt');
                     doc.documentElement.innerHTML = html;
                     title.html(doc.title);
-                    callback({title: doc.title});
+                    callback({title: doc.title, type: "youtube", value: videoid});
                 }
             });
     }
