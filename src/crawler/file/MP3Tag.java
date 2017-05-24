@@ -1,14 +1,12 @@
 package crawler.file;
 
 /**
- * Diese Enumeration beinhaltet alle Informationen zum MP3-Tag. Die Angabe
- * der Position bezieht sich immer auf die Startposition im Tag.
+ * Contains all information about the MP3-Tag. The positions are based on
+ * the start position in the tag.
  * <p>
- * Z.B. Position 128 im Tag => Größe des Files - 128 für die Position im
- * File.
+ * e.g. Position 128 in Tag => size of File - 128 is the file position.
  * 
- * @author mratzenb
- * @since 1.0
+ * @author Michael Ratzenböck
  */
 public enum MP3Tag
 {
@@ -21,20 +19,20 @@ public enum MP3Tag
 	GENRE("Genre", 1, 1);
 
 	/**
-	 * Größe des Tags in Byte.
+	 * Size of the Tag in bytes.
 	 */
 	public static final int TAG_SIZE = 128;
 
 	/**
-	 * Name des Tags
+	 * name of the Tag.
 	 */
 	private final String name;
 	/**
-	 * Position im Tag
+	 * The position in the Tag.
 	 */
 	private final long position;
 	/**
-	 * Größe des Tags in Byte.
+	 * Size of the tag component in bytes.
 	 */
 	private final int length;
 
@@ -63,7 +61,7 @@ public enum MP3Tag
 	@Override
 	public String toString()
 	{
-		return "Name: " + name + ", Postition: " + position + ", Länge: "
+		return "name: " + name + ", position: " + position + ", size: "
 				+ length;
 	}
 }
