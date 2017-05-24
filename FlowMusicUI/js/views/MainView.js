@@ -212,20 +212,48 @@ SearchView.prototype.setData = function(query, data){
 
 function AddSong(element){
     const self = this;
-    this.element = element;
-    this.element.addClass("w3-container");
+    this.element = $(element);
     $("<h3>Add a new title</h3>").appendTo(this.element);
 
-    const urlInput = $('<input type="text" name="url" value="enter a link">');
-    urlInput.appendTo(this.element);
-    urlInput.on("input", function(){
+    const form = $('<form class="addSong"></form>')
+    form.appendTo(this.element);
+
+    const enterLink = "enter a link";
+    const urlInput = $('<input type="text" name="url" value="'+enterLink+'"/>');
+    urlInput.appendTo(form);
+    const artistInput = $('<input type="text" name="artist" value="artist name"/>');
+    artistInput.appendTo(form);
+    const titleInput = $('<input type="text" name="title" value="song title"/>');
+    titleInput.appendTo(form);
+
+    const submitButton = $('<input type="submit" name="submit" value="save"/>');
+    submitButton.appendTo(form);
+
+    const preview = $('<div class="addSong preview"></div>');
+    preview.appendTo(this.element);
+
+    urlInput.click(function(){
         var url = urlInput.val();
-        if( url.search("https://youtube.com") >= 0 ||
-            url.search("https://youtu.be") >= 0 ){
-            //var id = getParameterByName("v", url);
-
-
+        if(url == enterLink){
+            urlInput.val("");
         }
+    });
+    urlInput.on("input", function(){
+        var url = urlInput.val().trim();
+        if(url == ""){
+            return;
+        }
+        preview.html("");
+        Central.getUrlPreview().preview(preview, url, function(data){console.log(data)});
+    });
+
+
+/*
+
+*/
+    form.submit(function(event){
+        event.preventDefault();
+
     });
 }
 

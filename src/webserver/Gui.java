@@ -1,6 +1,8 @@
 package webserver;
 
-import java.io.File;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Consumer;
 
@@ -53,15 +55,25 @@ public class Gui extends ThreadedComponent
 
 	public void messageIncoming(JSONObject msg) throws JSONException, InterruptedException
 	{
+        final int browserId = msg.getInt("id");
+        final String recipient = msg.getString("recipient").toUpperCase();
+
 	    // Manage File chooser dialogu
-	    if(msg.optJSONObject("msg") != null
-                && msg.getJSONObject("msg").optString("command") != null
-                && msg.getJSONObject("msg").getString("command").equalsIgnoreCase("browse directory")){
-            chooseFile(msg);
-            return;
+	    if(recipient.equalsIgnoreCase("GUI")
+                &&msg.optJSONObject("msg") != null
+                && msg.getJSONObject("msg").optString("command") != null){
+	        String cmd = msg.getJSONObject("msg").getString("command");
+	        JSONObject message = msg.getJSONObject("msg");
+            if(cmd.equalsIgnoreCase("browse directory")){
+                chooseFile(msg);
+                return;
+            }else if(cmd.equalsIgnoreCase("get url")
+                    && message.optString("url") != null
+                    && msg.opt("id") != null) {
+                getURL(message.getString("url"), msg.getInt("id"));
+                return;
+            }
         }
-		final int browserId = msg.getInt("id");
-		final String recipient = msg.getString("recipient").toUpperCase();
 		
 		Consumer<JSONObject> answer = jsonMsg ->
 		{
@@ -128,5 +140,45 @@ public class Gui extends ThreadedComponent
             }
             frame.setVisible(false);
         });
+    }
+    private void getURL(String urlString, int msgId){
+        URL url;
+        InputStream is = null;
+        BufferedReader br;
+        String line;
+        String html = "";
+
+        try {
+            url = new URL(urlString);
+            is = url.openStream();  // throws an IOException
+            br = new BufferedReader(new InputStreamReader(is));
+
+            while ((line = br.readLine()) != null) {
+                html += line + "\n";
+            }
+
+            JSONObject obj = new JSONObject();
+            JSONObject json = new JSONObject();
+            json.put("answer", html);
+            obj.put("msg", json);
+            obj.put("id", browserMsgId++);
+            obj.put("answerTo", msgId);
+            obj.put("recipient", "GUI");
+            obj.put("sender", "GUI");
+            toBrowserQueue.putLast(obj);
+
+        } catch (MalformedURLException mue) {
+            logger.error("HTML fetch error", mue);
+            ExceptionHandler.showErrorDialog(mue);
+        } catch (Exception e) {
+            logger.error("HTML fetch error", e);
+            ExceptionHandler.showErrorDialog(e);
+        } finally {
+            try {
+                if (is != null) is.close();
+            } catch (IOException ioe) {
+                // nothing to see here
+            }
+        }
     }
 }

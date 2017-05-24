@@ -98,6 +98,24 @@ Verifier.prototype.verify = function(url){
     return results;
 }
 
+function UrlPreview(){
+    this.plugins = [];
+}
+
+UrlPreview.prototype.addPlugin = function(plugin){
+    this.plugins.push(plugin);
+}
+
+UrlPreview.prototype.preview = function(element, url, callback){
+    for(var i = 0; i < this.plugins.length; i++){
+        if(this.plugins[i].supportsUrl(url)){
+            this.plugins[i].preview(element, url, callback);
+            return true;
+        }
+    }
+    return false;
+}
+
 // ---------------------------------------------- CLASS CENTRAL --------------------------------------------------------
 /**
  * Singleton class that handles all internal (model in MVC) classes
@@ -109,6 +127,7 @@ function Central() {
     this.verifier = new Verifier();
     this.player = new MusicPlayer();
     this.search = new SearchEngine();
+    this.urlPreview = new UrlPreview();
 
     return this;
 }
@@ -143,5 +162,8 @@ Central.getVerifier = function(){
     return Central.getInstance().verifier;
 }
 
+Central.getUrlPreview = function(){
+    return Central.getInstance().urlPreview;
+}
 
 

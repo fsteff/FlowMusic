@@ -51,30 +51,12 @@ function LocalComm(){
                 return;
             }
             const listeners = self.listeners.get(m.command);
-            if(typeof listeners === 'object'){
+            if(listeners !== null && typeof listeners === 'object'){
                 for(var i = 0; i < listeners.length; i++){
                     listeners[i].call(m);
                 }
             }
         }
-        /*
-            switch (m.command.toLowerCase()) {
-                case "play":
-                    Central.getPlayer().getCurrentPlayer().play();
-                    break;
-                case "pause":
-                    Central.getPlayer().getCurrentPlayer().pause();
-                    break;
-                case "next":
-                    Central.getPlayer().nextSong();
-                    break;
-                // TODO: more
-                default:
-                    Log.info("Unhandled message command: " + m.command);
-                    break;
-            }
-        }*/
-
     }
 
     this.getMessage();

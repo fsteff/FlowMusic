@@ -120,6 +120,8 @@ $(document).ready(function() {
         // TODO: check if neccessary
         elem.appendTo("body");
 
+
+
         var player = new YT.Player(elem,{
             height: '180',
             width: '320',
@@ -138,25 +140,49 @@ $(document).ready(function() {
 
     ytPlayerInstance = extend(BaseMusicPlayer, YoutubePlayer, "youtube");
 
-    /*
+
     function YoutubePreview(element, videoid) {
-        this.element = element;
 
-        this.player = new YT.Player(element, {
-            //default 640x360
-            height: '180',
-            width: '320',
-            videoId: videoid,
-            playerVars: {'autoplay': 0, 'controls': 1},
-        });
     }
 
-    YoutubePreview.prototype.destroy = function(){
-        this.element.hide();
-        this.player.destroy();
+    YoutubePreview.prototype.supportsUrl = function(url){
+        if(url.search("youtube.com") >= 0) return true;
+        if(url.search("youtu.be") >= 0) return true;
     }
-    */
 
+    YoutubePreview.prototype.preview = function(element, url, callback){
+        this.element = $(element);
+        var videoid = "";
+        if(url.search("youtube.com/watch") >= 0){
+            videoid = getParameterByName("v", url);
+        }else{
+            var split = url.split(".be/");
+            videoid = split[1];
+        }
+
+        const imgUrl = "http://img.youtube.com/vi/"+videoid+"/2.jpg";
+        const img = $('<img src="'+imgUrl+'"/>');
+        img.appendTo(this.element);
+
+        const title = $('<div>loading title...</div>');
+        title.appendTo(this.element);
+        LocalComm.newMessage({command: "get url",url: url},
+            Message.Components.GUI, function(data){
+                if(typeof data.answer !== 'undefined' && data.answer !== null){
+                    var html = data.answer;
+                    // todo remove scripts from html
+                    const doc = document.implementation.createHTMLDocument('yt');
+                    doc.documentElement.innerHTML = html;
+                    title.html(doc.title);
+                    callback({title: doc.title});
+                }
+            });
+    }
+
+    Central.getUrlPreview().addPlugin(extend(BaseUrlPreview, YoutubePreview, "youtube"));
+
+
+/*
     function YoutubeSearch(){
         //this.apikey = "AIzaSyAvxru3VA2YzJxmx1R403Y6KeTPwHrLR_w";
     }
@@ -175,7 +201,7 @@ $(document).ready(function() {
     }
 
     ytSearchInstance = extend(BaseSearchEngine, YoutubeSearch, "youtube");
-    Central.getSearch().addPlugin(ytSearchInstance);
+    Central.getSearch().addPlugin(ytSearchInstance);*/
 
 });
 

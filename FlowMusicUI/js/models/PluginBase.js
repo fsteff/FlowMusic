@@ -74,3 +74,17 @@ BaseSearchEngine.prototype.search = function(query, callback){
     callback({});
 }
 
+//--------------------------------------------- CLASS BaseUrlPreview ----------------------------------------
+
+BaseUrlPreview = function(name){
+    this.name = name;
+}
+
+BaseUrlPreview.prototype.supportsUrl = function(url){
+    return false;
+}
+
+BaseUrlPreview.prototype.preview = function(element, url, callback){
+    $(element).html("base url preview: " + url);
+    callback({title: "nodidea", artist: "noidea"});
+}
