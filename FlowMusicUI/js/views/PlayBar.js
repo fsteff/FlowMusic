@@ -65,12 +65,14 @@ function PlayBar(){
 
     window.setInterval(function(){
         var player = Central.getPlayer().currentPlayer;
-        var part = player.getDuration() / player.getTime();
-        var pixels = 0;
-        if(part != 0){
-            pixels = self.root.width() / part;
+        if(player != null && player.getTime() != 0) {
+            var part = player.getDuration() / (player.getTime() + 0.001);
+            var pixels = 0;
+            if (part != 0) {
+                pixels = self.root.width() / part;
+            }
+            progressbar.animate({width: pixels + 'px'}, 1000);
         }
-        progressbar.animate({width: pixels+'px'}, 1000);
     }, 1000);
 }
 

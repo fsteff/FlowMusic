@@ -371,13 +371,13 @@ html, body{
     opacity: 0.9;
     position: fixed;
     float: right;
-    bottom: 30px;
+    bottom: 40px;
     right: 0px;
 }
 #soundcloud-frame{
     float: right;
     right: 0px;
-    bottom: 30px;
+    bottom: 40px;
     position: fixed;
     opacity: 0.9;
     background-color: white;

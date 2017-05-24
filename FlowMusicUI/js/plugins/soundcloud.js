@@ -27,10 +27,8 @@ function SoundCloudPlayer() {
         + 'height="200px"'
         + 'scrolling="no"'
         + 'frameborder="no"'
-        + 'src="https://w.soundcloud.com/player/?url=http://api.soundcloud.com/'
-        + '&amp;auto_play=true&amp;'
-        + 'hide_related=true&amp;show_comments=false&amp;'
-        + 'show_user=false&amp;show_reposts=false&amp;visual=true">');
+            // throws an error, but works anyway - can´t find a fix for it
+        + 'src="https://w.soundcloud.com/player/?url=http://api.soundcloud.com/">');
     this.element.appendTo("body");
 
 
@@ -112,6 +110,18 @@ SoundCloudPlayer.prototype.load = function (url) {
             checkTime();
         });
 
+        this.widget.bind(SC.Widget.Events.PAUSE, function(){
+            soundCloudInstance.settings.playing = false;
+            var song = Central.getPlayer().getCurrentSong();
+            Central.getPlayer().getPlayQueue().notifyListeners(song);
+        });
+
+        this.widget.bind(SC.Widget.Events.PLAY, function(){
+            soundCloudInstance.settings.playing = true;
+            var song = Central.getPlayer().getCurrentSong();
+            Central.getPlayer().getPlayQueue().notifyListeners(song);
+        })
+
     }
 }
 SoundCloudPlayer.prototype.stop = function () {
@@ -131,6 +141,10 @@ SoundCloudPlayer.prototype.getTime = function(){
 
 SoundCloudPlayer.prototype.getDuration = function(){
     return this.duration;
+}
+
+SoundCloudPlayer.prototype.tryLoadSource = function(source, callback){
+    callback(true);
 }
 
 soundCloudInstance = extend(BaseMusicPlayer, SoundCloudPlayer, "soundcloud");

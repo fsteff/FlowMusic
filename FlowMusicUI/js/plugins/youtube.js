@@ -37,11 +37,21 @@ $(document).ready(function() {
     }
 
     YoutubePlayer.prototype.onPlayerStateChange = function (event) {
-        if (event.data == YT.PlayerState.ENDED ) {
+        if (event.data == YT.PlayerState.ENDED ){
             ytPlayerInstance.unload();
             Central.getPlayer().nextSong();
             //setTimeout(stopVideo, 6000);
+        }else if(event.data == YT.PlayerState.PAUSED){
+            ytPlayerInstance.settings.playing = false;
+            var song = Central.getPlayer().getCurrentSong();
+            Central.getPlayer().getPlayQueue().notifyListeners(song);
+        }else if(event.data == YT.PlayerState.PLAYING){
+            ytPlayerInstance.settings.playing = true;
+            var song = Central.getPlayer().getCurrentSong();
+            Central.getPlayer().getPlayQueue().notifyListeners(song);
         }
+
+
     }
     YoutubePlayer.prototype.pause = function () {
         this.settings.playing = false;
