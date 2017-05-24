@@ -62,6 +62,9 @@ public abstract class AbstractFile implements Comparable<AbstractFile>
 		return file.getName();
 	}
 
+	/**
+	 * @return the filename without the suffix.
+	 */
 	public String getPureFileName()
 	{
 		return getFileName().substring(0, getFileName().lastIndexOf('.'));

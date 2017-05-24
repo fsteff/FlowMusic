@@ -15,6 +15,11 @@ import org.slf4j.LoggerFactory;
 
 import central.ExceptionHandler;
 
+/**
+ * This class provides some utilities methods for IO use.
+ * 
+ * @author Michael Ratzenböck
+ */
 public final class IOTools
 {
 	private static final Logger logger = LoggerFactory
@@ -25,8 +30,19 @@ public final class IOTools
 
 	}
 
+	/**
+	 * Writes the given File to the given OutputStream.
+	 * 
+	 * @param path
+	 *            the Path to the File as String.
+	 * @param os
+	 *            the OutputStream
+	 * @throws RuntimeException
+	 *             if the File does not exist
+	 * @see #writeTo(File, OutputStream)
+	 */
 	public static void writeTo(String path, OutputStream os)
-			throws FileNotFoundException
+			throws RuntimeException
 	{
 		final Path p = Paths.get(path);
 
@@ -45,6 +61,16 @@ public final class IOTools
 		}
 	}
 
+	/**
+	 * Writes the given File to the given OutputStream.
+	 * <p>
+	 * If an exception occurs it gets caught showed and logged.
+	 * 
+	 * @param file
+	 *            The File that should be written.
+	 * @param os
+	 *            The OutputStream.
+	 */
 	public static void writeTo(File file, OutputStream os)
 	{
 		InputStream is = null;
