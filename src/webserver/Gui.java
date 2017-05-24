@@ -147,6 +147,7 @@ public class Gui extends ThreadedComponent
         BufferedReader br;
         String line;
         String html = "";
+        JSONObject answer = new JSONObject();
 
         try {
             url = new URL(urlString);
@@ -157,28 +158,38 @@ public class Gui extends ThreadedComponent
                 html += line + "\n";
             }
 
-            JSONObject obj = new JSONObject();
             JSONObject json = new JSONObject();
             json.put("answer", html);
-            obj.put("msg", json);
-            obj.put("id", browserMsgId++);
-            obj.put("answerTo", msgId);
-            obj.put("recipient", "GUI");
-            obj.put("sender", "GUI");
-            toBrowserQueue.putLast(obj);
+            answer.put("msg", json);
+            answer.put("id", browserMsgId++);
+            answer.put("answerTo", msgId);
+            answer.put("recipient", "GUI");
+            answer.put("sender", "GUI");
 
-        } catch (MalformedURLException mue) {
-            logger.error("HTML fetch error", mue);
-            ExceptionHandler.showErrorDialog(mue);
+
         } catch (Exception e) {
-            logger.error("HTML fetch error", e);
-            ExceptionHandler.showErrorDialog(e);
+            logger.info("HTML fetch error", e);
+
+            JSONObject json = new JSONObject();
+            json.put("answer", "invalid url");
+            answer.put("msg", json);
+            answer.put("id", browserMsgId++);
+            answer.put("answerTo", msgId);
+            answer.put("recipient", "GUI");
+            answer.put("sender", "GUI");
         } finally {
             try {
                 if (is != null) is.close();
             } catch (IOException ioe) {
                 // nothing to see here
             }
+        }
+
+        try{
+            toBrowserQueue.putLast(answer);
+        }catch (InterruptedException e){
+            logger.error("", e);
+            ExceptionHandler.showErrorDialog(e);
         }
     }
 }

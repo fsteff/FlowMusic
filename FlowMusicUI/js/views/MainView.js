@@ -26,7 +26,7 @@ function MainView(){
     $('#mainview-search-form > .searchicon').click(search);
 
     $("#mainview-addsong").click(function(){
-        self.newTab(AddSong, "Add Title");
+        self.newTab(AddSong, "Add Song");
     });
 
     $("#mainview-settings").click(function(){
@@ -213,7 +213,7 @@ SearchView.prototype.setData = function(query, data){
 function AddSong(element){
     const self = this;
     this.element = $(element);
-    $("<h3>Add a new title</h3>").appendTo(this.element);
+    $("<h3>Add a new song</h3>").appendTo(this.element);
 
     const form = $('<form class="addSong"></form>')
     form.appendTo(this.element);
@@ -249,9 +249,24 @@ function AddSong(element){
             return;
         }
         preview.html("");
-        Central.getUrlPreview().preview(preview, url, function(data){
+        submitButton.val("save");
+        artistInput.val("artist name");
+        titleInput.val("song title");
+        var valid = Central.getUrlPreview().preview(preview, url, function(data){
             songdata.sources = [{type: data.type, value: data.value}];
+            if(typeof data.artist == "string"){
+                songdata.artist = data.artist;
+                artistInput.val(data.artist);
+            }
+            if(typeof data.title == "string"){
+                songdata.title = data.title;
+                titleInput.val(data.title);
+            }
         });
+
+        if(!valid){
+            preview.html("invalid url");
+        }
     });
 
 

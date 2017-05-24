@@ -141,12 +141,12 @@ $(document).ready(function() {
     ytPlayerInstance = extend(BaseMusicPlayer, YoutubePlayer, "youtube");
 
 
-    function YoutubePreview(element, videoid) {
+    function YoutubePreview() {
 
     }
 
     YoutubePreview.prototype.supportsUrl = function(url){
-        if(url.search("youtube.com") >= 0) return true;
+        if(url.search("youtube.com\/watch") >= 0) return true;
         if(url.search("youtu.be") >= 0) return true;
     }
 
@@ -174,8 +174,32 @@ $(document).ready(function() {
                     // todo remove scripts from html
                     const doc = document.implementation.createHTMLDocument('yt');
                     doc.documentElement.innerHTML = html;
-                    title.html(doc.title);
-                    callback({title: doc.title, type: "youtube", value: videoid});
+
+                    var vidname = doc.title;
+                    // remove " - YouTube"
+                    title.html(vidname.substring(0, vidname.length-10));
+
+                    // remove unneccesary information
+                    vidname = vidname.replace(" - YouTube", "");
+                    vidname = vidname.replace(" (Official Video)", "");
+                    vidname = vidname.replace(" [Official Video]", "");
+                    vidname = vidname.replace(" (Official)", "");
+                    vidname = vidname.replace(" (official)", "");
+                    vidname = vidname.replace(" (Audio)", "");
+                    vidname = vidname.replace(" [Cover Art]", "");
+                    vidname = vidname.replace(" [cover art]", "");
+                    vidname = vidname.replace(" (Lyric)", "");
+                    vidname = vidname.replace(" (lyric)", "");
+
+
+                    var song = {title: vidname, type: "youtube", value: videoid};
+                    var split = vidname.split("-");
+                    if(split.length >= 2){
+                        song.artist = split[0].trim();
+                        song.title = split[1].trim();
+                    }
+
+                    callback(song);
                 }
             });
     }

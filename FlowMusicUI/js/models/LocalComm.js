@@ -18,7 +18,11 @@ function LocalComm(){
             {
                 self.messageCallbacks.get(answerTo)(msg.msg);
                 self.messageCallbacks.remove(answerTo);
-                Log.info("Message from " + msg.sender + ": " + JSON.stringify(msg.msg));
+                var logmsg = JSON.stringify(msg.msg).substring(0, 97);
+                if(logmsg.length == 97){
+                    logmsg += "...";
+                }
+                Log.info("Message from " + msg.sender + ": " + logmsg);
             } else {
                 self.processMessage(msg);
             }

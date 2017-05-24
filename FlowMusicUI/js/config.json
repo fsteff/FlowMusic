@@ -1,6 +1,7 @@
 {
     "plugins": [
         "local.js",
+        "soundcloud.js",
         "youtube.js"
     ]
 }

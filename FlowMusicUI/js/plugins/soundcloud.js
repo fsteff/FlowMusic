@@ -3,91 +3,195 @@
  * Copyright 2017 Fixl Stefan
  */
 
-// TODO: Soundcloud API throws error on load!
 
-var scr = document.createElement("script");
-
-//scr.async = false;
-//scr.defer = false;
-//scr.type = "text/javascript";
+var scr = document.createElement('script'),
+    head = document.head || document.getElementsByTagName('head')[0];
+scr.async = false;
+scr.type = "text/javascript";
 scr.src = "https://w.soundcloud.com/player/api.js";
-//$("head").append(s);
-document.head.appendChild(scr);
+head.insertBefore(scr, head.firstChild);
 
-WaitForSoundcloud();
+var soundCloudInstance = null;
 
-function WaitForSoundcloud() {
-    if (typeof SC == "undefined") {
-        setTimeout(WaitForSoundcloud, 500);
-    } else {
+function SoundCloudPlayer() {
+    const self = this;
+    this.settings = {playing: false, volume: 100}
+    this.widget = null;
+    this.ready = false;
+    this.time = 0;
+    this.duration = 0;
 
-        var soundCloudInstance = null;
+    this.element = $('<iframe id="soundcloud-frame"'
+        + 'class="iframe"'
+        + 'width="300px"'
+        + 'height="200px"'
+        + 'scrolling="no"'
+        + 'frameborder="no"'
+        + 'src="https://w.soundcloud.com/player/?url=http://api.soundcloud.com/'
+        + '&amp;auto_play=true&amp;'
+        + 'hide_related=true&amp;show_comments=false&amp;'
+        + 'show_user=false&amp;show_reposts=false&amp;visual=true">');
+    this.element.appendTo("body");
 
-        function SoundCloudPlayer() {
-            const self = this;
-            this.settings = {playing: false, volume: 100}
 
+    var widgetIframe = document.getElementById('soundcloud-frame');
+    const seconds = new Date().getTime() / 1000;
 
-            this.element = $('<iframe id="soundcloud-frame" scrolling="no" frameborder="no"></iframe>');
-            this.element.appendTo("body");
+    const load = function(){
+        if(typeof SC == 'undefined' || SC == null){
+            if(seconds + 5 < (new Date().getTime() / 1000)){
+                Log.error("could not load soundcloud api");
+                return;
+            }
+            window.setTimeout(load, 500);
+        }else {
+            soundCloudInstance.widget = SC.Widget(widgetIframe);
 
-            this.element.hide();
-
-            var widgetIframe = document.getElementById('soundcloud-frame');
-            this.widget = SC.Widget(widgetIframe);
-
-            this.ready = false;
-            this.widget.bind(SC.Widget.Events.READY, function () {
-                self.ready = true;
-                self.setVolume(100);
-                if (self.settings.playing) {
-                    self.play();
+            soundCloudInstance.ready = false;
+            soundCloudInstance.widget.bind(SC.Widget.Events.READY, function () {
+                soundCloudInstance.ready = true;
+                soundCloudInstance.setVolume(soundCloudInstance.settings.volume);
+                if (soundCloudInstance.settings.playing) {
+                    soundCloudInstance.play();
                 }
                 Central.getPlayer().addPlugin(soundCloudInstance);
             });
 
-            this.widget.bind(SC.Widget.Events.FINISH, function () {
+            soundCloudInstance.widget.bind(SC.Widget.Events.FINISH, function () {
                 Central.getPlayer().nextSong();
             })
+            self.element.hide();
+        }
+    }
+    window.setTimeout(load, 100);
 
-        }
+}
 
-        SoundCloudPlayer.prototype.play = function () {
-            if (this.ready) {
-                this.settings.playing = true;
-                this.widget.play();
-            }
-        }
-        SoundCloudPlayer.prototype.pause = function () {
-            if (this.ready) {
-                this.settings.playing = false;
-                this.widget.pause();
-            }
-        }
-        SoundCloudPlayer.prototype.load = function (url) {
-            if (this.ready) {
-                this.settings.playing = false;
-                this.widget.load(url);
-                this.element.show();
-            }
-        }
-        SoundCloudPlayer.prototype.stop = function () {
-            if (this.ready) {
-                this.settings.playing = false;
-                this.element.hide();
-            }
-        }
-        SoundCloudPlayer.prototype.setVolume = function (volume) {
-            if (this.ready) {
-                this.widget.setVolume(volume);
-                this.settings.volume = volume;
-            }
-        }
+SoundCloudPlayer.prototype.play = function () {
+    this.settings.playing = true;
+    if (this.ready) {
+        this.widget.play();
+    }
+}
+SoundCloudPlayer.prototype.pause = function () {
+    this.settings.playing = false;
+    if (this.ready) {
+        this.widget.pause();
+    }
+}
+SoundCloudPlayer.prototype.load = function (url) {
+    if (this.ready) {
+        this.settings.playing = false;
+        url += '&amp;auto_play=false&amp;liking=false&amp;buying=false&amp;sharing=false&amp;'
+            + 'hide_related=true&amp;show_comments=false&amp;download=false&amp;'
+            + 'show_user=false&amp;show_reposts=false&amp;visual=true';
 
-        soundCloudInstance = extend(BaseMusicPlayer, SoundCloudPlayer, "soundcloud");
+        this.ready = false;
+        this.widget.load(url);
+        this.widget.bind(SC.Widget.Events.READY, function () {
+            soundCloudInstance.ready = true;
+            soundCloudInstance.setVolume(soundCloudInstance.settings.volume);
+            if (soundCloudInstance.settings.playing) {
+                soundCloudInstance.play();
+            }
+            soundCloudInstance.element.show();
+            soundCloudInstance.widget.getDuration(function(aw){
+               soundCloudInstance.duration = aw/1000;
+            });
 
+            const getTime = function(aw){
+                soundCloudInstance.time = aw/1000;
+            }
+
+            const checkTime = function(){
+                if(soundCloudInstance.ready){
+                    soundCloudInstance.widget.getPosition(getTime);
+                    window.setTimeout(checkTime, 1000);
+                }
+            }
+            checkTime();
+        });
 
     }
 }
+SoundCloudPlayer.prototype.stop = function () {
+    this.settings.playing = false;
+    this.widget.pause();
+    this.element.hide();
+}
+SoundCloudPlayer.prototype.setVolume = function (volume) {
+    if (this.ready) {
+        this.widget.setVolume(volume);
+        this.settings.volume = volume;
+    }
+}
+SoundCloudPlayer.prototype.getTime = function(){
+    return this.time;
+}
 
-// https://w.soundcloud.com/player/api.js
+SoundCloudPlayer.prototype.getDuration = function(){
+    return this.duration;
+}
+
+soundCloudInstance = extend(BaseMusicPlayer, SoundCloudPlayer, "soundcloud");
+
+
+function SoundCloudPreview(){
+
+}
+
+SoundCloudPreview.prototype.supportsUrl = function(url){
+    return (url.search("soundcloud.com") >= 0);
+}
+
+SoundCloudPreview.prototype.preview = function(element, url, callback){
+    const self = this;
+    this.element = element;
+    const iframe = $('<iframe '
+        + 'width="400px" '
+        + 'height="200px" '
+        + 'scrolling="no" '
+        + 'frameborder="no" '
+        + 'src="https://w.soundcloud.com/player/?url='
+        + url
+        + '&amp;auto_play=false&amp;liking=false&amp;buying=false&amp;sharing=false&amp;'
+        + 'hide_related=true&amp;show_comments=false&amp;download=false&amp;'
+        + 'show_user=false&amp;show_reposts=false&amp;visual=true"></iframe>');
+
+    const title = $('<div>loading title...</div>');
+    title.appendTo(this.element);
+    iframe.appendTo(this.element);
+
+    LocalComm.newMessage({command: "get url",url: url},
+        Message.Components.GUI, function(data){
+            if(typeof data.answer !== 'undefined' && data.answer !== null){
+                var html = data.answer;
+                // todo remove scripts from html
+                const doc = document.implementation.createHTMLDocument('sc');
+                doc.documentElement.innerHTML = html;
+
+                var trackname = doc.title;
+                var pos = 0;
+                // remove "by user | Listen on Soundcloud"
+                for(var i = trackname.length; i > 0 && pos == 0; i--){
+                    if(trackname.charAt(i) == 'y' && trackname.charAt(i-1) == 'b'){
+                        pos = i-1;
+                    }
+                }
+                trackname = trackname.substring(0, pos);
+
+                title.html(trackname);
+
+                var song = {title: trackname, type: "soundcloud", value: url};
+                var split = trackname.split("-");
+                if(split.length >= 2){
+                    song.artist = split[0].trim();
+                    song.title = split[1].trim();
+                }
+
+                callback(song);
+            }
+        });
+}
+
+Central.getUrlPreview().addPlugin(extend(BaseUrlPreview, SoundCloudPreview, "soundcloud"));
