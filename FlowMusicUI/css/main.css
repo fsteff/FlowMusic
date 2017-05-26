@@ -373,6 +373,7 @@ html, body{
     float: right;
     bottom: 40px;
     right: 0px;
+    box-shadow: 0 4px 10px 0 rgba(0,0,0,0.2), 0 4px 20px 0 rgba(0,0,0,0.19)
 }
 #soundcloud-frame{
     float: right;
@@ -381,5 +382,6 @@ html, body{
     position: fixed;
     opacity: 0.9;
     background-color: white;
+    box-shadow: 0 4px 10px 0 rgba(0,0,0,0.2), 0 4px 20px 0 rgba(0,0,0,0.19)
 }
 

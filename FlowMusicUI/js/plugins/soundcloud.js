@@ -53,6 +53,7 @@ function SoundCloudPlayer() {
                     soundCloudInstance.play();
                 }
                 Central.getPlayer().addPlugin(soundCloudInstance);
+                soundCloudInstance.widget.unbind(SC.Widget.Events.READY);
             });
 
             soundCloudInstance.widget.bind(SC.Widget.Events.FINISH, function () {
@@ -79,12 +80,18 @@ SoundCloudPlayer.prototype.pause = function () {
 }
 SoundCloudPlayer.prototype.load = function (url) {
     if (this.ready) {
-        this.settings.playing = false;
+        //this.settings.playing = false;
         url += '&amp;auto_play=false&amp;liking=false&amp;buying=false&amp;sharing=false&amp;'
             + 'hide_related=true&amp;show_comments=false&amp;download=false&amp;'
             + 'show_user=false&amp;show_reposts=false&amp;visual=true';
 
         this.ready = false;
+
+        // unload old listeners
+        this.widget.unbind(SC.Widget.Events.READY);
+        this.widget.unbind(SC.Widget.Events.PAUSE);
+        this.widget.unbind(SC.Widget.Events.PLAY);
+
         this.widget.load(url);
         this.widget.bind(SC.Widget.Events.READY, function () {
             soundCloudInstance.ready = true;
@@ -204,6 +211,8 @@ SoundCloudPreview.prototype.preview = function(element, url, callback){
                 }
 
                 callback(song);
+            }else{
+                Log.error("SoundCloud: invalid answer from GUI: " + JSON.stringify(data));
             }
         });
 }

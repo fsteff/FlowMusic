@@ -243,6 +243,8 @@ MusicPlayer.prototype.getCurrentSong = function () {
 MusicPlayer.prototype.addPlugin = function (player) {
     player.settings = this.settings;
     this.players.push(player);
+    Log.info("MusicPlayer: registered plugin '"+player.getName()+"'");
+
     this.currentSong = this.playQueue.current();
     if(this.currentSong != null) {
         for (var i = 0; i < this.players.length; i++) {
@@ -280,8 +282,9 @@ MusicPlayer.prototype.playSong = function (song) {
         this.currentPlayer.load(this.currentSong.source);
         this.currentPlayer.play();
         this.playQueue.notifyListeners(song);
+        Log.info("MusicPlayer: playing song "+ JSON.stringify(song));
     }else{
-        log("Cannot find a plugin for "+song, "warning");
+        Log.warning("Cannot find a plugin for "+JSON.stringify(song));
     }
 }
 /**

@@ -8,7 +8,7 @@ $(document).ready(function() {
 
 
     function YoutubePlayer() {
-        this.element = $("<div class='w3-card-4' id=\"yt-frame\"></div>");
+        this.element = $("<div id=\"yt-frame\"></div>");
         this.element.appendTo($("body"));
 
 
@@ -64,9 +64,6 @@ $(document).ready(function() {
         if(this.player != null && this.playerReady) {
             this.player.playVideo();
         }
-
-   //      var playlist = Central.getPlayer().getPlayQueue();
-   //     playlist.notifyListeners(playlist.current());
     }
     YoutubePlayer.prototype.load = function(videoid){
 
@@ -84,7 +81,14 @@ $(document).ready(function() {
                 playerVars: {'autoplay': 0, 'controls': 1},
                 events: {
                     'onReady': this.onPlayerReady,
-                    'onStateChange': this.onPlayerStateChange
+                    'onStateChange': this.onPlayerStateChange,
+                    'onError': function(err){
+                        var errStr = ""+err;
+                        if(err == 2)errStr = "invalid videoId";
+                        if(err == 100) errStr = "video removed by user";
+                        if(err == 101 || err == 150) errStr = "embedding video not allowed"
+                        Log.error("Youtube: " + errStr);
+                    }
                 }
             });
         }
@@ -210,6 +214,8 @@ $(document).ready(function() {
                     }
 
                     callback(song);
+                }else{
+                    Log.error("Youtube: invalid answer from GUI: " + JSON.stringify(data));
                 }
             });
     }
@@ -240,6 +246,7 @@ $(document).ready(function() {
 
 });
 
+// called by youtube api
 function onYouTubeIframeAPIReady() {
     Central.getPlayer().addPlugin(ytPlayerInstance);
 }
