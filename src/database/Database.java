@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,7 +29,6 @@ public class Database extends ThreadedComponent {
 
 	public Database(Central central, File folder) {
 		super(Component.DATABASE, central);
-
 		// DataBase creation:
 		try {
 			// Save the database at the user home directory, subdirectory
@@ -37,7 +38,6 @@ public class Database extends ThreadedComponent {
 		if(folder != null && folder.getParentFile().exists()){
 				dbName = folder.getAbsolutePath();
 			}
- 
 			Class.forName("org.h2.Driver");
 			databaseConnection = DriverManager.getConnection("jdbc:h2:"+dbName);
 		} catch (ClassNotFoundException e) { 
@@ -56,66 +56,126 @@ public class Database extends ThreadedComponent {
 				logger.error("", e);
 			}
 		}
-
-		// Table creation:
-		addAllTables();
-	
-		
-		//Adding information from Crawler to DB
-		
-		//DB test and information
-		
-		
-		
-		
-		//Drop Tables
-		
-	
-		
 	}
 
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
 		String command = msg.getString("command");
+		
+		
 		switch (command) {
+		
+		case "start":
+			addAllTables();
+			
+			break;
 		case "get":
 
+			
 			// TODO: further selection, filtering, joining, ...
-			// For debugging purposes and until the database works, we return a
-			// fixed value:
+//			String what = msg.getString("what");
+//			String filter="";
+//			String criteria = "";
+//			if(msg.get("filter") instanceof JSONObject){//check if there is a JSONObject with a criteria
+//				JSONObject obj=(JSONObject) msg.get("filter");
+//				DBTables[] tables=DBTables.values();
+//				for(int i=0; i<tables.length; i++){//check in the filter for the attribute
+//					for(int j=0; j<tables[i].getAttributes().size();j++){
+//						filter=obj.optString(tables[i].getAttributes().get(j), filter);
+//					}
+//				}
+//				criteria=obj.getString(filter);
+//			}else{
+//				filter = msg.get("filter").toString();
+//			}
 			JSONObject ret = new JSONObject();
 			JSONArray found = new JSONArray();
 			JSONObject song = new JSONObject();
-			/*
-			 *  artist: "Martin Garrix & Bebe Rexha",
-		        title: "In the Name of Love",
-		        sources: [{
-		            plugin: "local",
-		            source: "test3.mp3"
-		        }]
-			 */
-			song.put("artist", "Martin Garrix & Bebe Rexha");
-			song.put("title", "In the Name of Love");
-			JSONArray sources = new JSONArray();
-			sources.put(new JSONObject("{\"plugin\": \"local\", \"source\":\"test.mp3\"}"));
-			song.put("sources", sources);
-			found.put(song);
+		
+			found = getAllSongInformation();
+			ret.put("found", found);
+			//TODO
+			
+			
 			ret.put("answer", found);
 	/*		JSONArray res = query("SELECT * FROM songs");
 			JSONObject ret = new JSONObject();
 			ret.put("answer", res);*/
+			
+
+			
+//			switch(what){
+//			case "allSongs":
+//				found = getAllSongInformation();
+//				break;
+//			default:
+//				switch(filter){	//TODO: 
+//				case "*":
+//					found = getAllEntrys(what);
+//					break;
+//				case DBAttributes.ALBUM_ID:
+//					found = getInfoAlbumId(what, criteria);
+//					break;
+//				
+//				case DBAttributes.SONG_ID:
+//					found = getSong(what, criteria);
+//					break;
+//				}
+//				break;
+//				
+//			}
 			return ret;
-
-		case "...":
-			// TODO: other messages
+		case "update"://TODO
 			break;
-
+		case "insertSong"://TODO
+			JSONObject newSong = new JSONObject();
+			newSong.put(DBAttributes.TITLE,msg.get(DBAttributes.TITLE));
+			newSong.put(DBAttributes.TYPE, msg.getJSONArray("sources").getJSONObject(0).get(DBAttributes.TYPE));
+			newSong.put(DBAttributes.VALUE, msg.getJSONArray("sources").getJSONObject(0).get(DBAttributes.VALUE));
+			if(msg.has(DBAttributes.ARTIST_NAME)){
+				newSong.put(DBAttributes.ARTIST_NAME, msg.get(DBAttributes.ARTIST_NAME));
+			}
+			if(msg.has(DBAttributes.YEAR)){
+				newSong.put(DBAttributes.YEAR, msg.get(DBAttributes.YEAR));
+			}
+			if(msg.has(DBAttributes.ALBUM_NAME)){
+				newSong.put(DBAttributes.ALBUM_NAME, msg.get(DBAttributes.ALBUM_NAME));
+			}
+			if(msg.has(DBAttributes.TAG_NAME)){
+				newSong.put(DBAttributes.TAG_NAME, msg.get(DBAttributes.TAG_NAME));
+			}
+			addSong(newSong);
+			break;
+		case "delete"://TODO
+			switch(command){
+			case "playlist":
+			case "playlistentry":
+			}
+			break;
+			
 		default:
+			
+
+		
 			// TODO: error
 		}
+		
 		return null;
 	}
+
 	
+	
+
+	private JSONArray getInfoAlbumId(String table, String criteria) {
+		// TODO test
+		String get = "SELECT "+table+".*" +
+				"FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Album+", "+DBTables.Tag+", "+DBTables.Source+
+				" WHERE "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = "+criteria+
+				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Source+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID;
+		return query(get);
+	}
+
 	private JSONArray query(String query){
 		JSONArray result = new JSONArray();
 		try{
@@ -129,9 +189,9 @@ public class Database extends ThreadedComponent {
 					Object obj = rs.getObject(i);
 					String columnName = meta.getColumnName(i);
 					if(obj instanceof String){
-						line.put(columnName, (String) obj);
-					}else{
-						// TODO
+						line.put(columnName.toLowerCase(), (String) obj);
+					}else if(obj instanceof Integer){
+						line.put(columnName.toLowerCase(), (Integer) obj);
 					}
 				}
 				result.put(line);
@@ -144,39 +204,33 @@ public class Database extends ThreadedComponent {
 		return result;
 	}
 	
-	private void addSong(JSONObject song){
+ 	private void addSong(JSONObject song){
 		String insert;
 		
 		int songId;
 		int sourceId;
 		int albumId;
 		int artistId;
-		String year = "";
-		String type = "";
-		String title = song.getString(DBAttributes.TITLE);;
-		String value = "";
+		String year = "0";
+		String type = song.getString(DBAttributes.TYPE);
+		String title = song.getString(DBAttributes.TITLE);
+		String value = song.getString(DBAttributes.VALUE);
 		String album = "";
 		String artist = "";
 		String tag = "";
-		if(song.getString(DBAttributes.YEAR)!=null){
+		ResultSet rs;
+		if(song.has(DBAttributes.YEAR) && !song.isNull(DBAttributes.YEAR)){
 			year = song.getString(DBAttributes.YEAR);
 		}
-		if(song.getString(DBAttributes.TYPE)!=null){
-			type = song.getString(DBAttributes.TYPE);
-		}
-		if(song.getString(DBAttributes.VALUE)!=null){
-			value = song.getString(DBAttributes.VALUE);
-		}
-		if(song.getString(DBAttributes.ALBUM_NAME)!=null){
+		if(song.has(DBAttributes.ALBUM_NAME) && !song.isNull(DBAttributes.ALBUM_NAME)){
 			album = song.getString(DBAttributes.ALBUM_NAME);
 		}
-		if(song.getString(DBAttributes.ARTIST_NAME)!=null){
+		if(song.has(DBAttributes.ARTIST_NAME) && !song.isNull(DBAttributes.ARTIST_NAME)){
 			artist = song.getString(DBAttributes.ARTIST_NAME);
 		}
-		if(song.getString(DBAttributes.TAG_NAME)!=null){
+		if(song.has(DBAttributes.TAG_NAME) && !song.isNull(DBAttributes.TAG_NAME)){
 			tag = song.getString(DBAttributes.TAG_NAME);
 		}
-		
 
 		try {
 			statement= databaseConnection.createStatement();
@@ -186,34 +240,55 @@ public class Database extends ThreadedComponent {
 			
 			insert= "SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE '"+title+"'";
 			JSONArray information=query(insert);
-		
+
 			if(information.isNull(0)){
-				insert= "SELECT "+DBAttributes.ARTIST_NAME+" FROM "+DBTables.Artist+" WHERE "+DBAttributes.ARTIST_NAME+" LIKE '"+artist+"'";
+				insert= "SELECT "+DBAttributes.ARTIST_ID+" FROM "+DBTables.Artist+" WHERE "+DBAttributes.ARTIST_NAME+" = '"+artist+"'";
 				information=query(insert);
 				if(information.isNull(0)){
 					insert = "INSERT INTO "+DBTables.Artist+" ("+DBAttributes.ARTIST_NAME+")"+
 							"VALUES ('"+artist+"')";
-					artistId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+					statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+					rs=statement.getGeneratedKeys();
+					rs.next();
+					artistId=rs.getInt(1);
 				}else{
-					artistId = information.getInt(0);
+					artistId = information.getJSONObject(0).getInt(DBAttributes.ARTIST_ID);
 				}
-				
+
 				insert = "INSERT INTO "+DBTables.Song+" ("+DBAttributes.ARTIST_ID+","+DBAttributes.YEAR+","+DBAttributes.TITLE+")"+
 						"VALUES ("+artistId+", "+ year+", '"+ title+"')";
-				songId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				//TODO
+				statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+				rs=statement.getGeneratedKeys();
+				rs.next();
+				songId=rs.getInt(1);
 				
 				insert = "INSERT INTO "+DBTables.Source+" ("+DBAttributes.SONG_ID+","+DBAttributes.TYPE+","+DBAttributes.VALUE+")"+
 						"VALUES ("+songId+", '"+type+"', '"+ value+"')";
 				sourceId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
 				
-				insert= "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album+" WHERE "+DBAttributes.ALBUM_NAME+" LIKE '"+album+"'";
+				insert= "SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.Album+" WHERE "+DBAttributes.ALBUM_NAME+" LIKE '"+album+"'";
 				information=query(insert);
 				if(information.isNull(0)){
-					insert = "INSERT INTO "+DBTables.Album+" ("+DBAttributes.ALBUM_NAME+")"+
-							"VALUES ('"+album+"')";
-					albumId = statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+					if(album==""){
+						insert = "INSERT INTO "+DBTables.Album+" ("+DBAttributes.ALBUM_NAME+", "+DBAttributes.ARTIST_ID+")"+
+								"VALUES ('"+album+"', "+0+")";
+						statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+						rs=statement.getGeneratedKeys();
+						rs.next();
+						albumId=rs.getInt(1);
+					}else{
+						insert = "INSERT INTO "+DBTables.Album+" ("+DBAttributes.ALBUM_NAME+", "+DBAttributes.ARTIST_ID+")"+
+								"VALUES ('"+album+"', "+artistId+")";
+						statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+						rs=statement.getGeneratedKeys();
+						rs.next();
+						albumId=rs.getInt(1);
+					
+					}
 				}else{
-					albumId = information.getInt(0);
+					System.out.println(information.toString());
+					albumId = information.getJSONObject(0).getInt(DBAttributes.ALBUM_ID);
 				}
 
 				insert = "INSERT INTO "+DBTables.Tag+" ("+DBAttributes.TAG_NAME+","+DBAttributes.SONG_ID+")"+
@@ -222,6 +297,7 @@ public class Database extends ThreadedComponent {
 				
 				insert = "INSERT INTO "+DBTables.AlbumEntry+" ("+DBAttributes.ALBUM_ID+","+DBAttributes.SONG_ID+")"+
 						"VALUES ("+albumId+", "+songId+")";
+				statement.executeUpdate(insert);
 				logger.info("Song "+title+" was added to tables.");
 			}else{
 				logger.info("Song "+title+" is already in the tables.");
@@ -246,25 +322,97 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
-	private void addPlaylist(){//TODO
+	private void addPlaylist(String name){//TODO test
+		Timestamp stamp = new Timestamp(System.currentTimeMillis());
+		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+")"+
+						"VALUES ('"+name+"', "+stamp.toString()+")";
+		query(insert);
+	}
+	
+	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO
+		Timestamp stamp = new Timestamp(System.currentTimeMillis());
+		JSONArray information =	getSong(DBTables.Song.toString(), ""+songId);
+		String insert;
+		if(!information.isNull(0)){
+			insert= "SELECT "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" LIKE '"+playlistId+"' "+
+					"AND "+DBAttributes.SONG_ID+" = "+songId+
+					"AND "+DBAttributes.NR+" = "+trackNumber;
+			information=query(insert);
+			if(information.isNull(0)){
+				insert = "INSERT INTO "+DBTables.PlaylistEntry+" ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+", "+DBAttributes.NR+")"+
+						"VALUES ('"+playlistId+"', "+songId+", "+trackNumber+")";
+				query(insert);
+				insert = "UPDATE "+DBTables.Playlist+" SET "+DBAttributes.TIMESTAMP+" = "+stamp.toString()+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+				logger.info("Song added to playlist.");
+			}else{
+				logger.error("Tracknumber in playlist already taken.");
+			}
+		}else{
+			logger.error("Song not found.");
+		}
+	}
+	
+	private void removeSong(int ID){//TODO
 		
 	}
 	
-	private void addSongToPlaylist(){//TODO
-		
+	private JSONArray search(String search){//TODO
+		String get = "SELECT * FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Album+", "+DBTables.Tag+", "+DBTables.Source+ "WHERE "+DBAttributes.TITLE+" LIKE '%"+search+"%'"+
+				" OR "+DBAttributes.ARTIST_NAME+" LIKE '%"+search+"%'"+
+				" OR "+DBAttributes.ALBUM_NAME+" LIKE '%"+search+"%'";
+		return query(get);
 	}
 	
-	private JSONArray getPlaylists(){//TODO
-		return null;
+	private JSONArray getMyMusic(){//TODO test
+		String get = "SELECT "+DBAttributes.ARTIST_NAME+", "+DBAttributes.TITLE+", "+DBAttributes.ALBUM_NAME+
+					" FROM "+DBTables.Song+", "+DBTables.Album+", "+DBTables.Artist+
+					" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+					" AND "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+
+					" AND "+DBTables.AlbumEntry+"."+DBAttributes.ALBUM_ID+" = "+DBTables.Album+"."+DBAttributes.ALBUM_ID;		
+		return query(get);
 	}
 	
-	private JSONArray getSongs(){//TODO
-		return null;
+	private JSONArray viewArtists(){
+		String get = "SELECT "+DBAttributes.ARTIST_NAME+" FROM "+DBTables.Artist;
+		return query(get);
 	}
 	
-	private JSONArray getSong(int ID){//TODO
-		String get="SELECT "+DBAttributes.TITLE+" FROM "+DBTables.Song+" WHERE "+DBAttributes.TITLE+" LIKE 'Alle meine Tests'";
-		return null;
+	private JSONArray viewAlbums(){
+		String get = "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album;
+		return query(get);
+	}
+	
+	private JSONArray getAllEntrys(){
+		String get = "SELECT "+DBAttributes.TITLE+", "+DBAttributes.ARTIST_NAME+
+					" FROM "+DBTables.Song+", "+DBTables.Artist+
+					" WHERE "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
+		return query(get);
+	}
+	private JSONArray getAllEntrys(String table){
+		String get = "SELECT * FROM "+table;
+		return query(get);
+	}
+	
+	private JSONArray getAllSongInformation(){
+		String get = "SELECT DISTINCT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+", "+DBTables.Source+"."+DBAttributes.SOURCE_ID+", "+DBTables.Source+"."+DBAttributes.TYPE+", "+DBTables.Tag+"."+DBAttributes.TAG_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Source+","+DBTables.Album+", "+DBTables.Tag+
+				" WHERE "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.Source+"."+DBAttributes.SONG_ID+
+				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Tag+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+
+				" AND "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = (SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.AlbumEntry+" WHERE "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+")";
+		return query(get);
+	}
+	
+	private JSONArray getSong(String table, String ID){
+		String get = "SELECT "+table+".*" +
+				" FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Source+","+DBTables.Album+
+				" WHERE "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+ID+
+				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Source+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+
+				" AND "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = (SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+"'"+ID+"')";
+		JSONArray x=query(get);
+		x.forEach(e->System.out.println(e.toString()));
+		return x;
 	}
 	
 	private void addAllTables(){
@@ -272,6 +420,7 @@ public class Database extends ThreadedComponent {
 			String table = "CREATE TABLE "+DBTables.Playlist + 
 							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
 							DBAttributes.NAME+" varchar(255) NOT NULL, " + 
+							DBAttributes.TIMESTAMP+" varchar(255), "+
 							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
 			statement= databaseConnection.createStatement();
 			statement.executeUpdate(table);
@@ -302,6 +451,7 @@ public class Database extends ThreadedComponent {
 			table = "CREATE TABLE "+DBTables.Album+
 					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
 					DBTables.ALBUM_NAME+" varchar(255), "+
+					DBTables.ARTIST_ID+" int NOT NULL ,"+
 					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
 			statement.executeUpdate(table);
 			

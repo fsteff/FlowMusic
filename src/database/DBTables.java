@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public enum DBTables implements DBAttributes
 {
-	Playlist(PLAYLIST_ID, NAME),
+	Playlist(PLAYLIST_ID, NAME, TIMESTAMP),
 	PlaylistEntry(PLAYLIST_ID, SONG_ID, NR),
 	Artist(ARTIST_ID, ARTIST_NAME),
 	Song(SONG_ID, ARTIST_ID, YEAR, TITLE),
