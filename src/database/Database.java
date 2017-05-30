@@ -8,7 +8,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -61,73 +60,61 @@ public class Database extends ThreadedComponent {
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
 		String command = msg.getString("command");
-		
+		JSONObject ret = new JSONObject();
+		String what;
+		if(msg.has("what") && !msg.isNull("what")){
+			what = msg.getString("what");
+		}else{
+			what = "";
+		}
 		
 		switch (command) {
 		
 		case "start":
 			addAllTables();
-			
-			break;
+			ret.put("answer", "done");
+			return ret;
 		case "get":
 
 			
 			// TODO: further selection, filtering, joining, ...
-//			String what = msg.getString("what");
-//			String filter="";
-//			String criteria = "";
-//			if(msg.get("filter") instanceof JSONObject){//check if there is a JSONObject with a criteria
-//				JSONObject obj=(JSONObject) msg.get("filter");
-//				DBTables[] tables=DBTables.values();
-//				for(int i=0; i<tables.length; i++){//check in the filter for the attribute
-//					for(int j=0; j<tables[i].getAttributes().size();j++){
-//						filter=obj.optString(tables[i].getAttributes().get(j), filter);
-//					}
-//				}
-//				criteria=obj.getString(filter);
-//			}else{
-//				filter = msg.get("filter").toString();
-//			}
-			JSONObject ret = new JSONObject();
-			JSONArray found = new JSONArray();
-			JSONObject song = new JSONObject();
-		
-			found = getAllSongInformation();
-			ret.put("found", found);
-			//TODO
 			
+			String filter="";
+			if(msg.get("filter") instanceof JSONObject){//check if there is a JSONObject with a criteria
+				JSONObject obj=(JSONObject) msg.get("filter");
+				DBTables[] tables=DBTables.values();
+				for(int i=0; i<tables.length; i++){//check in the filter for the attribute
+					for(int j=0; j<tables[i].getAttributes().size();j++){
+						filter=obj.optString(tables[i].getAttributes().get(j), filter);
+					}
+				}
+			}else{
+				filter = msg.get("filter").toString();
+			}
+			
+			JSONArray found = new JSONArray();
+
+			switch(what){
+			case "song":
+				switch(filter){
+				case "*":
+					found = getAllSongInformation();
+				break;
+				default:
+					found = search(filter);
+				break;
+				}
+				
+				break;
+			default:
+				break;
+			}
 			
 			ret.put("answer", found);
-	/*		JSONArray res = query("SELECT * FROM songs");
-			JSONObject ret = new JSONObject();
-			ret.put("answer", res);*/
-			
-
-			
-//			switch(what){
-//			case "allSongs":
-//				found = getAllSongInformation();
-//				break;
-//			default:
-//				switch(filter){	//TODO: 
-//				case "*":
-//					found = getAllEntrys(what);
-//					break;
-//				case DBAttributes.ALBUM_ID:
-//					found = getInfoAlbumId(what, criteria);
-//					break;
-//				
-//				case DBAttributes.SONG_ID:
-//					found = getSong(what, criteria);
-//					break;
-//				}
-//				break;
-//				
-//			}
 			return ret;
 		case "update"://TODO
 			break;
-		case "insertSong"://TODO
+		case "insertSong":
 			JSONObject newSong = new JSONObject();
 			newSong.put(DBAttributes.TITLE,msg.get(DBAttributes.TITLE));
 			newSong.put(DBAttributes.TYPE, msg.getJSONArray("sources").getJSONObject(0).get(DBAttributes.TYPE));
@@ -145,9 +132,10 @@ public class Database extends ThreadedComponent {
 				newSong.put(DBAttributes.TAG_NAME, msg.get(DBAttributes.TAG_NAME));
 			}
 			addSong(newSong);
-			break;
+			ret.put("answer", "done");
+			return ret;
 		case "delete"://TODO
-			switch(command){
+			switch(what){
 			case "playlist":
 			case "playlistentry":
 			}
@@ -161,19 +149,6 @@ public class Database extends ThreadedComponent {
 		}
 		
 		return null;
-	}
-
-	
-	
-
-	private JSONArray getInfoAlbumId(String table, String criteria) {
-		// TODO test
-		String get = "SELECT "+table+".*" +
-				"FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Album+", "+DBTables.Tag+", "+DBTables.Source+
-				" WHERE "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = "+criteria+
-				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
-				" AND "+DBTables.Source+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID;
-		return query(get);
 	}
 
 	private JSONArray query(String query){
@@ -284,7 +259,6 @@ public class Database extends ThreadedComponent {
 						rs=statement.getGeneratedKeys();
 						rs.next();
 						albumId=rs.getInt(1);
-					
 					}
 				}else{
 					System.out.println(information.toString());
@@ -329,7 +303,7 @@ public class Database extends ThreadedComponent {
 		query(insert);
 	}
 	
-	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO
+	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		JSONArray information =	getSong(DBTables.Song.toString(), ""+songId);
 		String insert;
@@ -357,9 +331,14 @@ public class Database extends ThreadedComponent {
 	}
 	
 	private JSONArray search(String search){//TODO
-		String get = "SELECT * FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Album+", "+DBTables.Tag+", "+DBTables.Source+ "WHERE "+DBAttributes.TITLE+" LIKE '%"+search+"%'"+
-				" OR "+DBAttributes.ARTIST_NAME+" LIKE '%"+search+"%'"+
-				" OR "+DBAttributes.ALBUM_NAME+" LIKE '%"+search+"%'";
+		String get = "SELECT DISTINCT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+", "+DBTables.Source+"."+DBAttributes.SOURCE_ID+", "+DBTables.Source+"."+DBAttributes.TYPE+", "+DBTables.Tag+"."+DBAttributes.TAG_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Source+","+DBTables.Album+", "+DBTables.Tag+
+				" WHERE "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.Source+"."+DBAttributes.SONG_ID+
+				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Tag+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+
+				" AND (LOWER("+DBTables.Song+"."+DBAttributes.TITLE+") LIKE '%"+search+"%' OR LOWER("+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+") LIKE '%"+search+"%' OR LOWER("+DBTables.Album+"."+DBAttributes.ALBUM_NAME+") LIKE '%"+search+"%' )"+
+				" AND "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = (SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.AlbumEntry+" WHERE "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+")";
+	System.out.println(query(get).toString());
 		return query(get);
 	}
 	
@@ -372,22 +351,7 @@ public class Database extends ThreadedComponent {
 		return query(get);
 	}
 	
-	private JSONArray viewArtists(){
-		String get = "SELECT "+DBAttributes.ARTIST_NAME+" FROM "+DBTables.Artist;
-		return query(get);
-	}
 	
-	private JSONArray viewAlbums(){
-		String get = "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album;
-		return query(get);
-	}
-	
-	private JSONArray getAllEntrys(){
-		String get = "SELECT "+DBAttributes.TITLE+", "+DBAttributes.ARTIST_NAME+
-					" FROM "+DBTables.Song+", "+DBTables.Artist+
-					" WHERE "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
-		return query(get);
-	}
 	private JSONArray getAllEntrys(String table){
 		String get = "SELECT * FROM "+table;
 		return query(get);
@@ -403,7 +367,7 @@ public class Database extends ThreadedComponent {
 		return query(get);
 	}
 	
-	private JSONArray getSong(String table, String ID){
+	private JSONArray getSong(String table, String ID){//TODO
 		String get = "SELECT "+table+".*" +
 				" FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Source+","+DBTables.Album+
 				" WHERE "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+ID+
