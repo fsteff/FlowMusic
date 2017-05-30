@@ -2,7 +2,6 @@ package utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,8 +40,7 @@ public final class IOTools
 	 *             if the File does not exist
 	 * @see #writeTo(File, OutputStream)
 	 */
-	public static void writeTo(String path, OutputStream os)
-			throws RuntimeException
+	public static void writeTo(String path, OutputStream os) throws IOException
 	{
 		final Path p = Paths.get(path);
 
@@ -52,7 +50,7 @@ public final class IOTools
 		}
 		else
 		{
-			RuntimeException e = new RuntimeException(
+			IllegalArgumentException e = new IllegalArgumentException(
 					"The File with the given path does not exist: "
 							+ path);
 			logger.error("", e);
@@ -71,7 +69,7 @@ public final class IOTools
 	 * @param os
 	 *            The OutputStream.
 	 */
-	public static void writeTo(File file, OutputStream os)
+	public static void writeTo(File file, OutputStream os) throws IOException
 	{
 		InputStream is = null;
 
@@ -86,11 +84,6 @@ public final class IOTools
 				os.write(buf, 0, readBytes);
 			}
 			os.flush();
-		}
-		catch (IOException e)
-		{
-			ExceptionHandler.showErrorDialog(e);
-			logger.error("", e);
 		}
 		finally
 		{

@@ -6,9 +6,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.h2.store.fs.FileUtils;
@@ -258,7 +258,45 @@ public class Central extends ThreadedComponent
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
 		}
+		startChrome();
+	}
+	
+	/**
+	 * Starts the Chromium Browser and terminates the application if the
+	 * browser gets closed.
+	 */
+	private static void startChrome()
+	{
+		Thread t = new Thread(() ->
+		{
+			final String chromiumParam = "--app=\"http:\\\\localhost:8080\"";
+			final File f = new File("chromium/chrome.exe");
 
+			if (!Files.exists(Paths.get(f.getAbsolutePath())))
+			{
+				ExceptionHandler.showErrorDialog("Error", "Chromium not found...");
+			}
+			else
+			{
+				System.out.println(f.getAbsolutePath());
+				ProcessBuilder pb = new ProcessBuilder("cmd", "/c",
+						f.getAbsolutePath(), chromiumParam, "--start-maximized");
+
+				try
+				{
+					Process p = pb.start();
+					p.waitFor();
+					System.out.println("Exit value: " + p.exitValue());
+					System.exit(p.exitValue());
+				}
+				catch (Exception e)
+				{
+					logger.error("", e);
+				}
+			}
+		});
+
+		t.start();
 	}
 
 	@Override
