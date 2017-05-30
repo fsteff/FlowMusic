@@ -248,6 +248,14 @@ html, body{
 #mainview-settings:hover{
     background-image: url("../img/cog-black.svg");
 }
+#sidepanel-tabSpace{
+    overflow-y: auto;
+}
+#sidepanel-playlists{
+    position: relative;
+    float: left;
+    left: 0;
+}
 
 .searchicon{
     width: 25px;

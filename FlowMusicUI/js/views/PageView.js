@@ -43,10 +43,20 @@ $(document).ready(function(){
         }
 
         view.mainview.resize();
+        view.sidepanel.resize();
     });
 
 
     view.mainview.newTab(PlayQueueView, "Queue", false);
 
+    const pl = view.mainview.newTab(PlaylistView, "Party Playlist");
+    pl.setPlaylist(1, "Party Playlist");
+
+    const elem = $('<div class="maintab"></div>');
+    elem.appendTo(PageView.getInstance().mainview.element);
+    elem.hide();
+    const page = extend(MainTab, PlaylistOverview, elem, elem);
+    view.sidepanel.playlists.page = page;
+    view.mainview.tabs.push(page);
 
 });

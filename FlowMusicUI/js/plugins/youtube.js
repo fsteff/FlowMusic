@@ -165,6 +165,14 @@ $(document).ready(function() {
     YoutubePreview.prototype.preview = function(element, url, callback){
         this.element = $(element);
         var videoid = "";
+
+        if(url.startsWith("www")){
+            url = "https://"+url;
+        }
+        if(url.startsWith("http://")){
+            url = "https://" + url.substring(7);
+        }
+
         if(url.search("youtube.com/watch") >= 0){
             videoid = getParameterByName("v", url);
         }else{

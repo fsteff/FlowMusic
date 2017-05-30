@@ -189,6 +189,14 @@ SoundCloudPreview.prototype.supportsUrl = function(url){
 SoundCloudPreview.prototype.preview = function(element, url, callback){
     const self = this;
     this.element = element;
+
+    if(url.startsWith("www")){
+        url = "https://"+url;
+    }
+    if(url.startsWith("http://")){
+        url = "https://" + url.substring(7);
+    }
+
     const iframe = $('<iframe '
         + 'width="400px" '
         + 'height="200px" '

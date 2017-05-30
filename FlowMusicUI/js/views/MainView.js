@@ -59,7 +59,11 @@ MainView.prototype.newTab = function(type, name, close){
     const tab = extend(MainTab, type, elem, elem);
     this.tabs.push(tab);
 
-    PageView.getInstance().sidepanel.addTab(tab, name, close);
+    if(type == PlaylistView){
+        PageView.getInstance().sidepanel.addPlaylist(tab, name);
+    }else {
+        PageView.getInstance().sidepanel.addTab(tab, name, close);
+    }
     return tab;
 }
 
@@ -352,6 +356,7 @@ EditSettings.prototype.cleanUp = function () {
 
 function PlaylistView(element){
     this.element = $(element);
+    this.element.html("Nothing to see here");
     this.playlistId = null;
     this.playlistName = null;
     this.entries = [];
@@ -362,7 +367,8 @@ PlaylistView.prototype.setPlaylist = function(id, name){
     this.playlistName = name;
 }
 
-PlaylistView.prototype.loadEntries = function(){
+PlaylistView.prototype.update = function(){
+    const self = this;
     if(this.playlistId == null){
         Log.error("PlaylistView: no playlistId set");
     }
@@ -374,10 +380,30 @@ PlaylistView.prototype.loadEntries = function(){
     },
     Message.Components.DATABASE,
     function(msg){
-        // TODO
+        self.element.html("<h3>"+self.playlistName+"</h3>")
     });
 }
 
+//------------------------------------------------------------- CLASS PlaylistOverView ---------------------------------
+
+function PlaylistOverview(element){
+    this.element = $(element);
+    this.element.html("heyo, nothing there");
+    this.update();
+}
+
+PlaylistOverview.prototype.update = function(){
+    const self = this;
+    LocalComm.newMessage({
+        command: "get",
+        what: "playlist",
+        filter: {playlistid: "*"}
+    },
+    Message.Components.DATABASE,
+    function(msg){
+        self.element.html("<h3>Playlists</h3>");
+    });
+}
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
 
