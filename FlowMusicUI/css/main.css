@@ -85,12 +85,16 @@ html, body{
     transform: scaleX(-1);
 }
 .playbar-info{
-    postion: relative;
-    float: left;
-    left: 40%;
+    position: relative;
+    float: right;
+    right: 0px;
     padding: 5px;
     margin-top: 4px;
     display: inline-block;
+    width: calc(100% - 96px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 32px;
 }
 
 .progressbar{

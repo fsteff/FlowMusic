@@ -20,6 +20,8 @@ function SoundCloudPlayer() {
     this.ready = false;
     this.time = 0;
     this.duration = 0;
+    this.stopped = false;
+    this.loadLater = null;
 
     this.element = $('<iframe id="soundcloud-frame"'
         + 'class="iframe"'
@@ -28,7 +30,7 @@ function SoundCloudPlayer() {
         + 'scrolling="no"'
         + 'frameborder="no"'
             // throws an error, but works anyway - can´t find a fix for it
-        + 'src="https://w.soundcloud.com/player/?url=http://api.soundcloud.com/">');
+        + 'src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/">');
     this.element.appendTo("body");
 
 
@@ -59,7 +61,7 @@ function SoundCloudPlayer() {
             soundCloudInstance.widget.bind(SC.Widget.Events.FINISH, function () {
                 Central.getPlayer().nextSong();
             })
-            self.element.hide();
+            self.element.attr("right", "-50px"); //.hide();
         }
     }
     window.setTimeout(load, 100);
@@ -86,20 +88,35 @@ SoundCloudPlayer.prototype.load = function (url) {
             + 'show_user=false&amp;show_reposts=false&amp;visual=true';
 
         this.ready = false;
+        this.stopped = false;
 
         // unload old listeners
         this.widget.unbind(SC.Widget.Events.READY);
         this.widget.unbind(SC.Widget.Events.PAUSE);
         this.widget.unbind(SC.Widget.Events.PLAY);
 
+        soundCloudInstance.element.show();
         this.widget.load(url);
+
         this.widget.bind(SC.Widget.Events.READY, function () {
             soundCloudInstance.ready = true;
+
+            if(soundCloudInstance.loadLater != null){
+                soundCloudInstance.load(soundCloudInstance.loadLater);
+                soundCloudInstance.loadLater = null;
+                return;
+            }
+            if(soundCloudInstance.stopped){
+                soundCloudInstance.element.hide();
+                return;
+            }
+
             soundCloudInstance.setVolume(soundCloudInstance.settings.volume);
             if (soundCloudInstance.settings.playing) {
                 soundCloudInstance.play();
             }
-            soundCloudInstance.element.show();
+
+
             soundCloudInstance.widget.getDuration(function(aw){
                soundCloudInstance.duration = aw/1000;
             });
@@ -129,12 +146,16 @@ SoundCloudPlayer.prototype.load = function (url) {
             Central.getPlayer().getPlayQueue().notifyListeners(song);
         })
 
+    }else{
+        this.loadLater = url;
+        this.element.show();
     }
 }
 SoundCloudPlayer.prototype.stop = function () {
     this.settings.playing = false;
     this.widget.pause();
     this.element.hide();
+    this.stopped = true;
 }
 SoundCloudPlayer.prototype.setVolume = function (volume) {
     if (this.ready) {

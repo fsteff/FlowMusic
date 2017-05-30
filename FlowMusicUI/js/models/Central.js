@@ -70,42 +70,29 @@ SearchEngine.prototype.search = function(query, callback){
     return filtered;
 }
 
-// ---------------------------------------------- CLASS Verifier -------------------------------------------------------
+// ---------------------------------------------- CLASS UrlPreview -----------------------------------------------------
 /**
- * This class forwards "add title" input to all registered plugins
- * (when verify is called)
+ * Manages UrlPreview Plugins
  * @constructor
  */
-function Verifier(){
-    this.plugins = [];
-}
-/**
- * Register a plugin - (Base class is TODO)
- * @param plugin
- */
-Verifier.prototype.addPlugin = function(plugin){
-    this.plugins.push(plugin);
-}
-
-Verifier.prototype.verify = function(url){
-    var results = [];
-    for(var i = 0; i < this.plugins.length; i++){
-        var res = this.plugins[i].verify(url);
-        if(res != null){
-            results.push(res);
-        }
-    }
-    return results;
-}
-
 function UrlPreview(){
     this.plugins = [];
 }
 
+/**
+ * Register a plugin
+ * @param plugin {BaseUrlPreview}
+ */
 UrlPreview.prototype.addPlugin = function(plugin){
     this.plugins.push(plugin);
 }
 
+/**
+ * @param element {jQuery} element to draw to (will be erased!)
+ * @param url {string} url to preview
+ * @param callback {function(object)} object has: title, artist, type, value
+ * @returns {boolean} true if url is supported by a plugin, false if not
+ */
 UrlPreview.prototype.preview = function(element, url, callback){
     for(var i = 0; i < this.plugins.length; i++){
         if(this.plugins[i].supportsUrl(url)){
@@ -124,7 +111,6 @@ UrlPreview.prototype.preview = function(element, url, callback){
  */
 function Central() {
 
-    this.verifier = new Verifier();
     this.player = new MusicPlayer();
     this.search = new SearchEngine();
     this.urlPreview = new UrlPreview();
@@ -156,12 +142,9 @@ Central.getSearch = function(){
     return Central.getInstance().search;
 }
 /**
- * @returns {Verifier}
+ *
+ * @returns {UrlPreview}
  */
-Central.getVerifier = function(){
-    return Central.getInstance().verifier;
-}
-
 Central.getUrlPreview = function(){
     return Central.getInstance().urlPreview;
 }

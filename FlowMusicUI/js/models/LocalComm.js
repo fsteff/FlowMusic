@@ -8,6 +8,7 @@ function LocalComm(){
     this.messageCallbacks = new Map();
     this.listeners = new Map();
 
+
     this.onMessage = function(data){
         if(data !== "{}") {
             var msg = new Message({json: data});
@@ -18,10 +19,7 @@ function LocalComm(){
             {
                 self.messageCallbacks.get(answerTo)(msg.msg);
                 self.messageCallbacks.remove(answerTo);
-                var logmsg = JSON.stringify(msg.msg).substring(0, 97);
-                if(logmsg.length == 97){
-                    logmsg += "...";
-                }
+                var logmsg = self.clipString(JSON.stringify(msg.msg), 97);
                 Log.info("Message from " + msg.sender + ": " + logmsg);
             } else {
                 self.processMessage(msg);
@@ -35,7 +33,8 @@ function LocalComm(){
             url: "/inmsg",
             success: self.onMessage,
             error: function( jqXHR, textStatus, errorThrown ){
-                Log.error("GET /inmsg (Message-Polling) failed: " + errorThrown);
+            /*    if(errorThrown != null)
+                    Log.error("GET /inmsg (Message-Polling) failed: " + errorThrown + " " + textStatus);*/
                 window.setTimeout(self.getMessage, 5000);
             },
             timeout: 6000
@@ -62,10 +61,18 @@ function LocalComm(){
             }
         }
     }
-
-    this.getMessage();
+    // start message polling later
+    window.setTimeout(this.getMessage, 10);
 
     return this;
+}
+
+LocalComm.prototype.clipString = function(str, max){
+    var ret = str.substring(0, max);
+    if(ret.length == max){
+        ret += "...";
+    }
+    return ret;
 }
 
 LocalComm.instance = null;
@@ -87,11 +94,14 @@ LocalComm.newMessage = function(message, recipient,success){
         msg: JSON.stringify(message),
         recipient: recipient
     });
-    if(success == null){
-        //success = function(){};
-    }else {
-        self.messageCallbacks.put(msg.id, success);
+    if(success == null) {
+        success = function (aw) {
+            Log.info("LocalComm: message to "+recipient
+                +"'" + self.clipString(JSON.stringify(message), 97) + " was answered: '"
+                + self.clipString(JSON.stringify(aw)) + "'");
+        };
     }
+    self.messageCallbacks.put(msg.id, success);
 
     $.post("/msg", {msg: JSON.stringify(msg)});
 }

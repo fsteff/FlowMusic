@@ -23,7 +23,7 @@ function MainView(){
     }
 
     $("#mainview-search-form").submit(search);
-    $('#mainview-search-form > .searchicon').click(search);
+    $("#mainview-search-form > .searchicon").click(search);
 
     $("#mainview-addsong").click(function(){
         self.newTab(AddSong, "Add Song");
@@ -49,9 +49,9 @@ MainView.prototype.resize = function(){
 
 }
 
-MainView.prototype.newTab = function(type, name, closetab){
-    if(closetab == null){
-        closetab = true;
+MainView.prototype.newTab = function(type, name, close){
+    if(close == null){
+        close = true;
     }
     const elem = $('<div class="maintab"></div>');
     elem.appendTo(this.element);
@@ -59,7 +59,7 @@ MainView.prototype.newTab = function(type, name, closetab){
     const tab = extend(MainTab, type, elem, elem);
     this.tabs.push(tab);
 
-    PageView.getInstance().sidepanel.addTab(elem, name, closetab);
+    PageView.getInstance().sidepanel.addTab(tab, name, close);
     return tab;
 }
 
@@ -70,7 +70,6 @@ MainView.prototype.hideAllTabs = function(){
 }
 
 MainView.prototype.closeTab = function(element){
-    var tab = null;
     var index = -1;
     for(var i = 0; i < this.tabs.length && index < 0; i++){
         var t = this.tabs[i];
@@ -82,7 +81,7 @@ MainView.prototype.closeTab = function(element){
         this.tabs[index].cleanUp();
         this.tabs.splice(index, 1);
     }
-    element.remove();
+    $(element).remove();
 }
 // ------------------------------------------------------------ CLASS MainTab ------------------------------------------
 function MainTab(element){
@@ -99,12 +98,14 @@ MainTab.prototype.hide = function(){
 }
 MainTab.prototype.show = function(){
     this.element.show();
+    this.update();
 }
 
 MainTab.prototype.cleanUp = function(){
     
 }
 
+MainTab.prototype.update = function(){}
 
 
 // ------------------------------------------------------------- CLASS PlayQueue ----------------------------------------
@@ -114,7 +115,7 @@ function PlayQueueView(element){
     var playlist = Central.getPlayer().getPlayQueue();
 
     this.onElementRightClick = function(elem){
-        var ctx = new ContextMenu(null);
+        const ctx = new ContextMenu(null);
         ctx.addProperty(
             "play now",
             function() {
@@ -347,6 +348,36 @@ EditSettings.prototype.cleanUp = function () {
     LocalComm.unregisterListener(this.renderCallable);
 }
 
+//------------------------------------------------------------- CLASS PlaylistView -------------------------------------
+
+function PlaylistView(element){
+    this.element = $(element);
+    this.playlistId = null;
+    this.playlistName = null;
+    this.entries = [];
+}
+
+PlaylistView.prototype.setPlaylist = function(id, name){
+    this.playlistId = id;
+    this.playlistName = name;
+}
+
+PlaylistView.prototype.loadEntries = function(){
+    if(this.playlistId == null){
+        Log.error("PlaylistView: no playlistId set");
+    }
+
+    LocalComm.newMessage({
+        command: "get",
+        what: "ViewPlaylistSongs",
+        filter: {playlistId: this.playlistId}
+    },
+    Message.Components.DATABASE,
+    function(msg){
+        // TODO
+    });
+}
+
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
 
@@ -367,9 +398,8 @@ Table.prototype.draw = function(){
     html += "</tr></table>";
     this.element.html(html);
 
-    var rowelem;
     for(var row = 0; row < this.data.length; row++){
-        rowelem = $("<tr class='tablerow'></tr>");
+        var rowelem = $("<tr class='tablerow'></tr>");
         html = "";
         for(var col = 0; col < this.data[row].length; col++){
             if(this.options.visibility[col] === true){

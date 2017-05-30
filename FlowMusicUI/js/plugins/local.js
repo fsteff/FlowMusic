@@ -3,10 +3,9 @@
  * Copyright 2017 Fixl Stefan
  */
 
-// TODO: implement https://github.com/audiocogs/aurora.js or offline decoder to wav
+// TODO: implement https://github.com/audiocogs/aurora.js or offline decoder to wav to enable other formats
 
 function LocalFilePlayer() {
-   // this.name = "local";
     var elem = "localaudio-frame";
     $("body").append("<audio id=" + elem + " controls></audio>");
     this.audio = document.getElementById(elem);
@@ -311,6 +310,10 @@ BrowseMusic.prototype.initAlbums = function () {
 
     table.setData(tableData);
     table.draw();
+}
+
+BrowseMusic.prototype.update = function(){
+    this.initSongs();
 }
 
 $(document).ready(function(){

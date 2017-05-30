@@ -5,7 +5,7 @@
 
 //----------------------------------------------- CLASS PlayQueue ---------------------------------------
 /**
- * PlayQueue stores and manages the list of songs in the current playlist/queue.
+ * PlayQueue stores and manages the list of songs in the current playlistId/queue.
  * The PlayQueue instance is stored by Central - use Central.getPlayQueue() to retrieve it
  * @constructor
  */
@@ -47,7 +47,12 @@ PlayQueue.prototype.next = function (random) {
  */
 PlayQueue.prototype.prev = function(){
     if(this.history.length > 0) {
-        this.currentPos = this.songs.indexOf(this.history[this.history.length-1]);
+        var prev = this.history[this.history.length-1];
+        this.currentPos = this.songs.indexOf(prev);
+        if(this.currentPos < 0){
+            this.songs.splice(0, 0, prev);
+            this.currentPos = 0;
+        }
         this.history.pop();
     }
 
@@ -206,7 +211,7 @@ function PlayerSettings(){
 
 //----------------------------------------------- CLASS MusicPlayer -------------------------------------
 /**
- * Music Player that controls the playlist and all plugged-in music players
+ * Music Player that controls the playlistId and all plugged-in music players
  * @constructor
  */
 function MusicPlayer() {

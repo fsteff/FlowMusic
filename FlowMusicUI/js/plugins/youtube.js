@@ -97,13 +97,11 @@ $(document).ready(function() {
         this.unload();
     }
     YoutubePlayer.prototype.unload = function(){
-       // this.playerReady = false;
-        if(this.player != null) {
+        if(this.playerReady && this.player != null) {
             this.player.stopVideo();
-            //this.player = null;
+
         }
         $("#yt-frame").hide();
-        //$("#yt-frame").html("");
         this.settings.playing = false;
     }
 
