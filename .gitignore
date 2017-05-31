@@ -7,4 +7,6 @@
 /logs/
 *.mp3
 *.iml
+*.trace.db
+*.jar
 /chromium/

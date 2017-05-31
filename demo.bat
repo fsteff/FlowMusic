@@ -1,0 +1,1 @@
+java -jar flowmusic.jar ./demo/demo.config.json
