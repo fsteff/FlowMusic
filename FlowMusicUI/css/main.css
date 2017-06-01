@@ -131,6 +131,11 @@ html, body{
     border-color: #818181;
 }
 
+.contextMenu .label{
+    padding: 3px;
+    background-color: #aaaaaa;
+}
+
 .contextMenu .property{
     padding: 3px;
 }

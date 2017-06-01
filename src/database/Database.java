@@ -128,7 +128,7 @@ public class Database extends ThreadedComponent {
 			JSONArray update=msg.getJSONArray("found");
 			for(int i=0; i<update.length(); i++){
 				update.getJSONObject(i).put(DBAttributes.VALUE, update.getJSONObject(i).getString("path"));
-				update.getJSONObject(i).put(DBAttributes.TYPE, "LOCAL");
+				update.getJSONObject(i).put(DBAttributes.TYPE, "local");
 				addSong(update.getJSONObject(i));
 			}
 			logger.info("done");

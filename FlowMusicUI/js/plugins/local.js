@@ -50,7 +50,7 @@ LocalFilePlayer.prototype.tryLoadSource = function(source, callback){
     $.ajax({
         type: "HEAD",
         async: true,
-        url: source,
+        url: "/song?id="+source,
         success: function(){callback(true)},
         error: function(){callback(false)}
     });
@@ -89,8 +89,8 @@ LocalSearchEngine.prototype.search = function(query, callback){
                     source: src[i2].value
                 };
                 // local files are identified by their source id for security reasons
-                if(src.type == 'local'){
-                    obj.source = src.sourceid;
+                if(src[i2].type == 'local'){
+                    obj.source = src[i2].sourceid;
                 }
 
                 song.sources.push(obj);

@@ -55,7 +55,7 @@ public class Crawler extends ThreadedComponent {
 						MP3File mp3 = new MP3File(path);
 
 						JSONObject data = new JSONObject();
-						data.put("titel", mp3.getTitle());
+						data.put("title", mp3.getTitle());
 						data.put("artist", mp3.getArtist());
 						data.put("album", mp3.getAlbum());
 						data.put("path", path);

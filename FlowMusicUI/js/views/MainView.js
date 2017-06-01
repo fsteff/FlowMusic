@@ -365,11 +365,14 @@ function PlaylistView(element){
     this.playlistId = null;
     this.playlistName = null;
     this.entries = [];
+    this.songTable = null;
 }
 
 PlaylistView.prototype.setPlaylist = function(id, name){
     this.playlistId = id;
     this.playlistName = name;
+    this.songs = null;
+    this.songTable = new SongTable(this.element, this.playlistName);
     this.update();
 }
 
@@ -380,15 +383,39 @@ PlaylistView.prototype.update = function(){
         //Log.error("PlaylistView: no playlistId set");
     }
 
+    const onAnswer = function(msg){
+        self.songs = new SongArray(msg);
+        self.songTable.update(self.songs);
+    }
+
+    /*
     LocalComm.newMessage({
         command: "get",
         what: "ViewPlaylistSongs",
         filter: {playlistid: this.playlistId}
     },
     Message.Components.DATABASE,
-    function(msg){
-        self.element.html("<h3>"+self.playlistName+"</h3>")
-    });
+    onAnswer);*/
+
+    onAnswer([{
+        "sources": [{"sourceid": 1, "type": "youtube", "songid": 1, "value": "m8OM4JdsZ7Y"}],
+        "year": 0,
+        "artist": "Erwin & Edwin",
+        "album": [""],
+        "artistid": 1,
+        "tag": [""],
+        "title": "Stress",
+        "songid": 1
+    }, {
+        "sources": [{"sourceid": 2, "type": "youtube", "songid": 2, "value": "DWcISt1PdjI"}],
+        "year": 0,
+        "artist": "Erwin & Edwin",
+        "album": [""],
+        "artistid": 1,
+        "tag": [""],
+        "title": "Freddy",
+        "songid": 2
+    }]);
 }
 
 //------------------------------------------------------------- CLASS PlaylistOverView ---------------------------------
@@ -446,11 +473,11 @@ PlaylistOverview.prototype.update = function(){
            return cha - chb;
         });
 
-        this.playlists = [];
+        self.playlists = [];
         for(var i = 0; i < answer.length; i++){
             const name = answer[i].name;
             const id = answer[i].playlistid;
-            this.playlists.push({
+            self.playlists.push({
                 name: name,
                 id: id
             });
@@ -563,13 +590,17 @@ function ContextMenu(){
         var target = $(event.target);
         if( target.attr("id") !== self.element.attr("id") /*&& ctx.element.find("#"+ctx.id).length == 0*/){
             self.element.remove();
-            $(document).unbind("click", this);
+            $(document).unbind("click", this.closeHandler);
             ContextMenu.instance = null;
         }
     }
 
-    $(document).click(this.closeHandler);
+    $(document).bind("click", this.closeHandler); //.click(this.closeHandler);
     ContextMenu.instance = this;
+}
+
+ContextMenu.prototype.addLabel = function(html){
+    $("<div class='label'>"+html+"</div>").appendTo(this.element);
 }
 
 ContextMenu.prototype.addProperty = function(html, handler){

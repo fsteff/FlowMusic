@@ -168,4 +168,6 @@ Callable.prototype.equal = function(other){
 
 Callable.idCounter = 0;
 
-
+function isArray(obj){
+    return $.isArray(obj);
+}

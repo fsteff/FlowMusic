@@ -43,6 +43,7 @@ public class Central extends ThreadedComponent
 		public final static String COMMAND = "command";
 		public final static String CONFIG = "config";
 		public final static String ANSWER = "answer";
+		public final static String CONFIG_CHANGED = "config changed";
 
 		public static JSONObject getConfig()
 		{
@@ -214,7 +215,7 @@ public class Central extends ThreadedComponent
 		writeConfig();
 
 		JSONObject json = new JSONObject();
-		json.put(Messages.COMMAND, "config changed");
+		json.put(Messages.COMMAND, Messages.CONFIG_CHANGED);
 		json.put(Messages.CONFIG, this.config);
 		sendMessage(Component.ANY, json, m ->
 		{});
