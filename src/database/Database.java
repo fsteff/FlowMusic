@@ -127,6 +127,8 @@ public class Database extends ThreadedComponent {
 		case "updateFolder":
 			JSONArray update=msg.getJSONArray("found");
 			for(int i=0; i<update.length(); i++){
+				update.getJSONObject(i).put(DBAttributes.VALUE, update.getJSONObject(i).getString("path"));
+				update.getJSONObject(i).put(DBAttributes.TYPE, "LOCAL");
 				addSong(update.getJSONObject(i));
 			}
 			logger.info("done");
@@ -215,7 +217,6 @@ public class Database extends ThreadedComponent {
 	
  	private void addSong(JSONObject song){
 		String insert;
-		
 		int songId;
 		int albumId;
 		int artistId;
