@@ -109,12 +109,28 @@ public class Database extends ThreadedComponent {
 			case "source":
 				getSong(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID));
 				break;
+				
+			case "ViewPlaylistSongs":
+				if(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString()=="*"){
+					found = getPlaylists();
+				}else{
+					found = getPlaylist(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString());
+				}
+				
+				break;
 			default:
 				break;
 			}
 			
 			ret.put("answer", found);
 			return ret;
+		case "updateFolder":
+			JSONArray update=msg.getJSONArray("found");
+			for(int i=0; i<update.length(); i++){
+				addSong(update.getJSONObject(i));
+			}
+			logger.info("done");
+			break;
 		case "update"://TODO
 			break;
 		case "insertSong":
@@ -137,21 +153,36 @@ public class Database extends ThreadedComponent {
 			addSong(newSong);
 			ret.put("answer", "done");
 			return ret;
+		case "insertPlaylist":
+			addPlaylist(msg.getJSONObject("filter").getString(DBAttributes.NAME));
+			break;
+		case "addSongToPlaylist":
+			addSongToPlaylist(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID), msg.getJSONObject("filter").getInt(DBAttributes.PLAYLIST_ID), msg.getJSONObject("filter").getInt(DBAttributes.NR));
+			break;
 		case "delete"://TODO
 			switch(what){
+			case "song":
+				removeSong(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID));
 			case "playlist":
 			case "playlistentry":
 			}
 			break;
 			
 		default:
-			
-
-		
-			// TODO: error
 		}
 		
 		return null;
+	}
+
+	private JSONArray getPlaylist(String playlistId) {
+		// TODO test
+		String get = "SELECT * FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		return getAllInfo(get);	
+	}
+
+	private JSONArray getPlaylists() {
+		String get="SELECT * FROM "+DBTables.Playlist;
+		return query(get);
 	}
 
 	private JSONArray query(String query){
@@ -313,7 +344,7 @@ public class Database extends ThreadedComponent {
 	private void addPlaylist(String name){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+")"+
-						"VALUES ('"+name+"', "+stamp.toString()+")";
+						" VALUES ('"+turnToSqlString(name)+"', '"+stamp.toString()+"')";
 		query(insert);
 	}
 	
@@ -321,30 +352,60 @@ public class Database extends ThreadedComponent {
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		JSONArray information =	getSong(songId);
 		String insert;
+		insert= "SELECT MAX("+DBAttributes.NR+") AS MAX FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		information=query(insert);
 		if(!information.isNull(0)){
-			insert= "SELECT "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" LIKE '"+playlistId+"' "+
-					"AND "+DBAttributes.SONG_ID+" = "+songId+
-					"AND "+DBAttributes.NR+" = "+trackNumber;
-			information=query(insert);
-			if(information.isNull(0)){
-				insert = "INSERT INTO "+DBTables.PlaylistEntry+" ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+", "+DBAttributes.NR+")"+
-						"VALUES ('"+playlistId+"', "+songId+", "+trackNumber+")";
-				query(insert);
-				insert = "UPDATE "+DBTables.Playlist+" SET "+DBAttributes.TIMESTAMP+" = "+stamp.toString()+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
-				logger.info("Song added to playlist.");
-			}else{
-				logger.error("Tracknumber in playlist already taken.");
+			if(information.getJSONObject(0).getInt("MAX")<trackNumber){
+				trackNumber=information.getJSONObject(0).getInt("MAX")+1;
 			}
 		}else{
-			logger.error("Song not found.");
+			trackNumber=1;
 		}
+		insert= "SELECT "+DBAttributes.NR+", "+DBAttributes.SONG_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBAttributes.NR+" > "+trackNumber;
+		information=query(insert);	
+		
+		for(int i=0; i<information.length(); i++){
+			insert= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)+1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
+			query(insert);
+		}
+		
+		insert = "INSERT INTO "+DBTables.PlaylistEntry+" ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+", "+DBAttributes.NR+")"+
+				"VALUES ('"+playlistId+"', "+songId+", "+trackNumber+")";
+		query(insert);
+		insert = "UPDATE "+DBTables.Playlist+" SET "+DBAttributes.TIMESTAMP+" = "+stamp.toString()+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		query(insert);
+		logger.info("Song added to playlist.");
 	}
 	
-	private void removeSong(int ID){//TODO
+	private void removeSong(int ID){//TODO test
+		String delete=" DELETE FROM "+DBTables.Song+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		query(delete);
+		delete=" DELETE FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		query(delete);
+		delete=" DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		query(delete);
+		delete=" DELETE FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		query(delete);
+		delete=" DELETE FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		query(delete);
+		JSONArray number;
+		JSONArray information;
+		delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		number=query(delete);
+		for(int j=0; j<number.length(); j++){
+			delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.SONG_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.NR+" > "+number.getJSONObject(j).getInt(DBAttributes.NR);
+			information=query(delete);	
+			for(int i=0; i<information.length(); i++){
+				delete= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)-1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
+				query(delete);
+			}
+		}
+		
+		
 		
 	}
 	
-	private JSONArray search(String search){//TODO
+	private JSONArray search(String search){
 		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+
 				" FROM "+DBTables.Song+", "+DBTables.Artist+","+DBTables.Album+
 				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
@@ -405,64 +466,71 @@ public class Database extends ThreadedComponent {
 	
 	private void addAllTables(){
 		try {
-			String table = "CREATE TABLE "+DBTables.Playlist + 
-							"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-							DBAttributes.NAME+" varchar(255) NOT NULL, " + 
-							DBAttributes.TIMESTAMP+" varchar(255), "+
-							"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
-			statement= databaseConnection.createStatement();
-			statement.executeUpdate(table);
+			String table="SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema ='PUBLIC'";
+			if(query(table).isNull(0)){
+				table = "CREATE TABLE "+DBTables.Playlist + 
+						"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+						DBAttributes.NAME+" varchar(255) NOT NULL, " + 
+						DBAttributes.TIMESTAMP+" varchar(255), "+
+						"PRIMARY KEY("+DBTables.PLAYLIST_ID+"))";
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(table);
+		
+		
+		
+		table = "CREATE TABLE "+DBTables.PlaylistEntry+
+				"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+				DBAttributes.SONG_ID+" int NOT NULL, "+
+				DBAttributes.NR+" int(4), "+
+				"PRIMARY KEY ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+"))";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.Artist+
+				"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
+				DBAttributes.ARTIST_NAME+" varchar(255), "+
+				"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.Song +
+				"( "+DBAttributes.SONG_ID+" int NOT NULL AUTO_INCREMENT, "+
+				DBAttributes.ARTIST_ID+" int NOT NULL, "+
+				DBAttributes.YEAR+" int(4), "+
+				DBAttributes.TITLE+" varchar(255), "+
+				"PRIMARY KEY ("+DBAttributes.SONG_ID+"))";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.Album+
+				"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
+				DBTables.ALBUM_NAME+" varchar(255), "+
+				DBTables.ARTIST_ID+" int NOT NULL ,"+
+				"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.AlbumEntry+
+				"("+DBAttributes.ALBUM_ID+" int NOT NULL, "+
+				DBAttributes.SONG_ID+" int NOT NULL)";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.Source+
+				"("+DBAttributes.SOURCE_ID+" int NOT NULL AUTO_INCREMENT, "+
+				DBAttributes.SONG_ID+" int NOT NULL, "+
+				DBAttributes.TYPE+" varchar(255), "+
+				DBAttributes.VALUE+" varchar(255), "+
+				"PRIMARY KEY ("+DBAttributes.SOURCE_ID+"))";
+		statement.executeUpdate(table);
+		
+		table = "CREATE TABLE "+DBTables.Tag+
+				"("+DBAttributes.TAG_NAME+" varchar(255), "+
+				DBAttributes.SONG_ID+" int NOT NULL)";
+		statement.executeUpdate(table);
+		logger.info("All tables sucessfully created...");
+			}else{
+				logger.info("Tables do allready exist...");
+			}
 			
 			
-			
-			table = "CREATE TABLE "+DBTables.PlaylistEntry+
-					"( "+DBAttributes.PLAYLIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.SONG_ID+" int NOT NULL, "+
-					DBAttributes.NR+" int(4), "+
-					"PRIMARY KEY ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Artist+
-					"( "+DBAttributes.ARTIST_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.ARTIST_NAME+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.ARTIST_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Song +
-					"( "+DBAttributes.SONG_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.ARTIST_ID+" int NOT NULL, "+
-					DBAttributes.YEAR+" int(4), "+
-					DBAttributes.TITLE+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.SONG_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Album+
-					"("+DBAttributes.ALBUM_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBTables.ALBUM_NAME+" varchar(255), "+
-					DBTables.ARTIST_ID+" int NOT NULL ,"+
-					"PRIMARY KEY ("+DBAttributes.ALBUM_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.AlbumEntry+
-					"("+DBAttributes.ALBUM_ID+" int NOT NULL, "+
-					DBAttributes.SONG_ID+" int NOT NULL)";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Source+
-					"("+DBAttributes.SOURCE_ID+" int NOT NULL AUTO_INCREMENT, "+
-					DBAttributes.SONG_ID+" int NOT NULL, "+
-					DBAttributes.TYPE+" varchar(255), "+
-					DBAttributes.VALUE+" varchar(255), "+
-					"PRIMARY KEY ("+DBAttributes.SOURCE_ID+"))";
-			statement.executeUpdate(table);
-			
-			table = "CREATE TABLE "+DBTables.Tag+
-					"("+DBAttributes.TAG_NAME+" varchar(255), "+
-					DBAttributes.SONG_ID+" int NOT NULL)";
-			statement.executeUpdate(table);
-			logger.info("All tables sucessfully created...");
 		} catch (SQLException e) {
-			logger.info("Tables found...");
+			logger.info("Error when trying to start...");
 		}catch(Exception e){
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
