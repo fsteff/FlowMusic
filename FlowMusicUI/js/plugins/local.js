@@ -63,9 +63,9 @@ LocalSearchEngine = function(){
 
 LocalSearchEngine.prototype.search = function(query, callback){
     LocalComm.newMessage({
-        "command" : "get",
-        "what": "song",
-        "filter" : {"title" : query, "artist" : query}
+        command : "get",
+        what: "song",
+        filter : {title : query, artist : query, tag: query, album: query}
     },"DATABASE", function(data){
         if(data.answer === null || data.answer.length === null){
             Log.error("Local Song search: return answer invalid: " + data);
@@ -77,7 +77,22 @@ LocalSearchEngine.prototype.search = function(query, callback){
             var song = {
                 title: answer[i].title,
                 artist: answer[i].artist,
-                sources: answer[i].sources
+                sources: []
+            }
+            var src = answer[i].sources;
+            if(typeof src == 'undefined' || src == null){
+                src = [];
+            }
+            for(var i2 = 0; i2 < src.length; i2++){
+                var obj = {
+                    plugin: src.type,
+                    source: src.value
+                };
+                if(src.type == 'local'){
+                    obj.source = src.sourceid;
+                }
+
+                song.sources.push(obj);
             }
             result[i] = song;
         }

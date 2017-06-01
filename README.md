@@ -1,8 +1,12 @@
-# FlowPlayer
+# FlowMusic
 Multi-Source Music Player
+
+FlowMusic is a music player that allows playing local files, youtube videos and soundcloud tracks.
+(and many more to come!)
+
 <br>
-Copyright by © <br>
+Copyright by ï¿½ <br>
 Stefan Fixl <br>
-Michael Ratzenböck <br>
+Michael Ratzenbï¿½ck <br>
 Gregor Pertl <br>
 Vanessa Fediuk
