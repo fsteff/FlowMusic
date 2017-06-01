@@ -106,6 +106,9 @@ public class Database extends ThreadedComponent {
 				}
 				
 				break;
+			case "source":
+				getSong(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID));
+				break;
 			default:
 				break;
 			}
@@ -316,7 +319,7 @@ public class Database extends ThreadedComponent {
 	
 	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
-		JSONArray information =	getSong(Integer.toString(songId));
+		JSONArray information =	getSong(songId);
 		String insert;
 		if(!information.isNull(0)){
 			insert= "SELECT "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" LIKE '"+playlistId+"' "+
@@ -392,16 +395,12 @@ public class Database extends ThreadedComponent {
 		return songInfo;
 	}
 	
-	private JSONArray getSong(String ID){//TODO
-		String get = "SELECT "+".*" +
-				" FROM "+DBTables.Song+", "+DBTables.Artist+", "+DBTables.Source+","+DBTables.Album+
-				" WHERE "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+ID+
-				" AND "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
-				" AND "+DBTables.Source+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+
-				" AND "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = (SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+"'"+ID+"')";
-		JSONArray x=query(get);
-		x.forEach(e->System.out.println(e.toString()));
-		return x;
+	private JSONArray getSong(int ID){
+		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+
+				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+ID;
+		return getAllInfo(get);
 	}
 	
 	private void addAllTables(){
