@@ -17,7 +17,8 @@ import crawler.file.MP3File;
 public class Crawler extends ThreadedComponent {
 
 	private static final Logger logger = LoggerFactory.getLogger(Crawler.class);
-
+	JSONArray mp3Files = new JSONArray();
+	
 	public Crawler(Central central) {
 		super(Component.CRAWLER, central);
 	}
@@ -37,16 +38,15 @@ public class Crawler extends ThreadedComponent {
 		}
 	}
 
-	public JSONArray searchForMp3(String[] paths) {
-		JSONArray mp3Files = new JSONArray();
-
+	public void searchForMp3(JSONArray mp3Files, String[] paths) {
+		
 		if (paths != null) {
 			// test for each file if it is a directory
 			for (String path : paths) {
 				File file = new File(path);
 				if (file.isDirectory()) {
 					// searches all files in the given file for mp3 files
-					searchForMp3(getPaths(file));
+					searchForMp3(mp3Files, getPaths(file));
 
 				} else if (path.endsWith(".mp3")) {
 					// tests if the file is a mp3 file and adds it to the
@@ -67,7 +67,6 @@ public class Crawler extends ThreadedComponent {
 				}
 			}
 		}
-		return mp3Files;
 	}
 
 	public void shutdown() {
@@ -99,8 +98,8 @@ public class Crawler extends ThreadedComponent {
 		for (int i = 0; i < paths.length(); i++) {
 			params[i] = paths.getString(i);
 		}
-
-		JSONArray found = searchForMp3(params);
+		searchForMp3(mp3Files,params);
+		JSONArray found = mp3Files;
 
 		// updates Database
 		JSONObject uMsg = new JSONObject();
