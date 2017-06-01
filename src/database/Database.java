@@ -344,7 +344,7 @@ public class Database extends ThreadedComponent {
 	private void addPlaylist(String name){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+")"+
-						"VALUES ('"+turnToSqlString(name)+"', "+stamp.toString()+")";
+						" VALUES ('"+turnToSqlString(name)+"', '"+stamp.toString()+"')";
 		query(insert);
 	}
 	
