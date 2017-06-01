@@ -148,7 +148,11 @@ class SongTable{
                 playlists.forEach(function(pl){
                     const playlist = pl;
                     ctx.addProperty(pl.name, function(){
-                        console.log(pl.name);
+                        LocalComm.newMessage({
+                            command: "addSongToPlaylist",
+                            songid: song.id,
+                            playlistid: playlist.id
+                        }, Message.Components.DATABASE);
                     });
                 });
             }

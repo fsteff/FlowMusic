@@ -55,5 +55,6 @@ $(document).ready(function(){
     const page = extend(MainTab, PlaylistOverview, elem, elem);
     view.sidepanel.playlists.page = page;
     view.mainview.tabs.push(page);
+    page.update();
 
 });

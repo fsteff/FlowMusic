@@ -384,20 +384,20 @@ PlaylistView.prototype.update = function(){
     }
 
     const onAnswer = function(msg){
-        self.songs = new SongArray(msg);
+        self.songs = new SongArray(msg.answer);
         self.songTable.update(self.songs);
     }
 
-    /*
+
     LocalComm.newMessage({
         command: "get",
         what: "ViewPlaylistSongs",
         filter: {playlistid: this.playlistId}
     },
     Message.Components.DATABASE,
-    onAnswer);*/
+    onAnswer);
 
-    onAnswer([{
+    /*onAnswer([{
         "sources": [{"sourceid": 1, "type": "youtube", "songid": 1, "value": "m8OM4JdsZ7Y"}],
         "year": 0,
         "artist": "Erwin & Edwin",
@@ -415,7 +415,7 @@ PlaylistView.prototype.update = function(){
         "tag": [""],
         "title": "Freddy",
         "songid": 2
-    }]);
+    }]);*/
 }
 
 //------------------------------------------------------------- CLASS PlaylistOverView ---------------------------------
@@ -432,14 +432,6 @@ function PlaylistOverview(element){
 
 PlaylistOverview.prototype.update = function(){
     const self = this;
-
-/*    LocalComm.newMessage({
-        command: "get",
-        what: "playlist",
-        filter: {playlistid: "*"}
-    },
-    Message.Components.DATABASE,
-    onAnswer);*/
 
     const onAnswer = function(msg){
         self.element.html("<h3>Playlists</h3>");
@@ -474,6 +466,8 @@ PlaylistOverview.prototype.update = function(){
         });
 
         self.playlists = [];
+        const list = $("<ul></ul>");
+        list.appendTo(self.element);
         for(var i = 0; i < answer.length; i++){
             const name = answer[i].name;
             const id = answer[i].playlistid;
@@ -482,8 +476,8 @@ PlaylistOverview.prototype.update = function(){
                 id: id
             });
 
-            const elem = $("<div><a>"+answer[i].name+"</a></div>");
-            elem.appendTo(self.element);
+            const elem = $("<li>"+answer[i].name+"</li>");
+            elem.appendTo(list);
             elem.click(function(){
                 var found = false;
                 for(var i2 = 0; i2 < self.playlistTabs.length && !found; i2++){
@@ -511,17 +505,13 @@ PlaylistOverview.prototype.update = function(){
         PageView.getInstance().sidepanel.openTab(openTab, false);
     }
 
-    onAnswer({
-        answer: [{
-            playlistid: 1,
-            name: "Party",
-            lastchanged: 123456
-        },{
-            playlistid: 2,
-            name: "Chill",
-            lastchanged: 354678
-        }]
-    });
+    LocalComm.newMessage({
+            command: "get",
+            what: "ViewPlaylistSongs",
+            filter: {playlistid: "*"}
+        }, Message.Components.DATABASE,
+        onAnswer);
+
 }
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------

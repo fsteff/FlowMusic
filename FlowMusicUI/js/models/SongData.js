@@ -4,15 +4,16 @@
  */
 
 class Song{
-    constructor(title, artist, sources, albums, tags) {
+    constructor(id, title, artist, sources, albums, tags) {
+        this.id = parseInt(id);
         /**
          * @type {string}
          */
-        this.title = (typeof title == 'string') ? title : "";
+        this.title = (typeof title == 'string') ? title : "ERROR";
         /**
          * @type {string}
          */
-        this.artist = (typeof artist == 'string') ? artist : "";
+        this.artist = (typeof artist == 'string') ? artist : "ERROR";
         /**
          * @type {SourceArray}
          */
@@ -66,6 +67,7 @@ class SongArray extends Array{
         arr.forEach(function(entry){
             self.push(
                 new Song(
+                    entry.songid,
                     entry.title,
                     entry.artist,
                     new SourceArray(entry.sources),

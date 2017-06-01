@@ -111,7 +111,7 @@ public class Database extends ThreadedComponent {
 				break;
 				
 			case "ViewPlaylistSongs":
-				if(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString()=="*"){
+				if(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString().equals("*")){
 					found = getPlaylists();
 				}else{
 					found = getPlaylist(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString());
@@ -159,7 +159,7 @@ public class Database extends ThreadedComponent {
 			addPlaylist(msg.getJSONObject("filter").getString(DBAttributes.NAME));
 			break;
 		case "addSongToPlaylist":
-			addSongToPlaylist(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID), msg.getJSONObject("filter").getInt(DBAttributes.PLAYLIST_ID), msg.getJSONObject("filter").getInt(DBAttributes.NR));
+			addSongToPlaylist(msg.getInt(DBAttributes.SONG_ID), msg.getInt(DBAttributes.PLAYLIST_ID), msg.optInt(DBAttributes.NR));
 			break;
 		case "delete"://TODO
 			switch(what){
