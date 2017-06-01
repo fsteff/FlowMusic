@@ -31,8 +31,9 @@ $(document).ready(function() {
     YoutubePlayer.prototype.onPlayerReady = function (event) {
         ytPlayerInstance.playerReady = true;
         ytPlayerInstance.setVolume(100);
+        console.log(ytPlayerInstance.settings.playing);
         if(ytPlayerInstance.settings.playing) {
-            event.target.playVideo();
+            ytPlayerInstance.play();
         }
     }
 
@@ -66,7 +67,6 @@ $(document).ready(function() {
         }
     }
     YoutubePlayer.prototype.load = function(videoid){
-
         if(this.player != null){
             $("#yt-frame").show();
             this.player.loadVideoById(videoid);

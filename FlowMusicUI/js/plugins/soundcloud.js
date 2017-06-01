@@ -61,7 +61,7 @@ function SoundCloudPlayer() {
             soundCloudInstance.widget.bind(SC.Widget.Events.FINISH, function () {
                 Central.getPlayer().nextSong();
             })
-            self.element.attr("right", "-50px"); //.hide();
+            self.element.hide();
         }
     }
     window.setTimeout(load, 100);
