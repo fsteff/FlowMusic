@@ -1,11 +1,15 @@
 package central;
 
+import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,27 +36,34 @@ import webserver.Webserver;
  */
 public class Central extends ThreadedComponent
 {
-    public static class Messages{
-        public final static String GET_CONFIG = "get config";
-        public final static String SET_CONFIG = "set config";
-        public final static String COMMAND = "command";
-        public final static String CONFIG = "config";
-        public final static String ANSWER = "answer";
-        public static JSONObject getConfig(){
-            return new JSONObject("{\""+COMMAND+"\":\""+GET_CONFIG+"\"}");
-        }
-        public static JSONObject setConfig(JSONObject cfg){
-            JSONObject obj = new JSONObject();
-            obj.put(COMMAND, SET_CONFIG);
-            obj.put(CONFIG, cfg);
-            return obj;
-        }
-    }
+	public static class Messages
+	{
+		public final static String GET_CONFIG = "get config";
+		public final static String SET_CONFIG = "set config";
+		public final static String COMMAND = "command";
+		public final static String CONFIG = "config";
+		public final static String ANSWER = "answer";
 
-    public static class Config{
-        public final static String DB_LOCATION = "DBLocation";
-        public final static String MUSIC_DIRS = "MusicDirectories";
-    }
+		public static JSONObject getConfig()
+		{
+			return new JSONObject(
+					"{\"" + COMMAND + "\":\"" + GET_CONFIG + "\"}");
+		}
+
+		public static JSONObject setConfig(JSONObject cfg)
+		{
+			JSONObject obj = new JSONObject();
+			obj.put(COMMAND, SET_CONFIG);
+			obj.put(CONFIG, cfg);
+			return obj;
+		}
+	}
+
+	public static class Config
+	{
+		public final static String DB_LOCATION = "DBLocation";
+		public final static String MUSIC_DIRS = "MusicDirectories";
+	}
 
 	static
 	{
@@ -75,7 +86,6 @@ public class Central extends ThreadedComponent
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final Logger logger = LoggerFactory
 			.getLogger(Central.class);
 
@@ -86,7 +96,7 @@ public class Central extends ThreadedComponent
 	Central(File configFile)
 	{
 		super(Component.CENTRAL, null);
-        this._setCentral(this);
+		this._setCentral(this);
 		this.configFile = configFile;
 		this.components = new ConcurrentHashMap<>();
 		this.components.put(Component.CENTRAL, this);
@@ -95,14 +105,14 @@ public class Central extends ThreadedComponent
 		{
 			ExceptionHandler.showErrorDialog("Error",
 					"Config file is a directory!");
-            logger.error("Config file is a directory");
+			logger.error("Config file is a directory");
 			configFile = new File("./config.json");
 		}
 
 		if (!configFile.exists())
 		{
-            checkAndFixConfig();
-            writeConfig();
+			checkAndFixConfig();
+			writeConfig();
 		}
 		else
 		{
@@ -125,88 +135,105 @@ public class Central extends ThreadedComponent
 			catch (Exception e)
 			{
 				ExceptionHandler.showErrorDialog(e);
-                logger.error("", e);
+				logger.error("", e);
 
-			}finally {
-                checkAndFixConfig();
-                writeConfig();
-            }
-        }
+			}
+			finally
+			{
+				checkAndFixConfig();
+				writeConfig();
+			}
+		}
 	}
 
-	void checkAndFixConfig(){
-	    if(this.config == null){
-	        this.config = new JSONObject();
-        }
-        if(this.config.opt(Config.DB_LOCATION) == null){
-            this.config.put(Config.DB_LOCATION, this.configFile.getParent() + File.separator + "data");
-        }
+	void checkAndFixConfig()
+	{
+		if (this.config == null)
+		{
+			this.config = new JSONObject();
+		}
+		if (this.config.opt(Config.DB_LOCATION) == null)
+		{
+			this.config.put(Config.DB_LOCATION,
+					this.configFile.getParent() + File.separator + "data");
+		}
 
-        JSONArray dirs = this.config.optJSONArray(Config.MUSIC_DIRS);
-        ArrayList<String> entries = new ArrayList<>();
-        // check double entries
-        if(dirs != null && dirs.length() > 0) {
-            for (Object obj : dirs) {
-                if (obj instanceof String) {
-                    String str = (String) obj;
-                    boolean found = false;
-                    for(String s : entries){
-                        if(s.equals(str)){
-                            found = true;
-                        }
-                    }
-                    if(!found) {
-                        entries.add((String) obj);
-                    }
-                }
-            }
-        }
-        dirs = new JSONArray();
-        for(String s : entries){
-            dirs.put(s);
-        }
-        this.config.put(Config.MUSIC_DIRS, dirs);
-    }
+		JSONArray dirs = this.config.optJSONArray(Config.MUSIC_DIRS);
+		ArrayList<String> entries = new ArrayList<>();
+		// check double entries
+		if (dirs != null && dirs.length() > 0)
+		{
+			for (Object obj : dirs)
+			{
+				if (obj instanceof String)
+				{
+					String str = (String) obj;
+					boolean found = false;
+					for (String s : entries)
+					{
+						if (s.equals(str))
+						{
+							found = true;
+						}
+					}
+					if (!found)
+					{
+						entries.add((String) obj);
+					}
+				}
+			}
+		}
+		dirs = new JSONArray();
+		for (String s : entries)
+		{
+			dirs.put(s);
+		}
+		this.config.put(Config.MUSIC_DIRS, dirs);
+	}
 
-    void writeConfig(){
-        try
-        {
-            String str = this.config.toString(2);
-            FileWriter writer = new FileWriter(this.configFile);
-            writer.write(str);
-            writer.close();
-            logger.info("Config successfully written to file");
-        }
-        catch (IOException e)
-        {
-            ExceptionHandler.showErrorDialog(e);
-            logger.error("", e);
-        }
-    }
+	void writeConfig()
+	{
+		try
+		{
+			String str = this.config.toString(2);
+			FileWriter writer = new FileWriter(this.configFile);
+			writer.write(str);
+			writer.close();
+			logger.info("Config successfully written to file");
+		}
+		catch (IOException e)
+		{
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
+		}
+	}
 
 	void configChanged() throws InterruptedException
 	{
-	    checkAndFixConfig();
+		checkAndFixConfig();
 		writeConfig();
 
 		JSONObject json = new JSONObject();
 		json.put(Messages.COMMAND, "config changed");
 		json.put(Messages.CONFIG, this.config);
-		sendMessage(Component.ANY, json, m -> {});
+		sendMessage(Component.ANY, json, m ->
+		{});
 	}
 
 	void newMessage(Message msg) throws InterruptedException
-    {
-        ThreadedComponent comp = components.get(msg.recipient);
-        if(comp != null) {
-            comp.addMessage(msg);
-            logger.info("Message from " + msg.sender + " to " + msg.recipient + ": " + msg.message);
-        }
+	{
+		ThreadedComponent comp = components.get(msg.recipient);
+		if (comp != null)
+		{
+			comp.addMessage(msg);
+			logger.info("Message from " + msg.sender + " to "
+					+ msg.recipient + ": " + msg.message);
+		}
 	}
 
 	void addComponent(ThreadedComponent component)
 	{
-	    this.components.put(component.componentType, component);
+		this.components.put(component.componentType, component);
 	}
 
 	// TODO: implement good system for component loading
@@ -222,8 +249,10 @@ public class Central extends ThreadedComponent
 		}
 		else
 		{
-			File parentFolder = new File(System.getProperty("user.home") + File.separator + ".FlowMusic");
-			if(! parentFolder.exists()){
+			File parentFolder = new File(System.getProperty("user.home")
+					+ File.separator + ".FlowMusic");
+			if (!parentFolder.exists())
+			{
 				parentFolder.mkdir();
 			}
 			configPath = new File(parentFolder.getPath() + File.separator
@@ -236,8 +265,8 @@ public class Central extends ThreadedComponent
 		central.addComponent(gui);
 		central.addComponent(new Crawler(central));
 		central.addComponent(new Database(central,
-                new File(central.config.getString("DBLocation")).getAbsoluteFile()));
-		
+				new File(central.config.getString("DBLocation"))
+						.getAbsoluteFile()));
 
 		JSONObject json = new JSONObject();
 		json.put(Messages.COMMAND, "start");
@@ -258,9 +287,38 @@ public class Central extends ThreadedComponent
 			ExceptionHandler.showErrorDialog(e);
 			logger.error("", e);
 		}
-		startChrome();
+
+		if (System.getProperty("os.name").toLowerCase()
+				.contains("windows"))
+		{
+			startChrome();
+		}
+		else
+		{
+			startDefaultBrowser();
+		}
 	}
-	
+
+	private static void startDefaultBrowser()
+	{
+		if (Desktop.isDesktopSupported()
+				&& Desktop.getDesktop().isSupported(Action.OPEN))
+		{
+			try
+			{
+				Desktop.getDesktop()
+						.browse(new URL("http://localhost:8080").toURI());
+			}
+			catch (IOException | URISyntaxException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				ExceptionHandler.showErrorDialog(
+						"Could not open standard browser", e.getMessage());
+			}
+		}
+	}
+
 	/**
 	 * Starts the Chromium Browser and terminates the application if the
 	 * browser gets closed.
@@ -274,13 +332,15 @@ public class Central extends ThreadedComponent
 
 			if (!Files.exists(Paths.get(f.getAbsolutePath())))
 			{
-				ExceptionHandler.showErrorDialog("Error", "Chromium not found...");
+				ExceptionHandler.showErrorDialog("Error",
+						"Chromium not found...");
 			}
 			else
 			{
 				System.out.println(f.getAbsolutePath());
 				ProcessBuilder pb = new ProcessBuilder("cmd", "/c",
-						f.getAbsolutePath(), chromiumParam, "--start-maximized");
+						f.getAbsolutePath(), chromiumParam,
+						"--start-maximized");
 
 				try
 				{
@@ -303,7 +363,7 @@ public class Central extends ThreadedComponent
 	protected JSONObject onMessage(Component sender, JSONObject msg)
 			throws Exception
 	{
-	    String cmd = msg.optString(Messages.COMMAND);
+		String cmd = msg.optString(Messages.COMMAND);
 		switch (cmd)
 		{
 		case Messages.GET_CONFIG:
@@ -315,10 +375,12 @@ public class Central extends ThreadedComponent
 			JSONObject newConfig = msg.optJSONObject(Messages.CONFIG);
 			if (newConfig == null)
 			{
-                logger.error("'set config' - message does not contain 'config':" + msg.toString());
-                ExceptionHandler.showErrorDialog(new Exception(
-                        "Invalid message does not contain 'config': "
-                                + msg.toString()));
+				logger.error(
+						"'set config' - message does not contain 'config':"
+								+ msg.toString());
+				ExceptionHandler.showErrorDialog(new Exception(
+						"Invalid message does not contain 'config': "
+								+ msg.toString()));
 			}
 			else
 			{
@@ -330,12 +392,16 @@ public class Central extends ThreadedComponent
 			answer.put(Messages.ANSWER, "done");
 			return answer;
 		default:
-		    if(cmd == null){
-                logger.error("Message does not have 'command' :"+msg.toString());
-            }else {
-                logger.error("Unhandled message command:" + cmd);
-            }
-            break;
+			if (cmd == null)
+			{
+				logger.error("Message does not have 'command' :"
+						+ msg.toString());
+			}
+			else
+			{
+				logger.error("Unhandled message command:" + cmd);
+			}
+			break;
 		}
 		return null;
 	}

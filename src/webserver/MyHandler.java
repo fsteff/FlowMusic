@@ -90,8 +90,6 @@ public class MyHandler extends AbstractHandler
 	{
 		String method = baseRequest.getMethod();
 		boolean handeld = false;
-		System.out.print("Target: " + target);
-		System.out.println(" Method: " + method);
 
 		if (method.equals(GET))
 		{
@@ -127,7 +125,6 @@ public class MyHandler extends AbstractHandler
 			System.out.println("Sendig song...");
 
 			String range = request.getHeader("Range");
-			System.out.println("range: " + range);
 
 			/* If no range is specified send all... */
 			if (range == null)
@@ -239,7 +236,7 @@ public class MyHandler extends AbstractHandler
 	private String getPathFromID(String id)
 	{
 		// TODO: Get path from DB
-		return "C:\\Users\\Michael\\Desktop\\Rihanna - Love On The Brain.mp3";
+		return "C:\\Users\\Michael\\Music\\test.mp3";
 	}
 
 	/**
