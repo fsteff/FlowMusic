@@ -291,7 +291,7 @@ public class Central extends ThreadedComponent
 		if (System.getProperty("os.name").toLowerCase()
 				.contains("windows"))
 		{
-			startChrome();
+			startBrowser();
 		}
 		else
 		{
@@ -311,7 +311,6 @@ public class Central extends ThreadedComponent
 			}
 			catch (IOException | URISyntaxException e)
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				ExceptionHandler.showErrorDialog(
 						"Could not open standard browser", e.getMessage());
@@ -323,7 +322,7 @@ public class Central extends ThreadedComponent
 	 * Starts the Chromium Browser and terminates the application if the
 	 * browser gets closed.
 	 */
-	private static void startChrome()
+	private static void startBrowser()
 	{
 		Thread t = new Thread(() ->
 		{
@@ -332,12 +331,10 @@ public class Central extends ThreadedComponent
 
 			if (!Files.exists(Paths.get(f.getAbsolutePath())))
 			{
-				ExceptionHandler.showErrorDialog("Error",
-						"Chromium not found...");
+				startDefaultBrowser();
 			}
 			else
 			{
-				System.out.println(f.getAbsolutePath());
 				ProcessBuilder pb = new ProcessBuilder("cmd", "/c",
 						f.getAbsolutePath(), chromiumParam,
 						"--start-maximized");
@@ -346,7 +343,7 @@ public class Central extends ThreadedComponent
 				{
 					Process p = pb.start();
 					p.waitFor();
-					System.out.println("Exit value: " + p.exitValue());
+					logger.info("Exit value: " + p.exitValue());
 					System.exit(p.exitValue());
 				}
 				catch (Exception e)
