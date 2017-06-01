@@ -343,9 +343,18 @@ public class Database extends ThreadedComponent {
 	
 	private void addPlaylist(String name){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
-		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+")"+
+		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+", "+DBAttributes.TIMESTAMP+")"+
 						" VALUES ('"+turnToSqlString(name)+"', '"+stamp.toString()+"')";
-		query(insert);
+		try {
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(insert);
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+		
 	}
 	
 	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO test
