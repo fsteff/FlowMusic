@@ -56,7 +56,7 @@ public class Crawler extends ThreadedComponent {
 
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
-		if (sender == Component.CENTRAL) {
+		/*if (sender == Component.CENTRAL) {
 			String command = msg.getString("command");
 			if (command.equalsIgnoreCase("start")) {
 
@@ -72,7 +72,7 @@ public class Crawler extends ThreadedComponent {
 				shutdown();
 				return new JSONObject("{\"answer\":\"done\"}");
 			}
-		}
+		}*/
 		return null;
 	}
 

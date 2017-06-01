@@ -77,7 +77,7 @@ MainView.prototype.closeTab = function(element){
     var index = -1;
     for(var i = 0; i < this.tabs.length && index < 0; i++){
         var t = this.tabs[i];
-        if(t.element[0] == element[0]){
+        if(t.element[0] == element.element[0]){
             index = i;
         }
     }
@@ -100,9 +100,14 @@ MainTab.prototype.resize = function(){
 MainTab.prototype.hide = function(){
     this.element.hide();
 }
-MainTab.prototype.show = function(){
+MainTab.prototype.show = function(update){
+    if(update == null){
+        update = true;
+    }
     this.element.show();
-    this.update();
+    if(update) {
+        this.update();
+    }
 }
 
 MainTab.prototype.cleanUp = function(){
@@ -365,18 +370,20 @@ function PlaylistView(element){
 PlaylistView.prototype.setPlaylist = function(id, name){
     this.playlistId = id;
     this.playlistName = name;
+    this.update();
 }
 
 PlaylistView.prototype.update = function(){
     const self = this;
     if(this.playlistId == null){
-        Log.error("PlaylistView: no playlistId set");
+        return;
+        //Log.error("PlaylistView: no playlistId set");
     }
 
     LocalComm.newMessage({
         command: "get",
         what: "ViewPlaylistSongs",
-        filter: {playlistId: this.playlistId}
+        filter: {playlistid: this.playlistId}
     },
     Message.Components.DATABASE,
     function(msg){
@@ -389,19 +396,104 @@ PlaylistView.prototype.update = function(){
 function PlaylistOverview(element){
     this.element = $(element);
     this.element.html("heyo, nothing there");
+    this.playlists = [];
+    this.playlistTabs = [];
+
     this.update();
+
 }
 
 PlaylistOverview.prototype.update = function(){
     const self = this;
-    LocalComm.newMessage({
+
+/*    LocalComm.newMessage({
         command: "get",
         what: "playlist",
         filter: {playlistid: "*"}
     },
     Message.Components.DATABASE,
-    function(msg){
+    onAnswer);*/
+
+    const onAnswer = function(msg){
         self.element.html("<h3>Playlists</h3>");
+        //const tabs = PageView.getInstance().sidepanel.openTabs;
+        const openTab = PageView.getInstance().sidepanel.openTabNum;
+        const sidepanel = PageView.getInstance().sidepanel;
+        for(var i = 0; i < self.playlistTabs.length; i++) {
+            var num = sidepanel.getTabNumByPage(self.playlistTabs[i]);
+            if(num >= 0 && typeof sidepanel.openTabs[num].close == 'function'){
+                sidepanel.openTabs[num].close();
+            }else{
+                Log.error("could not find open tab");
+            }
+        }
+        self.playlistTabs = [];
+
+        var answer = msg.answer;
+        if(typeof answer == 'undefined' || answer == null){
+            answer = [];
+        }
+
+        answer.sort(function(a,b){
+           var cha = parseInt(a.lastchanged);
+           var chb = parseInt(b.lastchanged);
+           if(isNaN(cha)){
+               cha = 0;
+           }
+           if(isNaN(chb)){
+                chb = 0;
+           }
+           return cha - chb;
+        });
+
+        this.playlists = [];
+        for(var i = 0; i < answer.length; i++){
+            const name = answer[i].name;
+            const id = answer[i].playlistid;
+            this.playlists.push({
+                name: name,
+                id: id
+            });
+
+            const elem = $("<div><a>"+answer[i].name+"</a></div>");
+            elem.appendTo(self.element);
+            elem.click(function(){
+                var found = false;
+                for(var i2 = 0; i2 < self.playlistTabs.length && !found; i2++){
+                    const plView = self.playlistTabs[i2];
+                    if(plView.playlistId == id){
+                        found = PageView.getInstance().sidepanel.openTabByPage(plView, true);
+                    }
+                }
+                if(! found) {
+                    const view = PageView.getInstance().mainview.newTab(PlaylistView, name, true);
+                    view.setPlaylist(id, name);
+                    self.playlistTabs[i] = view;
+                }
+            });
+        }
+
+        for(var i = 0; i < answer.length && i < 3; i++) {
+            const name = answer[i].name;
+            const id = answer[i].playlistid;
+            const view = PageView.getInstance().mainview.newTab(PlaylistView, name, true);
+            view.setPlaylist(id, name);
+            self.playlistTabs.push(view);
+        }
+
+        PageView.getInstance().sidepanel.openTab(openTab, false);
+    }
+
+    onAnswer({
+        answer: [{
+            playlistid: 1,
+            name: "Party",
+            lastchanged: 123456
+        },{
+            playlistid: 2,
+            name: "Chill",
+            lastchanged: 354678
+        }]
     });
 }
 
@@ -576,7 +668,6 @@ ContextMenu.prototype.addPredefinedProperty = function(name, elem){
                                         source: elem[2][chosen].source
                                     };
                                     Central.getPlayer().getPlayQueue().add(song);
-                                   // Central.getPlayer().getPlayQueue().playSong(song);
                                     Central.getPlayer().playSong(song);
                                 }else{
                                     Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));

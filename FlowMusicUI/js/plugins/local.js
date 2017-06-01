@@ -85,9 +85,10 @@ LocalSearchEngine.prototype.search = function(query, callback){
             }
             for(var i2 = 0; i2 < src.length; i2++){
                 var obj = {
-                    plugin: src.type,
-                    source: src.value
+                    plugin: src[i2].type,
+                    source: src[i2].value
                 };
+                // local files are identified by their source id for security reasons
                 if(src.type == 'local'){
                     obj.source = src.sourceid;
                 }
@@ -142,9 +143,7 @@ function BrowseMusic(element){
     this.artistsView.table = null;
 
     this.currentView = null;
-    this.viewSongs();
-
-    this.initSongs();
+    this.viewArtists();
 }
 
 BrowseMusic.prototype.viewSongs = function(){
@@ -194,6 +193,19 @@ BrowseMusic.prototype.initSongs = function () {
 
     engine.search("*", function(data){
         self.songs = data;
+
+        self.songs = self.songs.sort(function(a, b){
+            var strA = "";
+            var strB = "";
+            if(typeof a.title !== 'undefined' && a.title !== null){
+                strA = a.title;
+            }
+            if(typeof b.title !== 'undefined' && b.title !== null){
+                strB = b.title;
+            }
+            return strA.localeCompare(strB);
+        });
+
         for(var i = 0; i < data.length; i++){
             if(typeof data[i].album === 'undefined'){
                 data[i].album = "";

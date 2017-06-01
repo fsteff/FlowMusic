@@ -49,9 +49,6 @@ $(document).ready(function(){
 
     view.mainview.newTab(PlayQueueView, "Queue", false);
 
-    const pl = view.mainview.newTab(PlaylistView, "Party Playlist");
-    pl.setPlaylist(1, "Party Playlist");
-
     const elem = $('<div class="maintab"></div>');
     elem.appendTo(PageView.getInstance().mainview.element);
     elem.hide();

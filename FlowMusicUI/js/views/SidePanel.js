@@ -10,6 +10,7 @@ function SidePanel(){
     const self = this;
     this.element = $("#sidepanel");
     this.opened = false;
+    this.openTabNum = 0;
 
     this.openTabs = [];
 
@@ -29,9 +30,11 @@ function SidePanel(){
         tab: playlistsTab
     }
 
+    const index = this.openTabs.push(this.playlists) - 1; //  -> always 0
+
     playlistsTab.click(function(event){
         PageView.getInstance().mainview.hideAllTabs();
-        self.playlists.page.update();
+        self.openTabNum = index;
         self.playlists.page.show();
         self.playlists.page.resize();
 
@@ -119,18 +122,29 @@ SidePanel.prototype.addPlaylist = function(element, name){
     const closeelem = $("<div class='closebutton'>&#10005;</div>");
     closeelem.appendTo(tab);
 
-    const index = this.openTabs.push({
-            page: element,
-            tab: tab
-        }) - 1;
+    const newTab = {
+        page: element,
+        tab: tab,
+        close: null
+    }
+    const index = this.openTabs.push(newTab) - 1;
+
+    newTab.close = function () {
+        tab.remove(); // jQuery remove
+        PageView.getInstance().mainview.closeTab(element); // removes mainview window
+        if(self.openTabNum == index) {
+            self.openTab(0);
+        }
+    }
 
     this.openTab(index);
 
     tab.click(function(event){
         if(event.target == closeelem[0]){
-            tab.remove();
+            /*tab.remove();
             PageView.getInstance().mainview.closeTab(element);
-            self.openTab(0);
+            self.openTab(0);*/
+            newTab.close();
         }else {
             self.openTab(index);
         }
@@ -142,16 +156,39 @@ SidePanel.prototype.addPlaylist = function(element, name){
  * @param page jquery element of mainview page
  * @param tab  jquery element of tab
  */
-SidePanel.prototype.openTab = function(index){
+SidePanel.prototype.openTab = function(index, update){
+    if(update == null){
+        update = true;
+    }
     var tab = this.openTabs[index];
     PageView.getInstance().mainview.hideAllTabs();
-    tab.page.show();
+    this.openTabNum = index;
+    tab.page.show(update);
     tab.page.resize();
 
     for(var i = 0; i < this.openTabs.length; i++){
         this.openTabs[i].tab.attr("class", "sidepanelbutton w3-bar-item w3-button");
     }
     tab.tab.attr("class", "sidepanelbutton active w3-bar-item w3-button ");
+
+}
+
+SidePanel.prototype.openTabByPage = function(element, update){
+    var num = this.getTabNumByPage(element);
+    if(num >= 0){
+        this.openTab(num, update);
+        return true;
+    }
+    return false;
+}
+
+SidePanel.prototype.getTabNumByPage = function(page){
+    for(var i = 0; i < this.openTabs.length; i++){
+        if(this.openTabs[i].page == page){
+            return i;
+        }
+    }
+    return -1;
 }
 
 

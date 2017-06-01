@@ -1,13 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>FlowPlayer</groupId>
-	<artifactId>FlowPlayer</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>FlowPlayer</name>
+	<groupId>FlowMusic</groupId>
+	<artifactId>FlowMusic</artifactId>
+	<version>0.1.0-DEMO</version>
+	<name>FlowMusic</name>
 	<description>Multi-Source Music Player</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
+        <finalName>flowmusic</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -18,8 +19,46 @@
 	                <encoding>UTF-8</encoding>
             </configuration>
 			</plugin>
+        <!--    <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+
+                    <excludes>
+                        <exclude>**/log4j.properties</exclude>
+                    </excludes>
+                    <archive>
+                        <manifest>
+
+                            <mainClass>central.Central</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${project.build.directory}/dependency-jars/</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>-->
 		</plugins>
+
 	</build>
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -47,25 +86,16 @@
 		  <artifactId>logback-classic</artifactId>
 		  <version>1.2.3</version>
 		</dependency>
-		<!--dependency>
- 		 <groupId>org.eclipse.jetty.websocket</groupId>
- 		 <artifactId>websocket-client</artifactId>
- 		 <version>9.4.4.v20170414</version>
-		</dependency-->
 		<dependency>
   		     <groupId>org.eclipse.jetty</groupId>
    			 <artifactId>jetty-servlet</artifactId>
    			 <version>9.4.4.v20170414</version>
 		</dependency>
-		<!--dependency>
-  		  <groupId>org.eclipse.jetty</groupId>
-  		  <artifactId>jetty-websocket</artifactId>
-    	  <version>8.2.0.v20160908</version>
-		</dependency-->
+		<!--
 		<dependency>
    		 <groupId>org.eclipse.jetty.websocket</groupId>
    		 <artifactId>websocket-servlet</artifactId>
    		 <version>9.4.4.v20170414</version>
-		</dependency>
+		</dependency>-->
 	</dependencies>
 </project>

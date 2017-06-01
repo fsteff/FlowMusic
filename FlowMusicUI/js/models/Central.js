@@ -63,9 +63,9 @@ SearchEngine.prototype.search = function(query, callback){
             for(var i2 = 0; i2 < result.length; i2++){
                 results.push(result[i2]);
             }
+            filter();
+            callback(filtered);
         });
-        filter();
-        callback(filtered);
     }
     return filtered;
 }
