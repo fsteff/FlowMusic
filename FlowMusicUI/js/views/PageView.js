@@ -27,7 +27,7 @@ $(document).ready(function(){
    /* $("body").height($(window).height());
     $("body").width($(window).width());*/
 
-    var view = PageView.getInstance();
+    const view = PageView.getInstance();
     if($(window).width() > 800){
         view.sidepanel.open();
     }else{
@@ -35,7 +35,7 @@ $(document).ready(function(){
     }
 
     $(window).resize(function(){
-        var width = $(window).width();
+        const width = $(window).width();
         if(width > 800){
             view.sidepanel.open();
         }else{
@@ -47,10 +47,11 @@ $(document).ready(function(){
     });
 
 
-    view.mainview.newTab(PlayQueueView, "Queue", false);
+    const queue = view.mainview.newTab(PlayQueueView, "Queue", false);
+    view.sidepanel.queueTabIndex = queue.tabIndex;
 
     const elem = $('<div class="maintab"></div>');
-    elem.appendTo(PageView.getInstance().mainview.element);
+    elem.appendTo(view.mainview.element);
     elem.hide();
     const page = extend(MainTab, PlaylistOverview, elem, elem);
     view.sidepanel.playlists.page = page;

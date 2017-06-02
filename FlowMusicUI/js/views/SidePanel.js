@@ -30,6 +30,8 @@ function SidePanel(){
         tab: playlistsTab
     }
 
+    this.queueTabIndex = -1;
+
     const index = this.openTabs.push(this.playlists) - 1; //  -> always 0
 
     playlistsTab.click(function(event){
@@ -104,11 +106,12 @@ SidePanel.prototype.addTab = function(element, name, closebutton){
        if(event.target == closeelem[0]){
            tab.remove();
            PageView.getInstance().mainview.closeTab(element);
-           self.openTab(0);
+           self.openTab(self.queueTabIndex);
        }else {
            self.openTab(index);
        }
     });
+    return index;
 }
 
 SidePanel.prototype.addPlaylist = function(element, name){
@@ -149,6 +152,7 @@ SidePanel.prototype.addPlaylist = function(element, name){
             self.openTab(index);
         }
     });
+    return index;
 }
 
 /**

@@ -4,8 +4,9 @@
  */
 
 class Song{
-    constructor(id, title, artist, sources, albums, tags) {
+    constructor(id, title, artist, sources, albums, tags, year) {
         this.id = parseInt(id);
+        this.year = parseInt(year);
         /**
          * @type {string}
          */
@@ -26,6 +27,7 @@ class Song{
          * @type {TagArray}
          */
         this.tags = (isArray(tags)) ? tags : new TagArray([]);
+
     }
 }
 
@@ -71,9 +73,10 @@ class SongArray extends Array{
                     entry.title,
                     entry.artist,
                     new SourceArray(entry.sources),
-                    // TODO: change protocol to album, tags
+                    // TODO: change protocol to albums, tags
                     new AlbumArray(entry.album),
-                    new TagArray(entry.tag)
+                    new TagArray(entry.tag),
+                    entry.year
                 ))
         });
     }

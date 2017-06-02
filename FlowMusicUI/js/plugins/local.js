@@ -206,6 +206,8 @@ BrowseMusic.prototype.initSongs = function () {
             return strA.localeCompare(strB);
         });
 
+        
+
         for(var i = 0; i < data.length; i++){
             if(typeof data[i].album === 'undefined'){
                 data[i].album = "";

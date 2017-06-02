@@ -60,9 +60,9 @@ MainView.prototype.newTab = function(type, name, close){
     this.tabs.push(tab);
 
     if(type == PlaylistView){
-        PageView.getInstance().sidepanel.addPlaylist(tab, name);
+        tab.tabIndex = PageView.getInstance().sidepanel.addPlaylist(tab, name);
     }else {
-        PageView.getInstance().sidepanel.addTab(tab, name, close);
+        tab.tabIndex = PageView.getInstance().sidepanel.addTab(tab, name, close);
     }
     return tab;
 }
@@ -85,7 +85,7 @@ MainView.prototype.closeTab = function(element){
         this.tabs[index].cleanUp();
         this.tabs.splice(index, 1);
     }
-    $(element).remove();
+    $(element.element).remove();
 }
 // ------------------------------------------------------------ CLASS MainTab ------------------------------------------
 function MainTab(element){
