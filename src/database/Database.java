@@ -21,11 +21,22 @@ import ch.qos.logback.core.net.SyslogOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Database Class that that creates and changes a local Database.
+ * 
+ * @author Gregor Pertl
+ */
+
 public class Database extends ThreadedComponent {
 	Connection databaseConnection;
 	Statement statement;
 	private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
+	/**
+	 * Creates H2 Database, which is a Java SQL database
+	 * @param folder : folder for database location
+	 */
+	
 	public Database(Central central, File folder) {
 		super(Component.DATABASE, central);
 		// DataBase creation:
@@ -57,6 +68,11 @@ public class Database extends ThreadedComponent {
 		}
 	}
 
+	/**
+	 * Executes sent commands. Except for the database creation, 
+	 * every other method in this class is executed by this method.
+	 */
+	
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg) throws Exception {
 		String command = msg.getString("command");
@@ -75,10 +91,6 @@ public class Database extends ThreadedComponent {
 			ret.put("answer", "done");
 			return ret;
 		case "get":
-
-			
-			// TODO: further selection, filtering, joining, ...
-			
 			String filter="";
 			if(msg.get("filter") instanceof JSONObject){//check if there is a JSONObject with a criteria
 				JSONObject obj=(JSONObject) msg.get("filter");
@@ -134,7 +146,7 @@ public class Database extends ThreadedComponent {
 			}
 			logger.info("done");
 			break;
-		case "update"://TODO
+		case "update":
 			break;
 		case "insertSong":
 			JSONObject newSong = new JSONObject();
@@ -161,23 +173,52 @@ public class Database extends ThreadedComponent {
 		case "addSongToPlaylist":
 			addSongToPlaylist(msg.getInt(DBAttributes.SONG_ID), msg.getInt(DBAttributes.PLAYLIST_ID), 1);
 			break;
-		case "delete"://TODO
+		case "delete":
 			switch(what){
 			case "song":
-				removeSong(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID));
+				removeSong(msg.getInt(DBAttributes.SONG_ID));
+				break;
 			case "playlist":
-			case "playlistentry":
+				removePlaylist(msg.getInt(DBAttributes.PLAYLIST_ID));
+				break;
 			}
 			break;
-			
 		default:
 		}
-		
 		return null;
 	}
 
+	/**
+	 * Removes a playlist from table playlist and table playlistentry
+	 * @param playlistId : ID of playlist to delete
+	 */
+	
+	private void removePlaylist(int playlistId) {//TODO test
+		String remove="DELETE FROM "+DBTables.Playlist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		try{
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(remove);
+			remove="DELETE FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		}catch(SQLException e){
+			logger.info("SQLException");
+		}catch(Exception e){
+			ExceptionHandler.showErrorDialog(e);
+			logger.error("", e);
+		}finally{
+			try {
+				if (statement != null) {
+					statement.close();
+				}
+			} catch (SQLException e) {
+				ExceptionHandler.showErrorDialog(e);
+				logger.error("", e);
+			}
+		}
+		
+		
+	}
+
 	private JSONArray getPlaylist(int playlistId) {
-		// TODO test
 		String get = "SELECT "+DBTables.PlaylistEntry+".*, "+DBTables.Song+"."+DBAttributes.TITLE+", "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+" FROM "+DBTables.PlaylistEntry+", "+DBTables.Song+", "+DBTables.Artist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.PlaylistEntry+"."+DBAttributes.SONG_ID+" AND "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
 		return getAllInfo(get);	
 	}
@@ -249,9 +290,6 @@ public class Database extends ThreadedComponent {
 
 		try {
 			statement= databaseConnection.createStatement();
-			
-			//TODO
-			//better request for song existence needed
 			JSONArray information;
 			insert= "SELECT "+DBAttributes.ARTIST_ID+" FROM "+DBTables.Artist+" WHERE "+DBAttributes.ARTIST_NAME+" = '"+artist+"'";
 			information=query(insert);
@@ -346,7 +384,7 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
-	private int addPlaylist(String name){//TODO test
+	private int addPlaylist(String name){
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+", "+DBAttributes.TIMESTAMP+")"+
 						" VALUES ('"+turnToSqlString(name)+"', '"+stamp.toString()+"')";
@@ -358,8 +396,6 @@ public class Database extends ThreadedComponent {
 			rs=statement.getGeneratedKeys();
 			rs.next();
 			playlistId=rs.getInt(1);
-			
-			statement.executeUpdate(insert);
 		} catch (SQLException e) {
 			logger.error("Problem with Statement...");
 			e.printStackTrace();
@@ -369,7 +405,7 @@ public class Database extends ThreadedComponent {
 		return playlistId;
 	}
 	
-	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO test
+	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		JSONArray information =	getSong(songId);
 		String insert;
