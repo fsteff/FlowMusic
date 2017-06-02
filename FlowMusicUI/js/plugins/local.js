@@ -74,9 +74,7 @@ LocalSearchEngine.prototype.search = function(query, callback){
         const answer = data.answer;
         const result = new SongArray(answer);
 
-        if(result.length > 0){
-            callback(result);
-        }
+        callback(result);
     });
 }
 

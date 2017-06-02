@@ -178,7 +178,7 @@ function PlayQueueView(element){
 //------------------------------------------------------- CLASS SearchView ---------------------------------------------
 function SearchView(element){
     this.element = element;
-    this.element.html("no data yet, sorry");
+    this.element.html("Seaching...");
     this.data = null;
 }
 
@@ -186,7 +186,7 @@ SearchView.prototype.setData = function(query, data){
     this.data = data;
     this.table = new SongTable(
         this.element,
-        'Results for "' + query + "'",
+        'Results for "' + query + '":',
         [{
             name: "Title",
             visible: true,
@@ -347,7 +347,7 @@ EditSettings.prototype.cleanUp = function () {
 
 function PlaylistView(element){
     this.element = $(element);
-    this.element.html("Nothing to see here");
+    this.element.html("Loading...");
     this.playlistId = null;
     this.playlistName = null;
     this.entries = [];
@@ -408,7 +408,7 @@ PlaylistView.prototype.update = function(){
 
 function PlaylistOverview(element){
     this.element = $(element);
-    this.element.html("heyo, nothing there");
+    this.element.html("Loading...");
     this.playlists = [];
     this.playlistTabs = [];
 

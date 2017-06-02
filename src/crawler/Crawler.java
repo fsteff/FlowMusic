@@ -17,7 +17,6 @@ import crawler.file.MP3File;
 public class Crawler extends ThreadedComponent {
 
 	private static final Logger logger = LoggerFactory.getLogger(Crawler.class);
-	JSONArray mp3Files = new JSONArray();
 	
 	public Crawler(Central central) {
 		super(Component.CRAWLER, central);
@@ -98,6 +97,7 @@ public class Crawler extends ThreadedComponent {
 		for (int i = 0; i < paths.length(); i++) {
 			params[i] = paths.getString(i);
 		}
+        JSONArray mp3Files = new JSONArray();
 		searchForMp3(mp3Files,params);
 		JSONArray found = mp3Files;
 

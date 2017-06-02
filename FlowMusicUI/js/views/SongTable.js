@@ -45,8 +45,11 @@ class SongTable{
      * @param data {SongArray}
      */
     update(data) {
-
-        var html = "<table class='w3-table songTable'><tr>";
+        let html = "";
+        if(this.title !== null){
+            html += "<h3>"+this.title+"</h3>";
+        }
+        html += "</h3><table class='w3-table songTable'><tr>";
         for (var i = 0; i < this.head.length; i++) {
             if (this.head[i].visible) {
                 html += "<th>" + this.head[i].name + "</th>";

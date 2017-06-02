@@ -80,7 +80,7 @@ function log(msg, type){
             break;
     }
 
-    Log.post(msg, type);
+    Log.post(clipString(msg, 1000), type);
 }
 
 function Log(){}
@@ -170,4 +170,12 @@ Callable.idCounter = 0;
 
 function isArray(obj){
     return $.isArray(obj);
+}
+
+function clipString(str, max){
+    var ret = str.substring(0, max);
+    if(ret.length == max){
+        ret += "...";
+    }
+    return ret;
 }

@@ -58,8 +58,11 @@ SearchEngine.prototype.search = function(query, callback){
         }
     }
 
+    let numSearches = 0;
     for(let i = 0; i < this.plugins.length; i++){
+        numSearches++;
         this.plugins[i].search(query, function(result){
+            numSearches--;
             if(!(result instanceof  SongArray)){
                 Log.error("Search result set no instance of SongArray");
                 return;
@@ -75,6 +78,12 @@ SearchEngine.prototype.search = function(query, callback){
             callback(filtered);
         });
     }
+    window.setTimeout(function(){
+        if(numSearches > 0) {
+            callback(filtered);
+            Log.warning("Search timed out");
+        }
+    }, 5000);
     return filtered;
 }
 
