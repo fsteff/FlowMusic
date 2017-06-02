@@ -16,7 +16,6 @@ import central.Central;
 import central.Component;
 import central.ExceptionHandler;
 import central.ThreadedComponent;
-import ch.qos.logback.core.net.SyslogOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +70,7 @@ public class Database extends ThreadedComponent {
 	/**
 	 * Executes sent commands. Except for the database creation, 
 	 * every other method in this class is executed by this method.
+	 * @return Depending on the command returns views, id, etc....
 	 */
 	
 	@Override
@@ -218,20 +218,13 @@ public class Database extends ThreadedComponent {
 		
 	}
 
-	private JSONArray getPlaylist(int playlistId) {
-		String get = "SELECT "+DBTables.PlaylistEntry+".*, "+DBTables.Song+"."+DBAttributes.TITLE+", "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+" FROM "+DBTables.PlaylistEntry+", "+DBTables.Song+", "+DBTables.Artist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.PlaylistEntry+"."+DBAttributes.SONG_ID+" AND "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
-		return getAllInfo(get);	
-	}
+	
 
-	private JSONArray getPlaylists() {//TODO test
-		String get="SELECT * FROM "+DBTables.Playlist;
-		JSONArray playlists=query(get);
-		for(int i=0; i<playlists.length(); i++){
-			playlists.getJSONObject(i).put("entries", getPlaylist(playlists.getJSONObject(i).getInt(DBAttributes.PLAYLIST_ID)).length());
-		}
-		return playlists;
-	}
-
+	/**
+	 * Executes a Select-SQL-Statement and returns a JSONArray with the found information.
+	 * @param query : Should be a String with a Select-SQL-Statement.
+	 * @return Returns a JSONArray containing JSONObjects for the found information in every column of the database
+	 */
 	private JSONArray query(String query){
 		JSONArray result = new JSONArray();
 		try{
@@ -259,6 +252,194 @@ public class Database extends ThreadedComponent {
 
 		return result;
 	}
+
+
+	/**
+	 * Removes a song from all tables and adjustes tracknumbers in a playlist if the song was inside of it.
+	 * @param ID : ID of the song to be deleted.
+	 */
+	
+	private void removeSong(int ID){
+		try{
+		String delete=" DELETE FROM "+DBTables.Song+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
+		delete=" DELETE FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
+		delete=" DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
+		delete=" DELETE FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
+		delete=" DELETE FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
+		JSONArray number;
+		JSONArray information;
+		delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
+		number=query(delete);
+		for(int j=0; j<number.length(); j++){
+			delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.SONG_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.NR+" > "+number.getJSONObject(j).getInt(DBAttributes.NR);
+			information=query(delete);	
+			for(int i=0; i<information.length(); i++){
+				delete= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)-1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
+				statement= databaseConnection.createStatement();
+				statement.executeUpdate(delete);
+			}
+		}
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+	}
+	
+	/**
+	 * Removes all sources with the TYPE 'local'. To set everything up for new information from the crawler. Also removes songs, if there is no source left.
+	 */
+	
+	private void removeLocalData(){
+		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.TYPE+" = 'local'";
+		try {
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(remove);
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+		JSONArray songs=getAllSongInformation();
+		for(int i=0; i<songs.length(); i++){
+			if(songs.getJSONObject(i).getJSONArray("sources").length()==0){
+				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
+			}
+		}
+	}
+	
+	/**
+	 * Looks for all entries with artist, title or albums like the search String.
+	 * @param search
+	 * @return Gets a JSONArray with a JSONObject of all Songinformation of the found songs.
+	 */
+	
+	private JSONArray search(String search){
+		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+","+DBTables.Album+
+				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND (LOWER("+DBTables.Song+"."+DBAttributes.TITLE+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Album+"."+DBAttributes.ALBUM_NAME+") LIKE '%"+search.toLowerCase()+"%' )";
+		return getAllInfo(get);
+	}
+	
+	/**
+	 * Gets all songs from the database.
+	 * @return Return a JSONArray with a JSONObject for every song and all their information.
+	 */
+	
+	private JSONArray getAllSongInformation(){
+		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+
+				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID;
+		return getAllInfo(get);
+	}
+	
+	/**
+	 * Gathers all sources, albums and tags and adds them to the by the get found songs and returns them in a JSONArray.
+	 * @param get : Select-SQL-Statement which has as one of the results the song ID.
+	 * @return A JSONArray with a JSONObject for every selected song containing the sources, albums and tags of the song.
+	 */
+	
+	private JSONArray getAllInfo(String get){ 
+		JSONArray songInfo=query(get);
+		JSONArray tags;
+		JSONArray albums;
+		JSONObject obj;
+		String id;
+		for(int i=0; i<songInfo.length(); i++){
+			if(songInfo.get(i) instanceof JSONObject){
+				obj = songInfo.getJSONObject(i);
+				id = obj.get(DBAttributes.SONG_ID).toString();
+				
+				get= "SELECT * FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+id;
+				songInfo.getJSONObject(i).put("sources", query(get));
+
+				get= "SELECT "+DBAttributes.TAG_NAME+" FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+id;
+				tags=query(get);
+				for(int j=0; j<tags.length();j++){
+					tags.put(j, tags.getJSONObject(j).getString(DBAttributes.TAG_NAME));
+				}
+				songInfo.getJSONObject(i).put(DBTables.Tag.toString().toLowerCase(), tags);
+				
+				get= "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album+", "+DBTables.AlbumEntry+" WHERE "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = "+DBTables.AlbumEntry+"."+DBAttributes.ALBUM_ID+" AND "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+id;
+				songInfo.getJSONObject(i).put(DBAttributes.ALBUM_NAME, query(get));
+				albums=query(get);
+				for(int j=0; j<tags.length();j++){
+					albums.put(j, albums.getJSONObject(j).getString(DBAttributes.ALBUM_NAME));
+				}
+				songInfo.getJSONObject(i).put(DBAttributes.ALBUM_NAME, albums);
+			}
+		}
+		return songInfo;
+	}
+	
+	/**
+	 * Gets the value and type of the searched source.
+	 * @param sourceId : ID of the searched source
+	 * @return JSONArray of one JSONObject containing the value and type of the searched source.
+	 */
+	
+	private JSONArray getSource(int sourceId){
+		String get="SELECT "+DBAttributes.VALUE+", "+DBAttributes.TYPE+" FROM "+DBTables.Source+" WHERE "+DBAttributes.SOURCE_ID+" = "+sourceId;
+		return query(get);
+	}
+	
+	/**
+	 * Gets all information of a certain song.
+	 * @param songId : ID of the searched song.
+	 * @return JSONArray with a JSONObject of the searched song containing all information of the song.
+	 */
+	
+	private JSONArray getSong(int songId){
+		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+
+				" FROM "+DBTables.Song+", "+DBTables.Artist+
+				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
+				" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+songId;
+		return getAllInfo(get);
+	}
+	
+	/**
+	 * 
+	 * @param playlistId : ID of playlist to search for its content
+	 * @return Returns a JSONArray with a JSONOBject per song in the playlist. 
+	 * The JSONObject contains the all information of the songs in the playlist including sources, albums and tags.
+	 */
+	
+	private JSONArray getPlaylist(int playlistId) {
+		String get = "SELECT "+DBTables.PlaylistEntry+".*, "+DBTables.Song+"."+DBAttributes.TITLE+", "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+" FROM "+DBTables.PlaylistEntry+", "+DBTables.Song+", "+DBTables.Artist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.PlaylistEntry+"."+DBAttributes.SONG_ID+" AND "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
+		return getAllInfo(get);	
+	}
+
+	/**
+	 * Gets all playlists in the database.
+	 * @return A JSONArray of every playlists name, ID, the time it was last changed and the number of songs in it
+	 */
+	
+	private JSONArray getPlaylists() {
+		String get="SELECT * FROM "+DBTables.Playlist;
+		JSONArray playlists=query(get);
+		for(int i=0; i<playlists.length(); i++){
+			playlists.getJSONObject(i).put("entries", getPlaylist(playlists.getJSONObject(i).getInt(DBAttributes.PLAYLIST_ID)).length());
+		}
+		return playlists;
+	}
+	
+	/**
+	 * Adds a song to the Database. The method checks for the sent information inside the given JSONObject and inserts the information into the specific tables.
+	 * @param song : JSONObject with all information of a song, that should be added. TYPE, TITLE and VALUE have to be in the JSONObject, other information can be added.
+	 */
 	
  	private void addSong(JSONObject song){
 		String insert;
@@ -384,6 +565,12 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
+ 	/**
+ 	 * Adds a new playlist to the table playlist and returns its generated Id.
+ 	 * @param name : Name of the new playlist.
+ 	 * @return Generated playlist ID.
+ 	 */
+ 	
 	private int addPlaylist(String name){
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+", "+DBAttributes.TIMESTAMP+")"+
@@ -404,6 +591,13 @@ public class Database extends ThreadedComponent {
 		}
 		return playlistId;
 	}
+	
+	/**
+	 * Adds a song to a playlist. The tracknumber can be higher than the highest tracknumber in the playlist. The method automatically changes the tracknumber to the right value. Songs that follow after the entered tracknumber will automatically get placed one number higher.
+	 * @param songId : ID of song to be added.
+	 * @param playlistId : ID of playlist, in which the song should be added.
+	 * @param trackNumber : Tracknumber on which position in the playlist the song should be added.
+	 */
 	
 	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
@@ -443,126 +637,9 @@ public class Database extends ThreadedComponent {
 		
 	}
 	
-	private void removeSong(int ID){
-		try{
-		String delete=" DELETE FROM "+DBTables.Song+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		statement= databaseConnection.createStatement();
-		statement.executeUpdate(delete);
-		delete=" DELETE FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		statement= databaseConnection.createStatement();
-		statement.executeUpdate(delete);
-		delete=" DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		statement= databaseConnection.createStatement();
-		statement.executeUpdate(delete);
-		delete=" DELETE FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		statement= databaseConnection.createStatement();
-		statement.executeUpdate(delete);
-		delete=" DELETE FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		statement= databaseConnection.createStatement();
-		statement.executeUpdate(delete);
-		JSONArray number;
-		JSONArray information;
-		delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		number=query(delete);
-		for(int j=0; j<number.length(); j++){
-			delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.SONG_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.NR+" > "+number.getJSONObject(j).getInt(DBAttributes.NR);
-			information=query(delete);	
-			for(int i=0; i<information.length(); i++){
-				delete= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)-1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
-				statement= databaseConnection.createStatement();
-				statement.executeUpdate(delete);
-			}
-		}
-		} catch (SQLException e) {
-			logger.error("Problem with Statement...");
-			e.printStackTrace();
-		} catch (Exception e){
-			logger.error(e.getMessage().toString());
-		}
-	}
-	
-	private void removeLocalData(){
-		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.TYPE+" = 'local'";
-		try {
-			statement= databaseConnection.createStatement();
-			statement.executeUpdate(remove);
-		} catch (SQLException e) {
-			logger.error("Problem with Statement...");
-			e.printStackTrace();
-		} catch (Exception e){
-			logger.error(e.getMessage().toString());
-		}
-		JSONArray songs=getAllSongInformation();
-		for(int i=0; i<songs.length(); i++){
-			if(songs.getJSONObject(i).getJSONArray("sources").length()==0){
-				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
-			}
-		}
-	}
-	
-	private JSONArray search(String search){
-		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+
-				" FROM "+DBTables.Song+", "+DBTables.Artist+","+DBTables.Album+
-				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
-				" AND (LOWER("+DBTables.Song+"."+DBAttributes.TITLE+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Album+"."+DBAttributes.ALBUM_NAME+") LIKE '%"+search.toLowerCase()+"%' )";
-		
-		
-		return getAllInfo(get);
-	}
-	
-	private JSONArray getAllSongInformation(){
-		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+
-				" FROM "+DBTables.Song+", "+DBTables.Artist+
-				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID;
-		return getAllInfo(get);
-	}
-	
-	private JSONArray getAllInfo(String get){//collects all info of song selection and returns it 
-		JSONArray songInfo=query(get);
-		JSONArray tags;
-		JSONArray albums;
-		JSONObject obj;
-		String id;
-		for(int i=0; i<songInfo.length(); i++){
-			if(songInfo.get(i) instanceof JSONObject){
-				obj = songInfo.getJSONObject(i);
-				id = obj.get(DBAttributes.SONG_ID).toString();
-				
-				get= "SELECT * FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+id;
-				songInfo.getJSONObject(i).put("sources", query(get));
-
-				get= "SELECT "+DBAttributes.TAG_NAME+" FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+id;
-				tags=query(get);
-				for(int j=0; j<tags.length();j++){
-					tags.put(j, tags.getJSONObject(j).getString(DBAttributes.TAG_NAME));
-				}
-				songInfo.getJSONObject(i).put(DBTables.Tag.toString().toLowerCase(), tags);
-				
-				get= "SELECT "+DBAttributes.ALBUM_NAME+" FROM "+DBTables.Album+", "+DBTables.AlbumEntry+" WHERE "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = "+DBTables.AlbumEntry+"."+DBAttributes.ALBUM_ID+" AND "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+id;
-				songInfo.getJSONObject(i).put(DBAttributes.ALBUM_NAME, query(get));
-				albums=query(get);
-				for(int j=0; j<tags.length();j++){
-					albums.put(j, albums.getJSONObject(j).getString(DBAttributes.ALBUM_NAME));
-				}
-				songInfo.getJSONObject(i).put(DBAttributes.ALBUM_NAME, albums);
-			}
-		}
-		return songInfo;
-	}
-	
-
-	private JSONArray getSource(int ID){
-		String get="SELECT "+DBAttributes.VALUE+", "+DBAttributes.TYPE+" FROM "+DBTables.Source+" WHERE "+DBAttributes.SOURCE_ID+" = "+ID;
-		return query(get);
-	}
-	
-	private JSONArray getSong(int ID){
-		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+
-				" FROM "+DBTables.Song+", "+DBTables.Artist+
-				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
-				" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+ID;
-		return getAllInfo(get);
-	}
+	/**
+	 * Checks if the tables for the FlowMusic database exist and creates them if necessary. 
+	 */
 	
 	private void addAllTables(){
 		try {
@@ -646,6 +723,10 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
+	/**
+	 * Drops all tables of the FlowMusic database. Only method not used yet in Database class. Can be used if tables change their attributes, to make a "reset" of the database. Could be added in later versions of the program to give users possibility of a reset.
+	 */
+	
 	private void dropAllTables(){
 		String drop;
 		try {
@@ -699,7 +780,13 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
-	private String turnToSqlString(String string){//transforms string for sqlstatement when apostroph is used in string
+	/**
+	 * SQL has problems with Strings containing " ' ". The method converts Strings to suit SQL by adding another " ' " to the String which prevents SQL-Exceptions from occuring.
+	 * @param string
+	 * @return
+	 */
+	
+	private String turnToSqlString(String string){
 		return string.replaceAll("'", "''");
 	}
 	
