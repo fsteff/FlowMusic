@@ -27,40 +27,48 @@ SearchEngine.prototype.addPlugin = function(plugin){
  * @returns {Array} the (empty) array that will be updated when the results arrive
  */
 SearchEngine.prototype.search = function(query, callback){
-    const results = [];
-    const filtered = [];
+    const results = new SongArray([]);
+    const filtered = new SongArray([]);
 
     function filter(){
         // Search for double entries and append the sources of one to the other
-        for(var i = 0; i < results.length; i++){
-            var found = false;
-            var outer = results[i];
-            for(var i2 = 0; i2 < filtered.length && !found; i2++){
-                var inner = filtered[i2];
+        for(let i = 0; i < results.length; i++){
+            let found = false;
+            let outer = results[i];
+            for(let i2 = 0; i2 < filtered.length && !found; i2++){
+                let inner = filtered[i2];
                 if(outer.title == inner.title && outer.artist == inner.artist){
                     found = true;
-                    for(var i3 = 0; i3 < outer.sources.length; i3++){
-                        var sourceFound = false;
-                        for(var i4 = 0; i4 < inner.sources.length; i4++){
+                    for(let i3 = 0; i3 < outer.sources.length; i3++){
+                        let sourceFound = false;
+                        for(let i4 = 0; i4 < inner.sources.length; i4++){
                             if(inner.sources[i4].plugin == outer.sources[i3].plugin){
                                 sourceFound = true;
                             }
                         }
                         if(! sourceFound){
-                            inner.sources[inner.sources.length] = outer.sources[i3];
+                            inner.sources.push(outer.sources[i3]);
                         }
                     }
                 }
             }
             if(! found){
-                filtered[filtered.length] = results[i];
+                filtered.push(results[i]);
             }
         }
     }
 
-    for(var i = 0; i < this.plugins.length; i++){
+    for(let i = 0; i < this.plugins.length; i++){
         this.plugins[i].search(query, function(result){
-            for(var i2 = 0; i2 < result.length; i2++){
+            if(!(result instanceof  SongArray)){
+                Log.error("Search result set no instance of SongArray");
+                return;
+            }
+            for(let i2 = 0; i2 < result.length; i2++){
+                if(!(result[i2] instanceof Song)){
+                    Log.error("Search result no instance of Song");
+                    return;
+                }
                 results.push(result[i2]);
             }
             filter();

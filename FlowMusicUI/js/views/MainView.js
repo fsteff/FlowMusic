@@ -184,38 +184,24 @@ function SearchView(element){
 
 SearchView.prototype.setData = function(query, data){
     this.data = data;
-
-    this.onElementRightClick = function(elem){
-        var ctx = new ContextMenu(null);
-        ctx.addPredefinedProperty("playNow", elem);
-        ctx.addPredefinedProperty("addToPlayQueue", elem);
-
-        return false;
-    }
-    //const header = $('<p>Results for "'+this.name+'"</p>')
-    this.element.html('<p class="w3-container">Results for "'+query+'":</p>');
-    const elem = $("<div></div>");
-    elem.appendTo(this.element);
-
-    var table = new Table(
-        elem,
-        ["Artist", "Title"],
-        {
-            visibility: [true, true, false],
-            className: "playListTable",
-            onElementRightClick: this.onElementRightClick
-        }
+    this.table = new SongTable(
+        this.element,
+        'Results for "' + query + "'",
+        [{
+            name: "Title",
+            visible: true,
+        },{
+            name: "Artist",
+            visible: true
+        },{
+            name: "Album",
+            visible: true
+        }, {
+            name: "Tags",
+            visible: false
+        }]
     );
-
-    var tableData = [];
-    for(var i = 0; i < this.data.length; i++){
-        tableData[i] = [];
-        tableData[i][0] = this.data[i].artist;
-        tableData[i][1] = this.data[i].title;
-        tableData[i][2] = this.data[i].sources;
-    }
-    table.setData(tableData);
-    table.draw();
+    this.table.update(this.data);
 }
 
 //------------------------------------------------------------- CLASS AddSong ------------------------------------------

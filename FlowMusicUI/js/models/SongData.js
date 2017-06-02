@@ -40,7 +40,7 @@ class Source{
         /**
          * @type {string}
          */
-        this.value = (typeof value == 'string') ? value : "";
+        this.value = (typeof value == 'string' || typeof value == 'number') ? value : "";
     }
 }
 
@@ -53,6 +53,14 @@ class Album{
         } else {
             this.artist = (typeof value.artist == 'string') ? value.artist : null;
             this.name = (typeof value.name == 'string') ? value.name : "";
+        }
+    }
+
+    toOneString(){
+        if(this.artist != null){
+            return this.artist + ": " + this.name;
+        }else{
+            return this.name;
         }
     }
 }
@@ -88,6 +96,47 @@ class SongArray extends Array{
             return null;
         }
     }
+
+    sortBy(by){
+        let type = 0;
+        switch(by){
+            case "title":
+                return this.sort(function(a, b){
+                    let valA = a.title;
+                    let valB = b.title;
+
+                    valA = (typeof valA === 'string') ? valA : "";
+                    valB = (typeof valB === 'string') ? valB : "";
+
+                    return valA.localeCompare(valB);
+                });
+                break;
+            case "artist":
+                return this.sort(function(a, b){
+                    let valA = a.artist;
+                    let valB = b.artist;
+
+                    valA = (typeof valA === 'string') ? valA : "";
+                    valB = (typeof valB === 'string') ? valB : "";
+
+                    return valA.localeCompare(valB);
+                });
+                break;
+            case "album":
+                return this.sort(function(a, b){
+                    let valA = a.albums.toOneString();
+                    let valB = b.albums.toOneString();
+
+                    valA = (typeof valA === 'string') ? valA : "";
+                    valB = (typeof valB === 'string') ? valB : "";
+
+                    return valA.localeCompare(valB);
+                });
+            default:
+                Log.error("Unimplemented search type: " + by);
+                return null;
+        }
+    }
 }
 
 
@@ -101,7 +150,11 @@ class SourceArray extends Array{
         }
 
         sources.forEach(function(entry){
-            self.push(new Source(entry.type, entry.value));
+            if(typeof entry.type === 'string' && entry.type.toLowerCase() === 'local'){
+                self.push(new Source(entry.type, entry.sourceid));
+            }else{
+                self.push(new Source(entry.type, entry.value));
+            }
         });
     }
 
@@ -116,9 +169,12 @@ class SourceArray extends Array{
 
 
 class AlbumArray extends Array{
+
+
     constructor(arr){
         super();
         const self = this;
+        this.oneString = null;
         if(! isArray(arr)){
             Log.error("SourceArray: is no array");
             return;
@@ -135,6 +191,20 @@ class AlbumArray extends Array{
         }else{
             return null;
         }
+    }
+
+    toOneString(){
+        if(this.oneString === null) {
+            let str = "";
+            this.forEach(function (album, index) {
+                if (index != 0) {
+                    str += ", ";
+                }
+                str += album.toOneString();
+            });
+            this.oneString = str;
+        }
+        return this.oneString;
     }
 }
 

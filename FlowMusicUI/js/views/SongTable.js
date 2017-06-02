@@ -72,14 +72,7 @@ class SongTable{
                             html += "<td>" + song.title + "</td>";
                             break;
                         case "Album":
-                            html += "<td>";
-                            song.albums.forEach(function (name, index) {
-                                if (index != 0) {
-                                    html += ", ";
-                                }
-                                html += name;
-                            });
-                            html += "</td>";
+                            html += "<td>"+song.albums.toOneString()+ "</td>";
                             break;
                         case "Tags":
                             // TODO: implement tags

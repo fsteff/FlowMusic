@@ -67,36 +67,12 @@ LocalSearchEngine.prototype.search = function(query, callback){
         what: "song",
         filter : {title : query, artist : query, tag: query, album: query}
     },"DATABASE", function(data){
-        if(data.answer === null || data.answer.length === null){
+        if(typeof data.answer == 'undefined' || data.answer === null || data.answer.length === null){
             Log.error("Local Song search: return answer invalid: " + data);
             return;
         }
-        var answer = data.answer;
-        var result = [];
-        for(var i = 0; i < answer.length; i++){
-            var song = {
-                title: answer[i].title,
-                artist: answer[i].artist,
-                sources: []
-            }
-            var src = answer[i].sources;
-            if(typeof src == 'undefined' || src == null){
-                src = [];
-            }
-            for(var i2 = 0; i2 < src.length; i2++){
-                var obj = {
-                    plugin: src[i2].type,
-                    source: src[i2].value
-                };
-                // local files are identified by their source id for security reasons
-                if(src[i2].type == 'local'){
-                    obj.source = src[i2].sourceid;
-                }
-
-                song.sources.push(obj);
-            }
-            result[i] = song;
-        }
+        const answer = data.answer;
+        const result = new SongArray(answer);
 
         if(result.length > 0){
             callback(result);
@@ -194,151 +170,94 @@ BrowseMusic.prototype.initSongs = function () {
     engine.search("*", function(data){
         self.songs = data;
 
-        self.songs = self.songs.sort(function(a, b){
-            var strA = "";
-            var strB = "";
-            if(typeof a.title !== 'undefined' && a.title !== null){
-                strA = a.title;
-            }
-            if(typeof b.title !== 'undefined' && b.title !== null){
-                strB = b.title;
-            }
-            return strA.localeCompare(strB);
-        });
+        self.songs = self.songs.sortBy("title");
 
-        
-
-        for(var i = 0; i < data.length; i++){
-            if(typeof data[i].album === 'undefined'){
-                data[i].album = "";
-            }
-        }
-        var table = self.songsView.table;
-        var tableData = [];
-        for(var i = 0; i < data.length; i++){
-            tableData[i] = [];
-            tableData[i][0] = data[i].artist;
-            tableData[i][1] = data[i].title;
-            tableData[i][2] = data[i].sources;
-            tableData[i][3] = data[i].album;
-        }
-
-        table.setData(tableData);
-        table.draw();
+        let table = self.songsView.table;
+        table.update(self.songs);
 
         self.initAlbums();
         self.initArtists();
     });
 
-    var table = self.songsView.table;
-    if(table == null) {
-        table = new Table(
+    let table = self.songsView.table;
+    if(table === null) {
+        table = new SongTable(
             self.songsView,
-            ["Artist", "Title", "Album"],
-            {
-                visibility: [true, true, false, true],
-                className: "playListTable",
-                onElementRightClick: onElementRightClick
-            }
+            null,
+            [{
+                name: "Title",
+                visible: true,
+            },{
+                name: "Artist",
+                visible: true
+            },{
+                name: "Album",
+                visible: true
+            }, {
+                name: "Tags",
+                visible: false
+            }]
         );
         self.songsView.table = table;
-        table.setData(self.songs);
-        table.draw();
+        table.update(self.songs);
     }
 
 }
 
 BrowseMusic.prototype.initArtists = function () {
     const self = this;
-    const onElementRightClick = function(element){
-        var ctx = new ContextMenu(null);
-        ctx.addPredefinedProperty("playNow", element);
-        ctx.addPredefinedProperty("addToPlayQueue", element);
-        return false;
-    }
-    var sortedByArtist = this.songs.sort(function(a, b){
-        var strA = "";
-        var strB = "";
-        if(typeof a.artist !== 'undefined' && a.artist !== null){
-            strA = a.artist;
-        }
-        if(typeof b.artist !== 'undefined' && b.artist !== null){
-            strB = b.artist;
-        }
-       return strA.localeCompare(strB);
-    });
-
-    var table = self.artistsView.table;
-    if(table == null) {
-        table = new Table(
+    const sortedByArtist = this.songs.sortBy("artist");
+    let table = self.artistsView.table;
+    if(table === null) {
+        table = new SongTable(
             self.artistsView,
-            ["Artist", "Title", "Album"],
-            {
-                visibility: [true, true, false, true],
-                className: "playListTable",
-                onElementRightClick: onElementRightClick
+            null,
+            [{
+                name: "Artist",
+                visible: true
+            }, {
+                name: "Title",
+                visible: true,
+            }, {
+                name: "Album",
+                visible: true
+            }, {
+                name: "Tags",
+                visible: false
             }
+            ]
         );
         self.artistsView.table = table;
     }
-    var tableData = [];
-    for(var i = 0; i < sortedByArtist.length; i++){
-        tableData[i] = [];
-        tableData[i][0] = sortedByArtist[i].artist;
-        tableData[i][1] = sortedByArtist[i].title;
-        tableData[i][2] = sortedByArtist[i].sources;
-        tableData[i][3] = sortedByArtist[i].album;
-    }
-
-    table.setData(tableData);
-    table.draw();
-
+    table.update(sortedByArtist);
 
 }
 
 BrowseMusic.prototype.initAlbums = function () {
     const self = this;
-    const onElementRightClick = function(element){
-        var ctx = new ContextMenu(null);
-        ctx.addPredefinedProperty("playNow", element);
-        ctx.addPredefinedProperty("addToPlayQueue", element);
-        return false;
-    }
-    var sortedByAlbum = this.songs.sort(function(a, b){
-        var strA = "";
-        var strB = "";
-        if(typeof a.album !== 'undefined' && a.album !== null){
-            strA = a.album;
-        }
-        if(typeof b.album !== 'undefined' && b.album !== null){
-            strB = b.album;
-        }
-        return strA.localeCompare(strB);
-    });
-    var table = self.albumsView.table;
-    if(table == null) {
-        table = new Table(
+    const sortedByAlbum = this.songs.sortBy("album");
+    let table = self.albumsView.table;
+    if(table === null) {
+        table = new SongTable(
             self.albumsView,
-            ["Artist", "Title", "Album"],
-            {
-                visibility: [true, true, false, true],
-                className: "playListTable",
-                onElementRightClick: onElementRightClick
-            }
+            null,
+            [{
+                name: "Album",
+                visible: true
+            },{
+                name: "Artist",
+                visible: true
+            },{
+                name: "Title",
+                visible: true,
+            },{
+                name: "Tags",
+                visible: false
+            }]
         );
         self.albumsView.table = table;
     }
-    var tableData = [];
-    for(var i = 0; i < sortedByAlbum.length; i++){
-        tableData[i] = [];
-        tableData[i][0] = sortedByAlbum[i].artist;
-        tableData[i][1] = sortedByAlbum[i].title;
-        tableData[i][2] = sortedByAlbum[i].sources;
-        tableData[i][3] = sortedByAlbum[i].album;
-    }
-
-    table.setData(tableData);
-    table.draw();
+    table.update(sortedByAlbum);
 }
 
 BrowseMusic.prototype.update = function(){
