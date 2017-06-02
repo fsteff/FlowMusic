@@ -177,6 +177,13 @@ PlayQueue.prototype.getSongByNr = function (nr) {
  * @returns the (new) current song (if not found the previous one)
  */
 PlayQueue.prototype.playSong = function(song){
+    if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
+        this.history.push(this.songs[this.currentPos]);
+        while (this.history.length > 10) {
+            this.history.shift();
+        }
+    }
+
     const nr = this.getSongNr(song.artist, song.title);
     if(nr < this.songs.length){
         this.currentPos = nr;
