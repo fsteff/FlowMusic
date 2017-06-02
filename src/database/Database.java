@@ -189,7 +189,7 @@ public class Database extends ThreadedComponent {
 		for(int i=0; i<playlists.length(); i++){
 			playlists.getJSONObject(i).put("entries", getPlaylist(playlists.getJSONObject(i).getInt(DBAttributes.PLAYLIST_ID)).length());
 		}
-		return query(get);
+		return playlists;
 	}
 
 	private JSONArray query(String query){
@@ -458,8 +458,8 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
-	private void removeDirectory(String dbLocation){
-		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.VALUE+" = "+dbLocation;
+	private void removeDirectory(String dbLocation){//TODO test
+		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.VALUE+" LIKE '"+dbLocation+"%'";
 		try {
 			statement= databaseConnection.createStatement();
 			statement.executeUpdate(remove);
