@@ -3,6 +3,7 @@ package crawler.file;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
@@ -161,12 +162,12 @@ public class MP3File extends AbstractFile
 	 */
 	private static class Tag
 	{
-		private final String title;
-		private final String artist;
-		private final String album;
-		private final String year;
-		private final String comment;
-		private final byte genre;
+		private String title = "";
+		private String artist = "";
+		private String album = "";
+		private String year = "";
+		private String comment = "";
+		private byte genre = 0;
 
 		public Tag(ByteBuffer bBuf) throws IllegalArgumentException
 		{
@@ -186,13 +187,16 @@ public class MP3File extends AbstractFile
 				throw new IllegalArgumentException(
 						"Diese Datei enthält keinen ID3-Tag! => keine MP3 Datei!");
 			}
-
-			title = new String(tagTitle).trim();
-			artist = new String(tagArtist).trim();
-			album = new String(tagAlbum).trim();
-			year = new String(tagYear).trim();
-			comment = new String(tagComment).trim();
-			genre = tagGenre[0];
+            try {
+                title = fixEncoding(new String(tagTitle, "iso-8859-1")).trim();
+                artist = fixEncoding(new String(tagArtist, "iso-8859-1")).trim();
+                album = fixEncoding(new String(tagAlbum, "iso-8859-1")).trim();
+                year = fixEncoding(new String(tagYear, "iso-8859-1")).trim();
+                comment = fixEncoding(new String(tagComment, "iso-8859-1")).trim();
+                genre = tagGenre[0];
+            }catch (UnsupportedEncodingException e){
+			    logger.error("",e);
+            }
 		}
 
 		public String getTitle()
@@ -299,5 +303,60 @@ public class MP3File extends AbstractFile
 				return false;
 			return true;
 		}
+
+        private static String fixEncoding(String latin1) {
+            try {
+                byte[] bytes = latin1.getBytes("ISO-8859-1");
+                if(bytes[0] == 0){
+                    return "";
+                }
+                if (!validUTF8(bytes))
+                    return latin1;
+                return new String(bytes, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                // Impossible, throw unchecked
+                throw new IllegalStateException("No Latin1 or UTF-8: " + e.getMessage());
+            }
+
+        }
+
+        private static boolean validUTF8(byte[] input) {
+            int i = 0;
+            // Check for BOM
+            if (input.length >= 3 && (input[0] & 0xFF) == 0xEF
+                    && (input[1] & 0xFF) == 0xBB & (input[2] & 0xFF) == 0xBF) {
+                i = 3;
+            }
+
+            int end;
+            for (int j = input.length; i < j; ++i) {
+                int octet = input[i];
+                if ((octet & 0x80) == 0) {
+                    continue; // ASCII
+                }
+
+                // Check for UTF-8 leading byte
+                if ((octet & 0xE0) == 0xC0) {
+                    end = i + 1;
+                } else if ((octet & 0xF0) == 0xE0) {
+                    end = i + 2;
+                } else if ((octet & 0xF8) == 0xF0) {
+                    end = i + 3;
+                } else {
+                    // Java only supports BMP so 3 is max
+                    return false;
+                }
+
+                while (i < end) {
+                    i++;
+                    octet = input[i];
+                    if ((octet & 0xC0) != 0x80) {
+                        // Not a valid trailing byte
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 	}
 }
