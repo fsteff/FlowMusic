@@ -107,7 +107,7 @@ public class Database extends ThreadedComponent {
 				
 				break;
 			case "source":
-				getSong(msg.getJSONObject("filter").getInt(DBAttributes.SONG_ID));
+				getSource(msg.getJSONObject("filter").getInt(DBAttributes.SOURCE_ID));
 				break;
 				
 			case "ViewPlaylistSongs":
@@ -464,6 +464,12 @@ public class Database extends ThreadedComponent {
 			}
 		}
 		return songInfo;
+	}
+	
+
+	private JSONArray getSource(int ID){
+		String get="SELECT "+DBAttributes.VALUE+", "+DBAttributes.TYPE+" FROM "+DBTables.Source+" WHERE "+DBAttributes.SOURCE_ID+" = "+ID;
+		return query(get);
 	}
 	
 	private JSONArray getSong(int ID){
