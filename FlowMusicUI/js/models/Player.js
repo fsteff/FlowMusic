@@ -197,6 +197,13 @@ PlayQueue.prototype.removeSongNr = function(nr){
     this.notifyListeners(this.current());
 }
 
+PlayQueue.prototype.removeAll = function(){
+    this.songs = [];
+    this.currentPos = 0;
+    this.history = [];
+    // TODO: what do we tell the listeners?
+}
+
 
 //----------------------------------------------- CLASS PlayerSettings ---------------------------------
 /**
@@ -335,4 +342,62 @@ MusicPlayer.prototype.tryLoadSource = function(plugin, source, callback){
     if(! found) {
         callback(false);
     }
+}
+
+/**
+ *
+ * @param song {Song}
+ * @param play {Boolean}
+ */
+MusicPlayer.prototype.addToQueue = function (song, play) {
+    const playable = [];
+    const state = {
+        countDown: 0,
+        finished: false
+    }
+
+    function choose() {
+        let chosen = -1;
+        for (let i2 = 0; i2 < song.sources.length && chosen < 0; i2++) {
+            if (playable[i2] === true) {
+                chosen = i2;
+            }
+        }
+        if (chosen >= 0) {
+            const s = {
+                artist: song.artist,
+                title: song.title,
+                plugin: song.sources.get(chosen).type,
+                source: song.sources.get(chosen).value
+            };
+            Central.getPlayer().getPlayQueue().add(s);
+            if (play) {
+                Central.getPlayer().playSong(s);
+            }
+        } else {
+            Log.warning("Cannnot get a valid source for " + JSON.stringify(elem));
+        }
+    }
+
+    for (let i = 0; i < song.sources.length; i++) {
+        const src = song.sources[i];
+        state.countDown++;
+        Central.getPlayer().tryLoadSource(src.type, src.value, function (valid) {
+            playable[i] = valid;
+            state.countDown--;
+
+            if (state.countDown === 0 && state.finished) {
+                choose();
+            }
+        });
+
+    }
+    ;
+    state.finished = true;
+
+    // if all callbacks returned immediately
+    if (state.countDown == 0) {
+        choose();
+    }
+
 }

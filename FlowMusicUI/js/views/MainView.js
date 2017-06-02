@@ -350,15 +350,39 @@ function PlaylistView(element){
     this.element.html("Loading...");
     this.playlistId = null;
     this.playlistName = null;
-    this.entries = [];
+    this.songs = null;
     this.songTable = null;
+    this.tableElement = $("<div></div>");
 }
 
 PlaylistView.prototype.setPlaylist = function(id, name){
+    const self = this;
     this.playlistId = id;
     this.playlistName = name;
     this.songs = null;
-    this.songTable = new SongTable(this.element, this.playlistName);
+    this.songTable = new SongTable(this.tableElement, /*this.playlistName*/ null);
+
+    this.element.html("");
+
+    $("<h3>"+this.playlistName+"</h3>").appendTo(this.element);
+    const playButton = $("<div class='playlistPlayAll'><img src='/img/play.png'/> Play all</div>");
+    playButton.appendTo(this.element);
+    playButton.click(function(){
+        if(self.songs !== null){
+            Central.getPlayer().getPlayQueue().removeAll();
+            for(let i = 0; i < self.songs.length; i++){
+                if(i == 0){
+                    Central.getPlayer().addToQueue(self.songs[i], true);
+                }else{
+                    Central.getPlayer().addToQueue(self.songs[i], false);
+                }
+            }
+
+        }
+    });
+
+    this.tableElement.appendTo(this.element);
+
     this.update();
 }
 
@@ -382,26 +406,6 @@ PlaylistView.prototype.update = function(){
     },
     Message.Components.DATABASE,
     onAnswer);
-
-    /*onAnswer([{
-        "sources": [{"sourceid": 1, "type": "youtube", "songid": 1, "value": "m8OM4JdsZ7Y"}],
-        "year": 0,
-        "artist": "Erwin & Edwin",
-        "album": [""],
-        "artistid": 1,
-        "tag": [""],
-        "title": "Stress",
-        "songid": 1
-    }, {
-        "sources": [{"sourceid": 2, "type": "youtube", "songid": 2, "value": "DWcISt1PdjI"}],
-        "year": 0,
-        "artist": "Erwin & Edwin",
-        "album": [""],
-        "artistid": 1,
-        "tag": [""],
-        "title": "Freddy",
-        "songid": 2
-    }]);*/
 }
 
 //------------------------------------------------------------- CLASS PlaylistOverView ---------------------------------
@@ -416,12 +420,46 @@ function PlaylistOverview(element){
 
 }
 
+PlaylistOverview.prototype.createPlaylist = function () {
+    // this is called from elsewhere, therefore "this" is something different
+    const self = PageView.getInstance().sidepanel.playlists.page;
+    const input = $("<input type='text'/>");
+    const submit = $("<input type='button' value='create'/>");
+
+    const ctx = new ContextMenu();
+    ctx.addLabel("New Playlist:");
+    ctx.addElement(input, function(){});
+    ctx.addElement(submit, function(){
+        const name = input.val();
+        LocalComm.newMessage({
+            command: "insertPlaylist",
+            name: name
+        }, Message.Components.DATABASE, function(msg){
+            const answer = parseInt(msg.answer);
+            if(! isNaN(answer)){
+                const view = PageView.getInstance().mainview.newTab(PlaylistView, name, true);
+                view.setPlaylist(answer, name);
+                self.playlistTabs.push(view);
+                self.playlists.push({name: name, id: answer});
+            }
+        });
+
+        ctx.close();
+    })
+}
+
 PlaylistOverview.prototype.update = function(){
     const self = this;
 
     const onAnswer = function(msg){
         self.element.html("<h3>Playlists</h3>");
-        //const tabs = PageView.getInstance().sidepanel.openTabs;
+
+        const addPlaylist = $("<div class='addPlaylist'><div class='add'>+</div>Create a new Playlist</div>");
+        addPlaylist.appendTo(self.element);
+
+        // use timeout to exit click handler before creating context menu
+        addPlaylist.click(function(){window.setTimeout(self.createPlaylist, 10)});
+
         const openTab = PageView.getInstance().sidepanel.openTabNum;
         const sidepanel = PageView.getInstance().sidepanel;
         for(var i = 0; i < self.playlistTabs.length; i++) {
@@ -560,15 +598,27 @@ function ContextMenu(){
 
     $("body").append(this.element);
 
+    this.properties = [];
+
     const self = this;
 
     this.closeHandler = function(event){
         var target = $(event.target);
-        if( target.attr("id") !== self.element.attr("id") /*&& ctx.element.find("#"+ctx.id).length == 0*/){
-            self.element.remove();
-            $(document).unbind("click", this.closeHandler);
-            ContextMenu.instance = null;
+        for(let i = 0; i < self.properties.length; i++){
+            let prop = self.properties[i];
+            if(target[0] == prop.element[0]){
+                prop.handler();
+                return;
+            }
         }
+
+        self.close();
+    }
+
+    this.close = function(){
+        self.element.remove();
+        $(document).unbind("click", this.closeHandler);
+        ContextMenu.instance = null;
     }
 
     $(document).bind("click", this.closeHandler); //.click(this.closeHandler);
@@ -576,14 +626,35 @@ function ContextMenu(){
 }
 
 ContextMenu.prototype.addLabel = function(html){
-    $("<div class='label'>"+html+"</div>").appendTo(this.element);
+    const label = $("<div class='label'>"+html+"</div>");
+    label.appendTo(this.element);
+    this.properties.push({
+        element: label,
+        handler: function(){}
+    });
 }
 
 ContextMenu.prototype.addProperty = function(html, handler){
+    const self = this;
     var elem = $("<div class='property'>"+html+"</div>");
     elem.appendTo(this.element);
 
-    elem.click(handler);
+    this.properties.push({
+        element: elem,
+        handler: function(){
+            handler();
+            self.close();
+        }
+    });
+}
+
+ContextMenu.prototype.addElement = function(element, handler){
+    element.appendTo(this.element);
+
+    this.properties.push({
+        element: element,
+        handler: handler
+    });
 }
 
 ContextMenu.instance = null;
