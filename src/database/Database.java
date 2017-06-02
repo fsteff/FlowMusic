@@ -107,7 +107,7 @@ public class Database extends ThreadedComponent {
 				
 				break;
 			case "source":
-				getSource(msg.getJSONObject("filter").getInt(DBAttributes.SOURCE_ID));
+				found = getSource(msg.getJSONObject("filter").getInt(DBAttributes.SOURCE_ID));
 				break;
 				
 			case "ViewPlaylistSongs":
