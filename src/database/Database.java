@@ -178,7 +178,7 @@ public class Database extends ThreadedComponent {
 
 	private JSONArray getPlaylist(String playlistId) {
 		// TODO test
-		String get = "SELECT * FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+		String get = "SELECT "+DBTables.PlaylistEntry+".*, "+DBTables.Song+"."+DBAttributes.TITLE+", "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+" FROM "+DBTables.PlaylistEntry+", "+DBTables.Song+", "+DBTables.Artist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.PlaylistEntry+"."+DBAttributes.SONG_ID+" AND "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
 		return getAllInfo(get);	
 	}
 
