@@ -157,8 +157,7 @@ public class Database extends ThreadedComponent {
 			ret.put("answer", "done");
 			return ret;
 		case "insertPlaylist":
-			addPlaylist(msg.getJSONObject("filter").getString(DBAttributes.NAME));
-			break;
+			return ret.put("answer", addPlaylist(msg.getString(DBAttributes.NAME)));
 		case "addSongToPlaylist":
 			addSongToPlaylist(msg.getInt(DBAttributes.SONG_ID), msg.getInt(DBAttributes.PLAYLIST_ID), 1);
 			break;
@@ -347,12 +346,19 @@ public class Database extends ThreadedComponent {
 		}
 	}
 	
-	private void addPlaylist(String name){//TODO test
+	private int addPlaylist(String name){//TODO test
 		Timestamp stamp = new Timestamp(System.currentTimeMillis());
 		String insert = "INSERT INTO "+DBTables.Playlist+" ("+DBAttributes.NAME+", "+DBAttributes.TIMESTAMP+")"+
 						" VALUES ('"+turnToSqlString(name)+"', '"+stamp.toString()+"')";
+		int playlistId=0;
+		ResultSet rs;
 		try {
 			statement= databaseConnection.createStatement();
+			statement.executeUpdate(insert, statement.RETURN_GENERATED_KEYS);
+			rs=statement.getGeneratedKeys();
+			rs.next();
+			playlistId=rs.getInt(1);
+			
 			statement.executeUpdate(insert);
 		} catch (SQLException e) {
 			logger.error("Problem with Statement...");
@@ -360,7 +366,7 @@ public class Database extends ThreadedComponent {
 		} catch (Exception e){
 			logger.error(e.getMessage().toString());
 		}
-		
+		return playlistId;
 	}
 	
 	private void addSongToPlaylist(int songId, int playlistId, int trackNumber){//TODO test
@@ -441,25 +447,6 @@ public class Database extends ThreadedComponent {
 	
 	private void removeLocalData(){
 		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.TYPE+" = 'local'";
-		try {
-			statement= databaseConnection.createStatement();
-			statement.executeUpdate(remove);
-		} catch (SQLException e) {
-			logger.error("Problem with Statement...");
-			e.printStackTrace();
-		} catch (Exception e){
-			logger.error(e.getMessage().toString());
-		}
-		JSONArray songs=getAllSongInformation();
-		for(int i=0; i<songs.length(); i++){
-			if(songs.getJSONObject(i).getJSONArray("sources").length()==0){
-				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
-			}
-		}
-	}
-	
-	private void removeDirectory(String dbLocation){//TODO test
-		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.VALUE+" LIKE '"+dbLocation+"%'";
 		try {
 			statement= databaseConnection.createStatement();
 			statement.executeUpdate(remove);
