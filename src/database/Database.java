@@ -159,7 +159,7 @@ public class Database extends ThreadedComponent {
 			addPlaylist(msg.getJSONObject("filter").getString(DBAttributes.NAME));
 			break;
 		case "addSongToPlaylist":
-			addSongToPlaylist(msg.getInt(DBAttributes.SONG_ID), msg.getInt(DBAttributes.PLAYLIST_ID), msg.optInt(DBAttributes.NR));
+			addSongToPlaylist(msg.getInt(DBAttributes.SONG_ID), msg.getInt(DBAttributes.PLAYLIST_ID), 1);
 			break;
 		case "delete"://TODO
 			switch(what){
@@ -364,8 +364,8 @@ public class Database extends ThreadedComponent {
 		String insert;
 		insert= "SELECT MAX("+DBAttributes.NR+") AS MAX FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
 		information=query(insert);
-		if(!information.isNull(0)){
-			if(information.getJSONObject(0).getInt("MAX")<trackNumber){
+		if(information.getJSONObject(0).has("max")){
+			if(information.getJSONObject(0).getInt("max")<trackNumber){
 				trackNumber=information.getJSONObject(0).getInt("MAX")+1;
 			}
 		}else{
@@ -373,18 +373,27 @@ public class Database extends ThreadedComponent {
 		}
 		insert= "SELECT "+DBAttributes.NR+", "+DBAttributes.SONG_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBAttributes.NR+" > "+trackNumber;
 		information=query(insert);	
-		
-		for(int i=0; i<information.length(); i++){
-			insert= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)+1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
-			query(insert);
+		try{
+			for(int i=0; i<information.length(); i++){
+				insert= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)+1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
+				statement= databaseConnection.createStatement();
+				statement.executeUpdate(insert);
+			}
+			insert = "INSERT INTO "+DBTables.PlaylistEntry+" ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+", "+DBAttributes.NR+")"+
+					"VALUES ('"+playlistId+"', "+songId+", "+trackNumber+")";
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(insert);
+			insert = "UPDATE "+DBTables.Playlist+" SET "+DBAttributes.TIMESTAMP+" = '"+stamp.toString()+"' WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(insert);
+			logger.info("Song added to playlist.");
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
 		}
 		
-		insert = "INSERT INTO "+DBTables.PlaylistEntry+" ("+DBAttributes.PLAYLIST_ID+", "+DBAttributes.SONG_ID+", "+DBAttributes.NR+")"+
-				"VALUES ('"+playlistId+"', "+songId+", "+trackNumber+")";
-		query(insert);
-		insert = "UPDATE "+DBTables.Playlist+" SET "+DBAttributes.TIMESTAMP+" = "+stamp.toString()+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId;
-		query(insert);
-		logger.info("Song added to playlist.");
 	}
 	
 	private void removeSong(int ID){//TODO test
