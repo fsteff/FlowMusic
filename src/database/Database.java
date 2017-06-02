@@ -114,7 +114,7 @@ public class Database extends ThreadedComponent {
 				if(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString().equals("*")){
 					found = getPlaylists();
 				}else{
-					found = getPlaylist(msg.getJSONObject("filter").get(DBAttributes.PLAYLIST_ID).toString());
+					found = getPlaylist(msg.getJSONObject("filter").getInt(DBAttributes.PLAYLIST_ID));
 				}
 				
 				break;
@@ -125,6 +125,7 @@ public class Database extends ThreadedComponent {
 			ret.put("answer", found);
 			return ret;
 		case "updateFolder":
+			removeLocalData();
 			JSONArray update=msg.getJSONArray("found");
 			for(int i=0; i<update.length(); i++){
 				update.getJSONObject(i).put(DBAttributes.VALUE, update.getJSONObject(i).getString("path"));
@@ -176,14 +177,18 @@ public class Database extends ThreadedComponent {
 		return null;
 	}
 
-	private JSONArray getPlaylist(String playlistId) {
+	private JSONArray getPlaylist(int playlistId) {
 		// TODO test
 		String get = "SELECT "+DBTables.PlaylistEntry+".*, "+DBTables.Song+"."+DBAttributes.TITLE+", "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+" FROM "+DBTables.PlaylistEntry+", "+DBTables.Song+", "+DBTables.Artist+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+playlistId+" AND "+DBTables.Song+"."+DBAttributes.SONG_ID+" = "+DBTables.PlaylistEntry+"."+DBAttributes.SONG_ID+" AND "+DBTables.Song+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Artist+"."+DBAttributes.ARTIST_ID;
 		return getAllInfo(get);	
 	}
 
-	private JSONArray getPlaylists() {
+	private JSONArray getPlaylists() {//TODO test
 		String get="SELECT * FROM "+DBTables.Playlist;
+		JSONArray playlists=query(get);
+		for(int i=0; i<playlists.length(); i++){
+			playlists.getJSONObject(i).put("entries", getPlaylist(playlists.getJSONObject(i).getInt(DBAttributes.PLAYLIST_ID)).length());
+		}
 		return query(get);
 	}
 
@@ -396,17 +401,23 @@ public class Database extends ThreadedComponent {
 		
 	}
 	
-	private void removeSong(int ID){//TODO test
+	private void removeSong(int ID){
+		try{
 		String delete=" DELETE FROM "+DBTables.Song+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		query(delete);
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
 		delete=" DELETE FROM "+DBTables.Tag+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		query(delete);
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
 		delete=" DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		query(delete);
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
 		delete=" DELETE FROM "+DBTables.AlbumEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		query(delete);
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
 		delete=" DELETE FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
-		query(delete);
+		statement= databaseConnection.createStatement();
+		statement.executeUpdate(delete);
 		JSONArray number;
 		JSONArray information;
 		delete= "SELECT "+DBAttributes.NR+", "+DBAttributes.PLAYLIST_ID+" FROM "+DBTables.PlaylistEntry+" WHERE "+DBAttributes.SONG_ID+" = "+ID;
@@ -416,12 +427,54 @@ public class Database extends ThreadedComponent {
 			information=query(delete);	
 			for(int i=0; i<information.length(); i++){
 				delete= "UPDATE "+DBTables.PlaylistEntry+" SET "+DBAttributes.NR+" = "+(information.getJSONObject(i).getInt(DBAttributes.NR)-1)+" WHERE "+DBAttributes.PLAYLIST_ID+" = "+number.getJSONObject(j).getInt(DBAttributes.PLAYLIST_ID)+" AND "+DBAttributes.SONG_ID+" = "+information.getJSONObject(i).getInt(DBAttributes.SONG_ID);
-				query(delete);
+				statement= databaseConnection.createStatement();
+				statement.executeUpdate(delete);
 			}
 		}
-		
-		
-		
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+	}
+	
+	private void removeLocalData(){
+		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.TYPE+" = 'local'";
+		try {
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(remove);
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+		JSONArray songs=getAllSongInformation();
+		for(int i=0; i<songs.length(); i++){
+			if(songs.getJSONObject(i).getJSONArray("sources").length()==0){
+				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
+			}
+		}
+	}
+	
+	private void removeDirectory(String dbLocation){
+		String remove="DELETE FROM "+DBTables.Source+" WHERE "+DBAttributes.VALUE+" = "+dbLocation;
+		try {
+			statement= databaseConnection.createStatement();
+			statement.executeUpdate(remove);
+		} catch (SQLException e) {
+			logger.error("Problem with Statement...");
+			e.printStackTrace();
+		} catch (Exception e){
+			logger.error(e.getMessage().toString());
+		}
+		JSONArray songs=getAllSongInformation();
+		for(int i=0; i<songs.length(); i++){
+			if(songs.getJSONObject(i).getJSONArray("sources").length()==0){
+				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
+			}
+		}
 	}
 	
 	private JSONArray search(String search){
