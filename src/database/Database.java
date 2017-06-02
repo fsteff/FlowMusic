@@ -419,8 +419,7 @@ public class Database extends ThreadedComponent {
 		String get = "SELECT "+DBTables.Song+".*, "+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+", "+DBTables.Album+"."+DBAttributes.ALBUM_NAME+
 				" FROM "+DBTables.Song+", "+DBTables.Artist+","+DBTables.Album+
 				" WHERE "+DBTables.Artist+"."+DBAttributes.ARTIST_ID+" = "+DBTables.Song+"."+DBAttributes.ARTIST_ID+
-				" AND (LOWER("+DBTables.Song+"."+DBAttributes.TITLE+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Album+"."+DBAttributes.ALBUM_NAME+") LIKE '%"+search.toLowerCase()+"%' )"+
-				" AND "+DBTables.Album+"."+DBAttributes.ALBUM_ID+" = (SELECT "+DBAttributes.ALBUM_ID+" FROM "+DBTables.AlbumEntry+" WHERE "+DBTables.AlbumEntry+"."+DBAttributes.SONG_ID+" = "+DBTables.Song+"."+DBAttributes.SONG_ID+")";
+				" AND (LOWER("+DBTables.Song+"."+DBAttributes.TITLE+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Artist+"."+DBAttributes.ARTIST_NAME+") LIKE '%"+search.toLowerCase()+"%' OR LOWER("+DBTables.Album+"."+DBAttributes.ALBUM_NAME+") LIKE '%"+search.toLowerCase()+"%' )";
 		
 		
 		return getAllInfo(get);
