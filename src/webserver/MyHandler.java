@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import central.Component;
+import central.ExceptionHandler;
 import database.DBAttributes;
 import utils.JSLogger;
 
@@ -184,21 +185,36 @@ public class MyHandler extends AbstractHandler
 		return false;
 	}
 
+	/**
+	 * Handles all Head-Requests.
+	 * 
+	 * @return if the request got handled.
+	 */
 	private boolean handleHead(String target, HttpServletRequest request,
 			HttpServletResponse response)
 			throws IOException, ServletException
 	{
 		String id = request.getParameter(ID);
 		String pathToSong = getPathFromID(id);
-		
+
+		/*
+		 * Checks if the requested file to stream still exists. If not a
+		 * dialog pops up and informs the user. Moreover the website
+		 * receives a 404.
+		 */
 		if (Files.exists(Paths.get(pathToSong)))
 		{
-			response.setHeader("Content-Length", ""+new File(pathToSong).length());
+			response.setHeader("Content-Length",
+					"" + new File(pathToSong).length());
 			response.setHeader("Content-Type", "audio/mpeg");
 			return true;
 		}
 		else
 		{
+			ExceptionHandler.showErrorDialog("Song does not exist",
+					String.format(
+							"The requested song [path = %s] does not exist anymore...",
+							pathToSong));
 			return false;
 		}
 	}
@@ -264,48 +280,45 @@ public class MyHandler extends AbstractHandler
 	 */
 	private String getPathFromID(String id)
 	{
-		// TODO: Get path from DB
-		//return "C:\\Users\\Michael\\Music\\test.mp3";
-		
 		JSONObject msg = new JSONObject();
 		JSONObject filter = new JSONObject();
 		filter.put(DBAttributes.SOURCE_ID, Integer.parseInt(id));
-		msg.put("command", "get").put("what", "source").put("filter", filter);
+		msg.put("command", "get").put("what", "source").put("filter",
+				filter);
 		final LinkedBlockingDeque<String> queue = new LinkedBlockingDeque<>();
-		
-			try
+
+		try
+		{
+			webserver.sendMessage(Component.DATABASE, msg, answer ->
 			{
-				webserver.sendMessage(Component.DATABASE, msg, answer ->{
-					try
-					{
-						queue.putFirst(answer.toString());
-					}
-					catch (InterruptedException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				});
-			}
-			catch (InterruptedException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			try
-			{
-				JSONObject answer = new JSONObject(queue.takeFirst());
-				JSONArray ret = answer.getJSONArray("answer");
-				JSONObject source = ret.getJSONObject(0);
-				return source.getString("value");
-			}
-			catch (InterruptedException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			throw new IllegalArgumentException("There is no answer from the database...");
+				try
+				{
+					queue.putFirst(answer.toString());
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			});
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+
+		try
+		{
+			JSONObject answer = new JSONObject(queue.takeFirst());
+			JSONArray ret = answer.getJSONArray("answer");
+			JSONObject source = ret.getJSONObject(0);
+			return source.getString("value");
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
+		throw new IllegalArgumentException(
+				"There is no answer from the database...");
 	}
 
 	/**

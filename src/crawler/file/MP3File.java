@@ -2,14 +2,14 @@ package crawler.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
+import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.TagException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import central.ExceptionHandler;
 
 /**
  * This implementation of the {@link AbstractFile} should be used to get
@@ -51,40 +51,7 @@ public class MP3File extends AbstractFile
 
 		if (file.exists() && file.length() > 128)
 		{
-			RandomAccessFile raf = null;
-			try
-			{
-				raf = new RandomAccessFile(file, "r");
-
-				byte[] buf = new byte[MP3Tag.TAG_SIZE];
-				raf.seek(raf.length() - MP3Tag.TAG_SIZE);
-				raf.read(buf);
-				ByteBuffer bBuf = ByteBuffer.allocate(MP3Tag.TAG_SIZE);
-				bBuf.put(buf);
-				bBuf.rewind();
-
-				ret = new Tag(bBuf);
-			}
-			catch (IOException e)
-			{
-				ExceptionHandler.showErrorDialog(e);
-				logger.error("", e);
-			}
-			finally
-			{
-				if (raf != null)
-				{
-					try
-					{
-						raf.close();
-					}
-					catch (IOException e)
-					{
-						ExceptionHandler.showErrorDialog(e);
-						logger.error("", e);
-					}
-				}
-			}
+			ret = new Tag(file);
 		}
 		return ret;
 	}
@@ -167,36 +134,39 @@ public class MP3File extends AbstractFile
 		private String album = "";
 		private String year = "";
 		private String comment = "";
-		private byte genre = 0;
+		private String genre = "";
 
-		public Tag(ByteBuffer bBuf) throws IllegalArgumentException
+		public Tag(File file)
 		{
-			byte[] tag = new byte[MP3Tag.TAG.getLength()];
-			byte[] tagTitle = new byte[MP3Tag.TITLE.getLength()];
-			byte[] tagArtist = new byte[MP3Tag.ARTIST.getLength()];
-			byte[] tagAlbum = new byte[MP3Tag.ALBUM.getLength()];
-			byte[] tagYear = new byte[MP3Tag.YEAR.getLength()];
-			byte[] tagComment = new byte[MP3Tag.COMMENT.getLength()];
-			byte[] tagGenre = new byte[MP3Tag.GENRE.getLength()];
-
-			bBuf.get(tag).get(tagTitle).get(tagArtist).get(tagAlbum)
-					.get(tagYear).get(tagComment).get(tagGenre);
-
-			if (!"TAG".equalsIgnoreCase(new String(tag)))
+			try
 			{
-				throw new IllegalArgumentException(
-						"Diese Datei enthält keinen ID3-Tag! => keine MP3 Datei!");
+				org.jaudiotagger.audio.mp3.MP3File mp3File = new org.jaudiotagger.audio.mp3.MP3File(file);
+				org.jaudiotagger.tag.Tag tag = mp3File.getTag();
+
+				if (tag != null)
+				{
+					title = fixEncoding(tag.getFirst(FieldKey.TITLE))
+							.trim();
+					artist = fixEncoding(tag.getFirst(FieldKey.ARTIST))
+							.trim();
+					album = fixEncoding(tag.getFirst(FieldKey.ALBUM))
+							.trim();
+					year = fixEncoding(tag.getFirst(FieldKey.YEAR)).trim();
+					comment = fixEncoding(tag.getFirst(FieldKey.COMMENT))
+							.trim();
+					genre = fixEncoding(tag.getFirst(FieldKey.GENRE)).trim();
+				}
+				else
+				{
+					throw new IllegalArgumentException(
+							"The file does not contain a ID3-Tag! => no MP3 file!");
+				}
 			}
-            try {
-                title = fixEncoding(new String(tagTitle, "iso-8859-1")).trim();
-                artist = fixEncoding(new String(tagArtist, "iso-8859-1")).trim();
-                album = fixEncoding(new String(tagAlbum, "iso-8859-1")).trim();
-                year = fixEncoding(new String(tagYear, "iso-8859-1")).trim();
-                comment = fixEncoding(new String(tagComment, "iso-8859-1")).trim();
-                genre = tagGenre[0];
-            }catch (UnsupportedEncodingException e){
-			    logger.error("",e);
-            }
+			catch (IOException | TagException | ReadOnlyFileException
+					| InvalidAudioFrameException e)
+			{
+				logger.error("", e);
+			}
 		}
 
 		public String getTitle()
@@ -224,7 +194,7 @@ public class MP3File extends AbstractFile
 			return comment;
 		}
 
-		public byte getGenre()
+		public String getGenre()
 		{
 			return genre;
 		}
@@ -234,7 +204,7 @@ public class MP3File extends AbstractFile
 		{
 			return "Title: " + getTitle() + " - " + getArtist();
 		}
-
+		
 		@Override
 		public int hashCode()
 		{
@@ -246,7 +216,8 @@ public class MP3File extends AbstractFile
 					+ ((artist == null) ? 0 : artist.hashCode());
 			result = prime * result
 					+ ((comment == null) ? 0 : comment.hashCode());
-			result = prime * result + genre;
+			result = prime * result
+					+ ((genre == null) ? 0 : genre.hashCode());
 			result = prime * result
 					+ ((title == null) ? 0 : title.hashCode());
 			result = prime * result
@@ -285,7 +256,12 @@ public class MP3File extends AbstractFile
 			}
 			else if (!comment.equals(other.comment))
 				return false;
-			if (genre != other.genre)
+			if (genre == null)
+			{
+				if (other.genre != null)
+					return false;
+			}
+			else if (!genre.equals(other.genre))
 				return false;
 			if (title == null)
 			{
@@ -304,59 +280,79 @@ public class MP3File extends AbstractFile
 			return true;
 		}
 
-        private static String fixEncoding(String latin1) {
-            try {
-                byte[] bytes = latin1.getBytes("ISO-8859-1");
-                if(bytes[0] == 0){
-                    return "";
-                }
-                if (!validUTF8(bytes))
-                    return latin1;
-                return new String(bytes, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                // Impossible, throw unchecked
-                throw new IllegalStateException("No Latin1 or UTF-8: " + e.getMessage());
-            }
+		private static String fixEncoding(String latin1)
+		{
+			try
+			{
+				byte[] bytes = latin1.getBytes("ISO-8859-1");
+				if (bytes.length == 0 || bytes[0] == 0)
+				{
+					return "";
+				}
+				if (!validUTF8(bytes))
+					return latin1;
+				return new String(bytes, "UTF-8");
+			}
+			catch (UnsupportedEncodingException e)
+			{
+				// Impossible, throw unchecked
+				throw new IllegalStateException(
+						"No Latin1 or UTF-8: " + e.getMessage());
+			}
 
-        }
+		}
 
-        private static boolean validUTF8(byte[] input) {
-            int i = 0;
-            // Check for BOM
-            if (input.length >= 3 && (input[0] & 0xFF) == 0xEF
-                    && (input[1] & 0xFF) == 0xBB & (input[2] & 0xFF) == 0xBF) {
-                i = 3;
-            }
+		private static boolean validUTF8(byte[] input)
+		{
+			int i = 0;
+			// Check for BOM
+			if (input.length >= 3 && (input[0] & 0xFF) == 0xEF
+					&& (input[1] & 0xFF) == 0xBB
+							& (input[2] & 0xFF) == 0xBF)
+			{
+				i = 3;
+			}
 
-            int end;
-            for (int j = input.length; i < j; ++i) {
-                int octet = input[i];
-                if ((octet & 0x80) == 0) {
-                    continue; // ASCII
-                }
+			int end;
+			for (int j = input.length; i < j; ++i)
+			{
+				int octet = input[i];
+				if ((octet & 0x80) == 0)
+				{
+					continue; // ASCII
+				}
 
-                // Check for UTF-8 leading byte
-                if ((octet & 0xE0) == 0xC0) {
-                    end = i + 1;
-                } else if ((octet & 0xF0) == 0xE0) {
-                    end = i + 2;
-                } else if ((octet & 0xF8) == 0xF0) {
-                    end = i + 3;
-                } else {
-                    // Java only supports BMP so 3 is max
-                    return false;
-                }
+				// Check for UTF-8 leading byte
+				if ((octet & 0xE0) == 0xC0)
+				{
+					end = i + 1;
+				}
+				else if ((octet & 0xF0) == 0xE0)
+				{
+					end = i + 2;
+				}
+				else if ((octet & 0xF8) == 0xF0)
+				{
+					end = i + 3;
+				}
+				else
+				{
+					// Java only supports BMP so 3 is max
+					return false;
+				}
 
-                while (i < end) {
-                    i++;
-                    octet = input[i];
-                    if ((octet & 0xC0) != 0x80) {
-                        // Not a valid trailing byte
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+				while (i < end)
+				{
+					i++;
+					octet = input[i];
+					if ((octet & 0xC0) != 0x80)
+					{
+						// Not a valid trailing byte
+						return false;
+					}
+				}
+			}
+			return true;
+		}
 	}
 }
