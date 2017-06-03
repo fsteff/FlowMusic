@@ -697,12 +697,11 @@ public class Database extends ThreadedComponent {
 				+ DBAttributes.PLAYLIST_ID + " = " + playlistId;
 		information = query(insert);
 		if (information.getJSONObject(0).has("max")) {
-			if (information.getJSONObject(0).getInt("max") < trackNumber) {
-				trackNumber = information.getJSONObject(0).getInt("MAX") + 1;
-			}
+			trackNumber = information.getJSONObject(0).getInt("max") + 1;
 		} else {
 			trackNumber = 1;
 		}
+		System.out.println(trackNumber);
 		insert = "SELECT " + DBAttributes.NR + ", " + DBAttributes.SONG_ID + " FROM " + DBTables.PlaylistEntry
 				+ " WHERE " + DBAttributes.PLAYLIST_ID + " = " + playlistId + " AND " + DBAttributes.NR + " > "
 				+ trackNumber;
@@ -753,7 +752,7 @@ public class Database extends ThreadedComponent {
 
 				table = "CREATE TABLE " + DBTables.PlaylistEntry + "( " + DBAttributes.PLAYLIST_ID
 						+ " int NOT NULL AUTO_INCREMENT, " + DBAttributes.SONG_ID + " int NOT NULL, " + DBAttributes.NR
-						+ " int(4), " + "PRIMARY KEY (" + DBAttributes.PLAYLIST_ID + ", " + DBAttributes.SONG_ID + "))";
+						+ " int(4), " + "PRIMARY KEY (" + DBAttributes.PLAYLIST_ID + ", " + DBAttributes.NR + "))";
 				statement.executeUpdate(table);
 
 				table = "CREATE TABLE " + DBTables.Artist + "( " + DBAttributes.ARTIST_ID
