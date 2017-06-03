@@ -142,8 +142,8 @@ public class Database extends ThreadedComponent {
 			return ret;
 
 		case "updateFolder":
-			removeLocalData();
 			JSONArray update = msg.getJSONArray("found");
+			removeLocalData(update);
 			for (int i = 0; i < update.length(); i++) {
 				update.getJSONObject(i).put(DBAttributes.VALUE, update.getJSONObject(i).getString("path"));
 				update.getJSONObject(i).put(DBAttributes.TYPE, "local");
@@ -207,7 +207,7 @@ public class Database extends ThreadedComponent {
 	 *            : ID of playlist to delete
 	 */
 
-	private void removePlaylist(int playlistId) {// TODO test
+	private void removePlaylist(int playlistId) {
 		String remove = "DELETE FROM " + DBTables.Playlist + " WHERE " + DBAttributes.PLAYLIST_ID + " = " + playlistId;
 		try {
 			statement = databaseConnection.createStatement();
@@ -325,27 +325,43 @@ public class Database extends ThreadedComponent {
 	}
 
 	/**
-	 * Removes all sources with the TYPE 'local'. To set everything up for new
-	 * information from the crawler. Also removes songs, if there is no source
+	 * Removes all local sources not included in the crawler update. To set everything up for the crawler. Also removes songs, if there is no source
 	 * left.
 	 */
 
-	private void removeLocalData() {
-		String remove = "DELETE FROM " + DBTables.Source + " WHERE " + DBAttributes.TYPE + " = 'local'";
-		try {
-			statement = databaseConnection.createStatement();
-			statement.executeUpdate(remove);
-		} catch (SQLException e) {
-			logger.error("Problem with Statement...");
-			e.printStackTrace();
-		} catch (Exception e) {
-			logger.error(e.getMessage().toString());
+	private void removeLocalData(JSONArray update) {
+		String get = "SELECT " + DBAttributes.VALUE + " FROM " + DBTables.Source; 
+		JSONArray sources = query(get);
+		if(!sources.isNull(0) && !update.isNull(0)){
+			for(int i = 0; i < update.length(); i++){
+				if(sources.getJSONObject(0).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))){
+					sources.remove(0);
+				}
+				for(int k = 1; k < sources.length(); k++){
+					if(sources.getJSONObject(k).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))){
+						sources.remove(k);
+					}
+				}
+			}
+		}
+		String remove;
+		for(int i = 0; i < sources.length(); i++){
+			remove = "DELETE FROM " + DBTables.Source + " WHERE " + DBAttributes.TYPE + " = 'local' AND " + DBAttributes.VALUE + " = '" + sources.getJSONObject(i).getString(DBAttributes.VALUE) + "'";
+			try {
+				statement = databaseConnection.createStatement();
+				statement.executeUpdate(remove);
+			} catch (SQLException e) {
+				logger.error("Problem with Statement...");
+				e.printStackTrace();
+			} catch (Exception e) {
+				logger.error(e.getMessage().toString());
+			}
 		}
 		JSONArray songs = getAllSongInformation();
 		for (int i = 0; i < songs.length(); i++) {
 			if (songs.getJSONObject(i).getJSONArray("sources").length() == 0) {
 				removeSong(songs.getJSONObject(i).getInt(DBAttributes.SONG_ID));
-			}
+			}		
 		}
 	}
 
