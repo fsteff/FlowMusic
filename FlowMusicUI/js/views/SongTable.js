@@ -18,6 +18,7 @@ class SongTable{
         this.jQElement = $(jQElement);
         this.title = title;
         this.jQElement.html("<h3>" + title + "</h3>");
+        this.isEmpty = true;
         this.data = [];
         if(isArray(head)) {
             this.head = head;
@@ -47,20 +48,34 @@ class SongTable{
     update(data) {
         const self = this;
         let html = "";
-        if(this.title !== null){
-            html += "<h3>"+this.title+"</h3>";
-        }
-        html += "</h3><table class='w3-table songTable'><tr>";
-        for (var i = 0; i < this.head.length; i++) {
-            if (this.head[i].visible) {
-                html += "<th>" + this.head[i].name + "</th>";
+        if(this.isEmpty) {
+            if (this.title !== null) {
+                html += "<h3>" + this.title + "</h3>";
             }
+            html += "</h3><table class='w3-table songTable'><tr>";
+            for (var i = 0; i < this.head.length; i++) {
+                if (this.head[i].visible) {
+                    html += "<th>" + this.head[i].name + "</th>";
+                }
+            }
+            html += "</tr></table>";
+            this.jQElement.html(html);
+            this.isEmpty = false;
         }
-        html += "</tr></table>";
-        this.jQElement.html(html);
+
+        const added = [];
+        const removed = [];
+        data.forEach(function(song){
+            var add = true;
+            for(let i = 0; i < self.data.length; i++){
+                const other = self.data[i];
+                if(song.id === other.id){
+                    add = false;
+                }
+            }
+        });
+
         const tableBody = this.jQElement.find("tbody");
-
-
         const threadState = {row: 0};
 
         function threadFoo(){
@@ -92,10 +107,10 @@ class SongTable{
                     }
                 }
                 rowelem.html(html);
-             /*   self.data.push({
+                self.data.push({
                     song: song,
                     elem: rowelem
-                });*/
+                });
 
 
                 function choosePlaylist(){
