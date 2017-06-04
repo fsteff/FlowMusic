@@ -3,12 +3,20 @@
  * Copyright 2017 Fixl Stefan
  */
 
+/**
+ * Singleton-Class that can be used for communication with the backend by polling /inmsg
+ * @returns {LocalComm}
+ * @constructor
+ */
 function LocalComm(){
     const self = this;
     this.messageCallbacks = new Map();
     this.listeners = new Map();
 
-
+    /**
+     * Is called every time a message is returned by /inmsg.
+     * @param data {string} string representation of JSON message
+     */
     this.onMessage = function(data){
         if(data !== "{}") {
             var msg = new Message({json: data});
@@ -19,7 +27,7 @@ function LocalComm(){
             {
                 self.messageCallbacks.get(answerTo)(msg.msg);
                 self.messageCallbacks.remove(answerTo);
-                var logmsg = self.clipString(JSON.stringify(msg.msg), 97);
+                var logmsg = clipString(JSON.stringify(msg.msg), 97);
                 Log.info("Message from " + msg.sender + ": " + logmsg);
             } else {
                 self.processMessage(msg);
@@ -28,6 +36,9 @@ function LocalComm(){
         self.getMessage();
     }
 
+    /**
+     * Polls /inmsg for new messages
+     */
     this.getMessage = function(){
         $.ajax({
             url: "/inmsg",
@@ -41,6 +52,11 @@ function LocalComm(){
         });
     }
 
+    /**
+     * Handles all messages not handeled by a messageCallback handler.
+     * If a message contains the "command" parameter it is forwarded to all registered listeners of this command.
+     * @param msg
+     */
     this.processMessage = function(msg){
 
         if(msg.json.trim() !== "{}") {
@@ -61,24 +77,16 @@ function LocalComm(){
             }
         }
     }
-    // start message polling later
+    // start message polling later to avoid blocking the UI
     window.setTimeout(this.getMessage, 10);
 
     return this;
 }
 
-LocalComm.prototype.clipString = function(str, max){
-    var ret = str.substring(0, max);
-    if(ret.length == max){
-        ret += "...";
-    }
-    return ret;
-}
-
 LocalComm.instance = null;
 
 /**
- * Get the instance
+ * Get the singleton instance
  * @returns {LocalComm}
  */
 LocalComm.getInstance = function () {
@@ -88,6 +96,12 @@ LocalComm.getInstance = function () {
     return LocalComm.instance;
 }
 
+/**
+ * Sends a message to the message queue of the backend
+ * @param message {Object} object that will be converted to JSON
+ * @param recipient {String} backend component name
+ * @param success {function(object)} callback from the backend component
+ */
 LocalComm.newMessage = function(message, recipient,success){
     const self = LocalComm.getInstance();
     var msg = new Message({
@@ -97,8 +111,8 @@ LocalComm.newMessage = function(message, recipient,success){
     if(success == null) {
         success = function (aw) {
             Log.info("LocalComm: message to "+recipient
-                +"'" + self.clipString(JSON.stringify(message), 97) + " was answered: '"
-                + self.clipString(JSON.stringify(aw)) + "'");
+                +"'" + clipString(JSON.stringify(message), 97) + " was answered: '"
+                + clipString(JSON.stringify(aw)) + "'");
         };
     }
     self.messageCallbacks.put(msg.id, success);
@@ -107,9 +121,9 @@ LocalComm.newMessage = function(message, recipient,success){
 }
 
 /**
- *
- * @param command
- * @param {Callable} listener
+ * Registers a command listener that will be called if certain commands arrive
+ * @param command {string}
+ * @param listener {Callable}
  */
 LocalComm.registerListener = function(command, listener){
     const self = LocalComm.getInstance();
@@ -126,12 +140,16 @@ LocalComm.registerListener = function(command, listener){
     arr[i] = listener;
 }
 
+/**
+ * Removes a listener
+ * @param listener {Callable}
+ */
 LocalComm.unregisterListener = function(listener){
     const self = LocalComm.getInstance();
     for(var i = 0; i < self.listeners.values.length; i++){
         const arr = self.listeners.values[i];
         for(var i2 = 0; i2 < arr.length; i2++){
-            if(arr[i2].equal(listener)){
+            if(arr[i2].equals(listener)){
                 arr.splice(i2, 1);
             }
         }
@@ -142,7 +160,7 @@ LocalComm.unregisterListener = function(listener){
 
 
 /**
- *
+ * Class that represents a message - only for internal use in LocalComm(!)
  * @param obj
  * Either an incoming json string as obj.json = "..."
  * or the object's members:
@@ -164,8 +182,7 @@ function Message(obj){
     if((typeof obj.id !== 'undefined') && obj.id !== null){
         this.id = obj.id;
     }else{
-        // use random id, because good synchronisation of incrementing the id is impossible
-        this.id = Math.floor(Math.random()*10000000+1);
+        this.id = Message.idCounter++;
     }
 
     if((typeof obj.answerTo !== 'undefined') && obj.answerTo !== null){
@@ -197,6 +214,12 @@ function Message(obj){
 
 }
 
+Message.idCounter = 1;
+
+/**
+ * @enum for backend components as recievers of a message
+ * @type {{ANY: string, WEBSERVER: string, DATABASE: string, GUI: string, CRAWLER: string, CENTRAL: string}}
+ */
 Message.Components = {
     ANY : "ANY",
     WEBSERVER : "WEBSERVER",

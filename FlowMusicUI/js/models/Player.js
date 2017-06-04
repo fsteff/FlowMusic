@@ -204,11 +204,13 @@ PlayQueue.prototype.removeSongNr = function(nr){
     this.notifyListeners(this.current());
 }
 
+/**
+ * Removes all song from the queue
+ */
 PlayQueue.prototype.removeAll = function(){
     this.songs = [];
     this.currentPos = 0;
     this.history = [];
-    // TODO: what do we tell the listeners?
 }
 
 
@@ -352,7 +354,7 @@ MusicPlayer.prototype.tryLoadSource = function(plugin, source, callback){
 }
 
 /**
- *
+ * Adds a song to the queue and chooses a source
  * @param song {Song}
  * @param play {Boolean}
  */
@@ -365,11 +367,21 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
 
     function choose() {
         let chosen = -1;
-        for (let i2 = 0; i2 < song.sources.length && chosen < 0; i2++) {
+        let options = [];
+        for (let i2 = 0; i2 < song.sources.length; i2++) {
             if (playable[i2] === true) {
-                chosen = i2;
+                options.push({index: i2, type: song.sources.get(i2).type});
             }
         }
+        if(options.length == 1){
+            chosen = options[0].index;
+        }else if(options.length > 1){
+            options.sort(function(a,b){
+               return Config.comparePluginRowing(a.type, b.type);
+            });
+            chosen = options[0].index;
+        }
+
         if (chosen >= 0) {
             const s = {
                 artist: song.artist,

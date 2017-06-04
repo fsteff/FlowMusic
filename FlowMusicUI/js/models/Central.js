@@ -14,24 +14,27 @@ function SearchEngine(){
 }
 /**
  * Register a plugin
- * A plugin at least hast to have all functions of BaseSearchEngine - use the extend method
- * @param plugin
+ * A plugin at least has to have all functions of BaseSearchEngine - use the extend method
+ * @param plugin {BaseSearchEngine}
  */
 SearchEngine.prototype.addPlugin = function(plugin){
     this.plugins.push(plugin);
 }
 /**
  * Searches all plugins with the given query
- * @param query
- * @param callback is called every time the results are updated (every time a plugin answered the query)
+ * @param query {String}
+ * @param callback {function(SongArray)}
+ * is called every time the results are updated (every time a plugin answered the query)
  * @returns {Array} the (empty) array that will be updated when the results arrive
  */
 SearchEngine.prototype.search = function(query, callback){
     const results = new SongArray([]);
     const filtered = new SongArray([]);
 
+    /**
+     * Searches for double entries and appends the sources of one to the other
+     */
     function filter(){
-        // Search for double entries and append the sources of one to the other
         for(let i = 0; i < results.length; i++){
             let found = false;
             let outer = results[i];
@@ -61,6 +64,7 @@ SearchEngine.prototype.search = function(query, callback){
     let numSearches = 0;
     for(let i = 0; i < this.plugins.length; i++){
         numSearches++;
+        // for every search engine, add the found songs to the result set
         this.plugins[i].search(query, function(result){
             numSearches--;
             if(!(result instanceof  SongArray)){
@@ -78,12 +82,15 @@ SearchEngine.prototype.search = function(query, callback){
             callback(filtered);
         });
     }
+    // if searching takes longer than 5 seconds,
+    // call the callback with an empty array and write a warning to the console
     window.setTimeout(function(){
         if(numSearches > 0) {
             callback(filtered);
             Log.warning("Search timed out");
         }
     }, 5000);
+
     return filtered;
 }
 

@@ -3,33 +3,10 @@
  * Copyright 2017 Fixl Stefan
  */
 
-// Avoid `console` errors in browsers that lack a console.
-(function() {
-    var method;
-    var noop = function () {};
-    var methods = [
-        'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
-        'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
-        'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
-        'timeline', 'timelineEnd', 'timeStamp', 'trace', 'warn'
-    ];
-    var length = methods.length;
-    var console = (window.console = window.console || {});
-
-    while (length--) {
-        method = methods[length];
-
-        // Only stub undefined methods.
-        if (!console[method]) {
-            console[method] = noop;
-        }
-    }
-}());
-
-
 var mouseX = 0;
 var mouseY = 0;
 
+// listen to mouse moves
 jQuery(document).ready(function () {
     $(document).mousemove(function (e) {
         var bodyOffsets = document.body.getBoundingClientRect();
@@ -38,24 +15,77 @@ jQuery(document).ready(function () {
     });
 })
 
-var Config = null;
-$.getJSON("./js/config.json", function(json) {
-    Config = json;
+/**
+ * Loads the config from config.json
+ * @constructor
+ */
+function Config(){
+    const self = this;
+    this.plugins = [];
+    $.getJSON("./js/config.json", function(config) {
+        for(var i = 0; i < config.plugins.length; i++){
+            var plugin = config.plugins[i];
+            if(typeof plugin.name === 'string' && typeof plugin.src ==='string'){
+                self.plugins.push(plugin);
+                var s = document.createElement("script");
+                s.async = false;
+                s.defer = false;
+                s.type = "text/javascript";
+                s.src = "./js/plugins/"+plugin.src;
+                document.head.appendChild(s);
+                Log.info("Loading plugin: " + plugin);
+            }else{
+                Log.error("config.json invalid: " + JSON.stringify(plugin));
+            }
+        };
+    });
 
-    for(var i = 0; i < Config.plugins.length; i++){
-        var plugin = Config.plugins[i];
-        var s = document.createElement("script");
-        s.async = false;
-        s.defer = false;
-        s.type = "text/javascript";
-        s.src = "./js/plugins/"+plugin;
-        //$("head").append(s);
-        document.head.appendChild(s);
-        Log.info("Loading plugin: " + plugin);
-    };
+    return this;
+}
 
-});
+Config.instance = null;
 
+/**
+ * Get the singleton instance
+ * @return {Config}
+ */
+Config.getInstance = function(){
+    if(Config.instance === null){
+        Config.instance = new Config();
+    }
+    return Config.instance;
+}
+
+// load the instance to load the plugins instantly
+Config.getInstance();
+
+/**
+ * Compares the rowing of two plugins - the rowing is based on the rowing inside config.json
+ * @param first {string} name of the first plugin
+ * @param second {string} name of the second plugin
+ * @return {number} -1 if the first plugin is to favor, 1 if the second plugin is to favor, or 0 if an error occured
+ */
+Config.comparePluginRowing = function(first, second){
+    const self = Config.getInstance();
+    for(let i = 0; i < self.plugins.length; i++){
+        if(first === self.plugins[i].name){
+            return -1;
+        }
+        if(second === self.plugins[i].name){
+            return -1;
+        }
+    }
+    Log.info("Config.comparePluginRowing: no plugin matches the loaded ones");
+    return 0;
+}
+
+
+/**
+ * Create a log message that will be printed to the console and into the logfile.
+ * Messages longer that 1000 characters will be clipped.
+ * @param msg {String}
+ * @param type {String} either "info", "debug", "warning" or "error"
+ */
 function log(msg, type){
     if(type == null){
         type = "warning";
@@ -83,34 +113,65 @@ function log(msg, type){
     Log.post(clipString(msg, 1000), type);
 }
 
+/**
+ * Class Log with functions for the log levels.
+ * @constructor
+ */
 function Log(){}
+/**
+ * Log an INFO message
+ * @param msg {String}
+ */
 Log.info = function(msg){
     log(msg, "info");
 }
+/**
+ * Log a DEBUG message
+ * @param msg {String}
+ */
 Log.debug = function(msg){
     log(msg, "debug");
 }
+/**
+ * Log a WARNING message
+ * @param msg {String}
+ */
 Log.warning = function(msg){
     log(msg, "warning");
 }
+/**
+ * Log a ERROR message
+ * @param msg {String}
+ */
 Log.error = function(msg){
     log(msg, "error");
 }
-
+/**
+ * Writes a message to the logfile
+ * @param msg {String}
+ * @param type {String} either "info", "debug", "warning" or "error"
+ */
 Log.post = function(msg, type){
     $.post("/log", {msg: msg, level: type.toUpperCase()});
 }
 
-
+/**
+ * Minimalistic Map (Key-Value Storage) implementation
+ * @constructor
+ */
 function Map(){
     this.keys = [];
     this.values = [];
 }
-
+/**
+ * Add a key-value pair or updates a value if the key is already present
+ * @param key {*}
+ * @param value {*}
+ */
 Map.prototype.put = function(key, value){
     var found = false;
     for(var i = 0; i < this.keys.length && ! found; i++){
-        if(this.keys[i] == key){
+        if(this.keys[i] === key){
             this.values[i] = value;
             found = true;
         }
@@ -121,7 +182,11 @@ Map.prototype.put = function(key, value){
         this.values[index] = value;
     }
 }
-
+/**
+ * Get a key-value pair from the map
+ * @param key
+ * @returns {*}
+ */
 Map.prototype.get = function(key){
     for(var i = 0; i < this.keys.length; i++){
         if(this.keys[i] == key){
@@ -130,18 +195,25 @@ Map.prototype.get = function(key){
     }
     return null;
 }
-
+/**
+ * Removes a key-value pair
+ * @param key
+ */
 Map.prototype.remove = function(key){
     for(var i = 0; i < this.keys.length; i++){
-        if(this.keys[i] == key){
+        if(this.keys[i] === key){
             delete this.keys[i];
         }
     }
 }
-
+/**
+ * Removes all key-value pairs whose value mathes the value
+ * @param value {*}
+ * @param comparator {function(a,b)} (optional, can be null)
+ */
 Map.prototype.removeAll = function(value, comparator){
-    if(comparator == null){
-        comparator = function(a,b){return a == b};
+    if(comparator === null){
+        comparator = function(a,b){return a === b};
     }
     for(var i = 0; i < this.keys.length; i++){
         if(comparator(this.values[i], value)){
@@ -154,24 +226,44 @@ Map.prototype.removeAll = function(value, comparator){
 
 /**
  * An easily compareable function wrapper
- * @param foo arbitrary function
+ * @param foo {function()} arbitrary function
  * @constructor
  */
 function Callable(foo){
     this.call = foo;
     this.id = Callable.idCounter++;
 }
-
-Callable.prototype.equal = function(other){
+/**
+ *
+ * @param other
+ * @returns {boolean}
+ */
+Callable.prototype.equals = function(other){
     return other.id === this.id;
 }
 
+/**
+ * Static id counter that is incremented each time an instance is created
+ * @type {number}
+ */
 Callable.idCounter = 0;
 
+/**
+ * Checks if an object is an array
+ * @param obj
+ * @returns {boolean}
+ */
 function isArray(obj){
     return $.isArray(obj);
 }
 
+/**
+ * Limits a string to a given length.
+ * If the string is longer than max, "..." is added to it
+ * @param str {string}
+ * @param max {number}
+ * @returns {string}
+ */
 function clipString(str, max){
     var ret = str.substring(0, max);
     if(ret.length == max){
@@ -180,15 +272,23 @@ function clipString(str, max){
     return ret;
 }
 
+/**
+ * Class for easy background-processing without blocking the UI
+ * @param foo {function()}
+ * @param maxTime {number} in milliseconds - if the time needed by foo is longer than this, a warning is
+ * written to the console
+ * @param pauseTime {number} the timeout that is used for UI
+ * @constructor
+ */
 function FakeThread(foo, maxTime, pauseTime){
     this.foo = foo;
     this.maxTime = maxTime;
     this.pauseTime = pauseTime;
-    this.id = FakeThread.idCounter++;
 }
 
-FakeThread.idCounter = 1;
-
+/**
+ * starts the processing
+ */
 FakeThread.prototype.start = function(){
     const self = this;
     function doStuff() {

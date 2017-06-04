@@ -48,7 +48,6 @@ class SongTable{
     update(data) {
         const self = this;
         let html = "";
-      //  if(this.isEmpty) {
             if (this.title !== null) {
                 html += "<h3>" + this.title + "</h3>";
             }
@@ -61,19 +60,7 @@ class SongTable{
             html += "</tr></table>";
             this.jQElement.html(html);
             this.isEmpty = false;
-        //}
 
-/*        const added = [];
-        const removed = [];
-        data.forEach(function(song){
-            var add = true;
-            for(let i = 0; i < self.data.length; i++){
-                const other = self.data[i];
-                if(song.id === other.id){
-                    add = false;
-                }
-            }
-        });*/
 
         const tableBody = this.jQElement.find("tbody");
         const threadState = {row: 0};
@@ -107,10 +94,7 @@ class SongTable{
                     }
                 }
                 rowelem.html(html);
-                self.data.push({
-                    song: song,
-                    elem: rowelem
-                });
+                tableBody.append(rowelem);
 
 
                 function choosePlaylist(){
@@ -148,10 +132,6 @@ class SongTable{
 
                     return false;
                 });
-
-
-
-                tableBody.append(rowelem);
             }
             if (threadState.row >= data.length){
                 return true;

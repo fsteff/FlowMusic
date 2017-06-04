@@ -1,7 +1,14 @@
 {
     "plugins": [
-        "local.js",
-        "soundcloud.js",
-        "youtube.js"
+      {
+        "name": "local",
+        "src": "local.js"
+      }, {
+        "name": "soundcloud",
+        "src": "soundcloud.js"
+      }, {
+        "name": "youtube",
+        "src": "youtube.js"
+      }
     ]
 }
