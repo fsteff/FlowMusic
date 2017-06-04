@@ -598,7 +598,7 @@ public class Database extends ThreadedComponent {
 			}
 
 			insert = "SELECT " + DBAttributes.SOURCE_ID + " FROM " + DBTables.Source + " WHERE " + DBAttributes.SONG_ID
-					+ " LIKE " + songId;
+					+ " LIKE " + songId + " AND " + DBAttributes.TYPE + " LIKE '" + type + "'";
 			information = query(insert);
 			if (information.isNull(0)) {
 				insert = "INSERT INTO " + DBTables.Source + " (" + DBAttributes.SONG_ID + "," + DBAttributes.TYPE + ","
