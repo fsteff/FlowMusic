@@ -179,3 +179,28 @@ function clipString(str, max){
     }
     return ret;
 }
+
+function FakeThread(foo, maxTime, pauseTime){
+    this.foo = foo;
+    this.maxTime = maxTime;
+    this.pauseTime = pauseTime;
+    this.id = FakeThread.idCounter++;
+}
+
+FakeThread.idCounter = 1;
+
+FakeThread.prototype.start = function(){
+    const self = this;
+    function doStuff() {
+        let start = performance.now();
+        let done = self.foo();
+        let diff = performance.now() - start;
+        if(diff > self.maxTime){
+            console.warn("FakeThread took longer as supposed");
+        }
+        if(! done) {
+            window.setTimeout(doStuff, self.pauseTime);
+        }
+    }
+    doStuff();
+}

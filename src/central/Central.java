@@ -227,8 +227,15 @@ public class Central extends ThreadedComponent
 		if (comp != null)
 		{
 			comp.addMessage(msg);
+			int len = msg.message.length()-1;
+			String logmsg = null;
+			if(len > 1000){
+			    logmsg = msg.message.substring(0, 1000) + "...";
+            }else{
+			    logmsg = msg.message;
+            }
 			logger.info("Message from " + msg.sender + " to "
-					+ msg.recipient + ": " + msg.message);
+					+ msg.recipient + ": " + logmsg);
 		}
 	}
 
@@ -276,12 +283,25 @@ public class Central extends ThreadedComponent
 		{
 			central.sendMessage(Component.WEBSERVER, json,
 					msg -> logger.info("webserver started"));
-			central.sendMessage(Component.CRAWLER, json,
-					msg -> logger.info("crawler started"));
 			central.sendMessage(Component.DATABASE, json,
 					msg -> logger.info("database started"));
 			central.sendMessage(Component.GUI, json,
 					msg -> logger.info("gui started"));
+
+            if (System.getProperty("os.name").toLowerCase()
+                    .contains("windows"))
+            {
+                startBrowser();
+            }
+            else
+            {
+                startDefaultBrowser();
+            }
+
+			// start crawler 5s later to make the startup faster
+			Thread.sleep(5000);
+            central.sendMessage(Component.CRAWLER, json,
+                    msg -> logger.info("crawler started"));
 		}
 		catch (InterruptedException e)
 		{
@@ -289,15 +309,7 @@ public class Central extends ThreadedComponent
 			logger.error("", e);
 		}
 
-		if (System.getProperty("os.name").toLowerCase()
-				.contains("windows"))
-		{
-			startBrowser();
-		}
-		else
-		{
-			startDefaultBrowser();
-		}
+
 	}
 
 	private static void startDefaultBrowser()
@@ -397,7 +409,7 @@ public class Central extends ThreadedComponent
 			}
 			else
 			{
-				logger.error("Unhandled message command:" + cmd);
+				logger.debug("Unhandled message command:" + cmd);
 			}
 			break;
 		}

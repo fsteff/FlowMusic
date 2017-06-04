@@ -416,7 +416,7 @@ function PlaylistOverview(element){
     this.playlists = [];
     this.playlistTabs = [];
 
-    this.update();
+    //this.update();
 
 }
 
@@ -449,7 +449,8 @@ PlaylistOverview.prototype.createPlaylist = function () {
 }
 
 PlaylistOverview.prototype.update = function(){
-    const self = this;
+    // this is called from elsewhere, therefore "this" is something different
+    const self = PageView.getInstance().sidepanel.playlists.page;
 
     const onAnswer = function(msg){
         self.element.html("<h3>Playlists</h3>");

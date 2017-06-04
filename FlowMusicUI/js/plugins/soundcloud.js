@@ -25,8 +25,8 @@ function SoundCloudPlayer() {
 
     this.element = $('<iframe id="soundcloud-frame"'
         + 'class="iframe"'
-        + 'width="300px"'
-        + 'height="200px"'
+        + 'width="320px"'
+        + 'height="180px"'
         + 'scrolling="no"'
         + 'frameborder="no"'
             // throws an error, but works anyway - can´t find a fix for it

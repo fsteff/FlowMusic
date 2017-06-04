@@ -150,6 +150,7 @@ public class Database extends ThreadedComponent {
 				addSong(update.getJSONObject(i));
 			}
 			logger.info("done");
+            notifyDatabaseChanged();
 			break;
 
 		case "update":
@@ -174,6 +175,7 @@ public class Database extends ThreadedComponent {
 			}
 			addSong(newSong);
 			ret.put("answer", "done");
+            notifyDatabaseChanged();
 			return ret;
 
 		case "insertPlaylist":
@@ -334,14 +336,16 @@ public class Database extends ThreadedComponent {
 		JSONArray sources = query(get);
 		if(!sources.isNull(0) && !update.isNull(0)){
 			for(int i = 0; i < update.length(); i++){
-				if(sources.getJSONObject(0).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))){
-					sources.remove(0);
-				}
-				for(int k = 1; k < sources.length(); k++){
-					if(sources.getJSONObject(k).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))){
-						sources.remove(k);
-					}
-				}
+			    if(sources.length() > 0) {
+                    if (sources.getJSONObject(0).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))) {
+                        sources.remove(0);
+                    }
+                    for (int k = 1; k < sources.length(); k++) {
+                        if (sources.getJSONObject(k).getString(DBAttributes.VALUE).contentEquals(update.getJSONObject(i).getString("path"))) {
+                            sources.remove(k);
+                        }
+                    }
+                }
 			}
 		}
 		String remove;
@@ -893,5 +897,15 @@ public class Database extends ThreadedComponent {
 	private String turnToSqlString(String string) {
 		return string.replaceAll("'", "''");
 	}
+
+	private void notifyDatabaseChanged(){
+	    JSONObject msg = new JSONObject();
+	    msg.put("command", "library changed");
+	    try {
+            sendMessage(Component.ANY, msg, as -> {});
+        }catch(InterruptedException e){
+            logger.error("", e);
+        }
+    }
 
 }

@@ -91,10 +91,10 @@ Central.getPlayer().addPlugin(extend(BaseMusicPlayer, LocalFilePlayer, "local"))
 function BrowseMusic(element){
     const self = this;
     this.element = $(element);
-    this.songs = [];
+    this.songs = new SongArray([]);
 
     this.categoryBar = $("<div class='topmenu'></div>");
-    this.categoryBar.appendTo(element);
+    this.categoryBar.appendTo(this.element);
 
     this.categorySongs = $("<div class='topmenu tab active'>Songs</div>");
     this.categoryArtists = $("<div class='topmenu tab'>Artists</div>");
@@ -108,40 +108,49 @@ function BrowseMusic(element){
     this.categoryAlbums.click(function(){self.viewAlbums()});
     this.categoryArtists.click(function(){self.viewArtists()});
 
-    this.songsView = $("<div>songs</div>");
-    this.artistsView = $("<div>artists</div>");
-    this.albumsView = $("<div>albums</div>");
+    this.songsView = $("<div>loading songs...</div>");
+    this.artistsView = $("<div>loading artists...</div>");
+    this.albumsView = $("<div>loading albums...</div>");
 
     this.songsView.table = null;
     this.albumsView.table = null;
     this.artistsView.table = null;
 
     this.currentView = null;
-    this.viewArtists();
+
+    window.setTimeout(function(){
+        self.initArtists();
+        self.viewArtists();
+        self.initSongs();
+        self.viewArtists();
+    }, 100);
+
+
+    LocalComm.registerListener("library changed", function(){
+        self.initSongs();
+    });
 }
+
 
 BrowseMusic.prototype.viewSongs = function(){
     this.clearView();
+    this.categorySongs.attr("class", "topmenu tab active");
     this.currentView = this.songsView;
     this.songsView.appendTo(this.element);
-    this.categorySongs.attr("class", "topmenu tab active");
-    this.initSongs();
 }
 
 BrowseMusic.prototype.viewAlbums = function () {
     this.clearView();
+    this.categoryAlbums.attr("class", "topmenu tab active");
     this.currentView = this.albumsView;
     this.albumsView.appendTo(this.element);
-    this.categoryAlbums.attr("class", "topmenu tab active");
-    this.initSongs();
 }
 
 BrowseMusic.prototype.viewArtists = function () {
     this.clearView();
+    this.categoryArtists.attr("class", "topmenu tab active");
     this.currentView = this.artistsView;
     this.artistsView.appendTo(this.element);
-    this.categoryArtists.attr("class", "topmenu tab active");
-    this.initSongs();
 }
 
 BrowseMusic.prototype.clearView = function () {
@@ -157,13 +166,6 @@ BrowseMusic.prototype.clearView = function () {
 BrowseMusic.prototype.initSongs = function () {
     const self = this;
     const engine = new LocalSearchEngine();
-
-    const onElementRightClick = function(element){
-        var ctx = new ContextMenu(null);
-        ctx.addPredefinedProperty("playNow", element);
-        ctx.addPredefinedProperty("addToPlayQueue", element);
-        return false;
-    }
 
     engine.search("*", function(data){
         self.songs = data;
@@ -258,9 +260,6 @@ BrowseMusic.prototype.initAlbums = function () {
     table.update(sortedByAlbum);
 }
 
-BrowseMusic.prototype.update = function(){
-    this.initSongs();
-}
 
 $(document).ready(function(){
     PageView.getInstance().mainview.newTab(BrowseMusic, "My Music", false);

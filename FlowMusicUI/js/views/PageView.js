@@ -24,8 +24,6 @@ PageView.getInstance = function(){
 }
 
 $(document).ready(function(){
-   /* $("body").height($(window).height());
-    $("body").width($(window).width());*/
 
     const view = PageView.getInstance();
     if($(window).width() > 800){
@@ -56,6 +54,6 @@ $(document).ready(function(){
     const page = extend(MainTab, PlaylistOverview, elem, elem);
     view.sidepanel.playlists.page = page;
     view.mainview.tabs.push(page);
-    page.update();
+    window.setTimeout(page.update, 200);
 
 });
