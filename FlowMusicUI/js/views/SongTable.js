@@ -48,7 +48,7 @@ class SongTable{
     update(data) {
         const self = this;
         let html = "";
-        if(this.isEmpty) {
+      //  if(this.isEmpty) {
             if (this.title !== null) {
                 html += "<h3>" + this.title + "</h3>";
             }
@@ -61,9 +61,9 @@ class SongTable{
             html += "</tr></table>";
             this.jQElement.html(html);
             this.isEmpty = false;
-        }
+        //}
 
-        const added = [];
+/*        const added = [];
         const removed = [];
         data.forEach(function(song){
             var add = true;
@@ -73,7 +73,7 @@ class SongTable{
                     add = false;
                 }
             }
-        });
+        });*/
 
         const tableBody = this.jQElement.find("tbody");
         const threadState = {row: 0};
