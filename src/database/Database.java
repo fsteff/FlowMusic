@@ -346,7 +346,7 @@ public class Database extends ThreadedComponent {
 		}
 		String remove;
 		for(int i = 0; i < sources.length(); i++){
-			remove = "DELETE FROM " + DBTables.Source + " WHERE " + DBAttributes.TYPE + " = 'local' AND " + DBAttributes.VALUE + " = '" + sources.getJSONObject(i).getString(DBAttributes.VALUE) + "'";
+			remove = "DELETE FROM " + DBTables.Source + " WHERE " + DBAttributes.TYPE + " = 'local' AND " + DBAttributes.VALUE + " = '" + turnToSqlString(sources.getJSONObject(i).getString(DBAttributes.VALUE)) + "'";
 			try {
 				statement = databaseConnection.createStatement();
 				statement.executeUpdate(remove);
