@@ -6,18 +6,25 @@
 const SIDEPANEL_WIDTH = 160;
 const SIDEPANEL_WIDTH_PX = SIDEPANEL_WIDTH+"px";
 
+/**
+ * View for the side panel (green bar at the left)
+ * @constructor
+ */
 function SidePanel(){
     const self = this;
     this.element = $("#sidepanel");
     this.opened = false;
+    // currently open tab
     this.openTabNum = 0;
 
     this.openTabs = [];
 
+    // div for general purpose tabs
     this.tabSpace = $("<div id='sidepanel-tabSpace'></div>");
     this.tabSpace.appendTo(this.element);
     this.tabSpace.height(this.element.height()/2);
 
+    // div for PlaylistView tabs
     this.playlistSpace = $("<div></div>");
     this.playlistSpace.appendTo(this.element);
 
@@ -25,15 +32,19 @@ function SidePanel(){
         'id="sidepanel-playlists">Playlists</div>');
     playlistsTab.appendTo(this.playlistSpace);
 
+    // holds the PlaylistOverview MainTab
     this.playlists = {
-        page: null,
+        page: null, // MainTab - is set a bit later by PageView (outside its constructor)
         tab: playlistsTab
     }
 
+    // tab number of the PlayQueue tab - this is (normally) set to 0 by PageView after it has created it
     this.queueTabIndex = -1;
 
+    // tab number of the PlaylistOverview
     const index = this.openTabs.push(this.playlists) - 1; //  -> always 0
 
+    // add click handler to playlist overview tab:
     playlistsTab.click(function(event){
         PageView.getInstance().mainview.hideAllTabs();
         self.openTabNum = index;
@@ -48,10 +59,15 @@ function SidePanel(){
 
 }
 
+/**
+ * Resizes the side panel to fit the page
+ */
 SidePanel.prototype.resize = function(){
     this.tabSpace.height(this.element.height()/2);
 }
-
+/**
+ * Shows the sidepanel
+ */
 SidePanel.prototype.open = function () {
     var mainview = $("#mainview");
     mainview.css("margin-left", SIDEPANEL_WIDTH_PX);
@@ -62,16 +78,20 @@ SidePanel.prototype.open = function () {
     this.opened = true;
     PageView.getInstance().mainview.resize();
 }
-
+/**
+ * Hides the sidepanel
+ */
 SidePanel.prototype.close = function () {
     var mainview = $("#mainview");
-    //mainview.animate({'margin-left':'0px'},0.4)
     mainview.css("margin-left"," 0px");
     this.element.css("display"," none");
     this.opened = false;
     PageView.getInstance().mainview.resize();
 }
 
+/**
+ * Toggles the sidepanel (opens it is it is closed, closes it it is opened)
+ */
 SidePanel.prototype.toggle = function(){
     if(this.opened){
         this.close();
@@ -80,32 +100,39 @@ SidePanel.prototype.toggle = function(){
     }
 }
 
-SidePanel.prototype.addTab = function(element, name, closebutton){
+/**
+ * Adds a new general purpose Tab (called by MainView.newTab)
+ * @param mainTab {MainTab} (subclass of MainTab)
+ * @param name {string} displayed name
+ * @param closeButton {boolean} if the tab should have a close button
+ * @return {number} the tab number of the newly created tab
+ */
+SidePanel.prototype.addTab = function(mainTab, name, closeButton){
     const self = this;
-    if(closebutton == null){
-        closebutton = true;
+    if(closeButton !== false){
+        closeButton = true;
     }
     const tab = $("<div class='sidepanelbutton active w3-bar-item w3-button'></div>");
     var html = "<div class='buttontext'>"+name+"</div>";
     tab.html(html);
     tab.appendTo(this.tabSpace);
 
-    const closeelem = $("<div class='closebutton'>&#10005;</div>");
-    if(closebutton){
-        closeelem.appendTo(tab);
+    const closeElem = $("<div class='closebutton'>&#10005;</div>");
+    if(closeButton){
+        closeElem.appendTo(tab);
     }
 
     const index = this.openTabs.push({
-        page: element,
+        page: mainTab,
         tab: tab
     }) - 1;
 
     this.openTab(index);
 
     tab.click(function(event){
-       if(event.target == closeelem[0]){
+       if(event.target == closeElem[0]){
            tab.remove();
-           PageView.getInstance().mainview.closeTab(element);
+           PageView.getInstance().mainview.closeTab(mainTab);
            self.openTab(self.queueTabIndex);
        }else {
            self.openTab(index);
@@ -114,7 +141,13 @@ SidePanel.prototype.addTab = function(element, name, closebutton){
     return index;
 }
 
-SidePanel.prototype.addPlaylist = function(element, name){
+/**
+ * Adds a new PlaylistView Tab (called by MainView.newTab)
+ * @param mainTab {PlaylistView}
+ * @param name {string} display name
+ * @return {number} the tab number of the newly created tab
+ */
+SidePanel.prototype.addPlaylist = function(mainTab, name){
     const self = this;
 
     const tab = $("<div class='sidepanelbutton active w3-bar-item w3-button'></div>");
@@ -126,7 +159,7 @@ SidePanel.prototype.addPlaylist = function(element, name){
     closeelem.appendTo(tab);
 
     const newTab = {
-        page: element,
+        page: mainTab,
         tab: tab,
         close: null
     }
@@ -134,7 +167,7 @@ SidePanel.prototype.addPlaylist = function(element, name){
 
     newTab.close = function () {
         tab.remove(); // jQuery remove
-        PageView.getInstance().mainview.closeTab(element); // removes mainview window
+        PageView.getInstance().mainview.closeTab(mainTab); // removes mainview window
         if(self.openTabNum == index) {
             self.openTab(0);
         }
@@ -144,9 +177,6 @@ SidePanel.prototype.addPlaylist = function(element, name){
 
     tab.click(function(event){
         if(event.target == closeelem[0]){
-            /*tab.remove();
-            PageView.getInstance().mainview.closeTab(element);
-            self.openTab(0);*/
             newTab.close();
         }else {
             self.openTab(index);
@@ -156,12 +186,12 @@ SidePanel.prototype.addPlaylist = function(element, name){
 }
 
 /**
- *
- * @param page jquery element of mainview page
- * @param tab  jquery element of tab
+ * Shows a MainTab of the given tab number/index
+ * @param index {number} of the tab
+ * @param update {boolean} if the MainTab should be updated (optional)
  */
 SidePanel.prototype.openTab = function(index, update){
-    if(update == null){
+    if(update !== false){
         update = true;
     }
     var tab = this.openTabs[index];
@@ -177,6 +207,12 @@ SidePanel.prototype.openTab = function(index, update){
 
 }
 
+/**
+ * Shows a the tab with the given MainTab instance
+ * @param element {MainTab}
+ * @param update {boolean} if the MainTab should be updated
+ * @return {boolean} if tab was found
+ */
 SidePanel.prototype.openTabByPage = function(element, update){
     var num = this.getTabNumByPage(element);
     if(num >= 0){
@@ -186,9 +222,14 @@ SidePanel.prototype.openTabByPage = function(element, update){
     return false;
 }
 
-SidePanel.prototype.getTabNumByPage = function(page){
+/**
+ * Returns the tab number of a MainTab instance
+ * @param mainTab {MainTab}
+ * @return {number} index of the sidepanel tab or -1 if it was not found
+ */
+SidePanel.prototype.getTabNumByPage = function(mainTab){
     for(var i = 0; i < this.openTabs.length; i++){
-        if(this.openTabs[i].page == page){
+        if(this.openTabs[i].page == mainTab){
             return i;
         }
     }

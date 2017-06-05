@@ -16,8 +16,8 @@ class LocalFilePlayer extends BaseMusicPlayer{
     /**
      * @constructor
      */
-    constructor(name) {
-        super(name)
+    constructor() {
+        super("local")
         var elem = "localaudio-frame";
         // depends on the browser, but eg chrome makes partial requests
         // and the backend answers in 1MB chunks
@@ -114,7 +114,7 @@ class LocalFilePlayer extends BaseMusicPlayer{
 }
 
 // Add to main Music Player
-Central.getPlayer().addPlugin(new LocalFilePlayer("local"));
+Central.getPlayer().addPlugin(new LocalFilePlayer());
 
 //------------------------------------------------------------- CLASS LocalSearchEngine --------------------------------
 
@@ -212,10 +212,13 @@ class BrowseMusic {
 
         this.currentView = null;
 
-        // init artist view (default)
-        this.viewArtists();
-        // load the data
-        this.initSongs();
+        window.setTimeout(function(){
+            // init artist view (default)
+            self.viewArtists();
+            // load the data
+            self.initSongs();
+        }, 200);
+
 
         // register listener for "library changed" events
         LocalComm.registerListener("library changed", new Callable(function () {

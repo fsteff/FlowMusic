@@ -21,12 +21,13 @@ function PlayQueue() {
  * @returns the new current song
  */
 PlayQueue.prototype.next = function (random) {
-    if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
+   /* if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
         this.history.push(this.songs[this.currentPos]);
         while (this.history.length > 10) {
             this.history.shift();
         }
-    }
+    }*/
+    let nextPos = -1;
 
     if (random) {
         this.currentPos = Math.round(Math.random() * this.songs.length) % this.songs.length;
@@ -34,30 +35,35 @@ PlayQueue.prototype.next = function (random) {
         if (this.songs.length == 0) {
             return null;
         } else {
-            this.currentPos = ((this.currentPos+1) % this.songs.length);
+            nextPos = ((this.currentPos+1) % this.songs.length);
         }
     }
-    this.notifyListeners(this.songs[this.currentPos]);
+    //this.notifyListeners(this.songs[this.currentPos]);
 
-    return this.songs[this.currentPos];
+    return this.songs[nextPos];
 }
 /**
  * Play the last song (called by MusicPlayer - not for other use!)
  * @returns {*}
  */
 PlayQueue.prototype.prev = function(){
+    var lastSong = -1;
     if(this.history.length > 0) {
         var prev = this.history[this.history.length-1];
-        this.currentPos = this.songs.indexOf(prev);
-        if(this.currentPos < 0){
+        lastSong = this.songs.indexOf(prev);
+        if(lastSong < 0){
             this.songs.splice(0, 0, prev);
-            this.currentPos = 0;
+            lastSong = 0;
         }
         this.history.pop();
     }
 
-    this.notifyListeners(this.songs[this.currentPos]);
-    return this.songs[this.currentPos];
+    //this.notifyListeners(this.songs[this.currentPos]);
+    if(lastSong > 0 && lastSong < this.songs.length) {
+        return this.songs[lastSong];
+    }else{
+        return null;
+    }
 }
 /**
  * Add a new song to the list
@@ -177,12 +183,12 @@ PlayQueue.prototype.getSongByNr = function (nr) {
  * @returns the (new) current song (if not found the previous one)
  */
 PlayQueue.prototype.playSong = function(song){
-    if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
+    /*if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
         this.history.push(this.songs[this.currentPos]);
         while (this.history.length > 10) {
             this.history.shift();
         }
-    }
+    }*/
 
     const nr = this.getSongNr(song.artist, song.title);
     if(nr < this.songs.length){
@@ -211,6 +217,15 @@ PlayQueue.prototype.removeAll = function(){
     this.songs = [];
     this.currentPos = 0;
     this.history = [];
+}
+
+PlayQueue.prototype.addCurrentToHistory = function(){
+    if(this.songs.length > this.currentPos && this.songs[this.currentPos] != null) {
+        this.history.push(this.songs[this.currentPos]);
+        while (this.history.length > 10) {
+            this.history.shift();
+        }
+    }
 }
 
 
@@ -242,7 +257,6 @@ function MusicPlayer() {
 
     this.currentSong = this.playQueue.current();
     this.currentPlayer = null;
-
 }
 /**
  * @returns the currently playing plugin
@@ -283,7 +297,10 @@ MusicPlayer.prototype.addPlugin = function (player) {
  * If it does not have the source and plugin information, these are provided by the playQueue
  * @param song (at least {artist, title})
  */
-MusicPlayer.prototype.playSong = function (song) {
+MusicPlayer.prototype.playSong = function (song, addToHistory) {
+    if(addToHistory !== false){
+        this.playQueue.addCurrentToHistory();
+    }
     song = this.playQueue.playSong(song);
 
     this.currentSong = song;
@@ -317,14 +334,16 @@ MusicPlayer.prototype.nextSong = function (random) {
         random = false;
     }
     this.currentSong = this.playQueue.next(random);
-    this.playSong(this.currentSong);
+    this.playSong(this.currentSong, true);
 }
 /**
  * Play the previous song
  */
 MusicPlayer.prototype.lastSong = function () {
     this.currentSong = this.playQueue.prev();
-    this.playSong(this.currentSong);
+    if(this.currentSong !== null) {
+        this.playSong(this.currentSong, false);
+    }
 }
 /**
  * @returns {PlayQueue} the playQueue
@@ -365,6 +384,9 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
         finished: false
     }
 
+    /**
+     * Used inside the callback for tryLoadSource - called after all source players answered
+     */
     function choose() {
         let chosen = -1;
         let options = [];
@@ -394,11 +416,14 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
             if (play) {
                 Central.getPlayer().playSong(s);
             }
+            // TODO: because the callbacks can have a different order, the order of the songs my be randomly changed
+
         } else {
             Log.warning("Cannnot get a valid source for " + JSON.stringify(elem));
         }
     }
 
+    // Try to load all sources
     for (let i = 0; i < song.sources.length; i++) {
         const src = song.sources[i];
         state.countDown++;
@@ -412,10 +437,9 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
         });
 
     }
-    ;
     state.finished = true;
 
-    // if all callbacks returned immediately
+    // if all callbacks returned immediately:
     if (state.countDown == 0) {
         choose();
     }

@@ -3,6 +3,11 @@
  * Copyright 2017 Fixl Stefan
  */
 
+/**
+ * Singleton class that holds the view components - use getInstance()
+ * @return {PageView}
+ * @constructor
+ */
 function PageView(){
     this.playbar = new PlayBar();
     this.mainview = new MainView();
@@ -16,6 +21,10 @@ function PageView(){
 
 PageView.instance = null;
 
+/**
+ * Singleton getter
+ * @return {PageView}
+ */
 PageView.getInstance = function(){
     if(PageView.instance === null){
         PageView.instance = new PageView();
@@ -23,6 +32,7 @@ PageView.getInstance = function(){
     return PageView.instance;
 }
 
+// on document.ready build the page
 $(document).ready(function(){
 
     const view = PageView.getInstance();
@@ -44,16 +54,18 @@ $(document).ready(function(){
         view.sidepanel.resize();
     });
 
-
+    // add the playQueue Tab
     const queue = view.mainview.newTab(PlayQueueView, "Queue", false);
     view.sidepanel.queueTabIndex = queue.tabIndex;
 
+    // add the PlaylistOverviewTab
     const elem = $('<div class="maintab"></div>');
     elem.appendTo(view.mainview.element);
     elem.hide();
     const page = extend(MainTab, PlaylistOverview, elem, elem);
     view.sidepanel.playlists.page = page;
     view.mainview.tabs.push(page);
+    // load the playlist overview a bit later
     window.setTimeout(page.update, 200);
 
 });

@@ -3,6 +3,10 @@
  * Copyright 2017 Fixl Stefan
  */
 
+/**
+ * View for controlling the music player (blue bar at the bottom)
+ * @constructor
+ */
 function PlayBar(){
     const self = this;
 
@@ -24,6 +28,7 @@ function PlayBar(){
     this.backbutton = backbutton;
     this.info = info;
 
+    // on playbutton click: either play or pause the song
     this.playbutton.click(function(){
         var player = Central.getPlayer().getCurrentPlayer();
         if(player != null) {
@@ -36,6 +41,7 @@ function PlayBar(){
             }
         }
     });
+    // on next button click play the next song
     this.nextbutton.click(function(){
         var player = Central.getPlayer();
         if(player.getCurrentPlayer() != null){
@@ -43,6 +49,7 @@ function PlayBar(){
             playbutton.attr("class", "pausebutton");
         }
     });
+    // on back button click play the previous song
     this.backbutton.click(function(){
         var player = Central.getPlayer();
         if(player.getCurrentPlayer() != null){
@@ -51,6 +58,7 @@ function PlayBar(){
         }
     });
 
+    // add a playqueue listener to update the song name and the play state
     Central.getPlayer().getPlayQueue().addListener(function(song){
         if(song !== null) {
             info.html(song.artist + " - " + song.title);
@@ -63,6 +71,7 @@ function PlayBar(){
         }
     });
 
+    // every second update the progress bar
     window.setInterval(function(){
         var player = Central.getPlayer().currentPlayer;
         if(player != null && player.getTime() != 0) {

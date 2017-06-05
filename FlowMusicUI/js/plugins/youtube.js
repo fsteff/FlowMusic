@@ -1,52 +1,66 @@
 /**
  * @author Fixl Stefan
  * Copyright 2017 Fixl Stefan
+ *
+ * Note to this file: this is ECMAScript 6
+ * Only modern browsers support this!
  */
 
 var ytPlayerInstance = null;
-$(document).ready(function() {
 
-
-    function YoutubePlayer() {
+/**
+ * BaseMusicPlayer for Youtube videos
+ * see /js/models/PluginBase for more detail
+ */
+class YoutubePlayer extends BaseMusicPlayer {
+    /**
+     * @constructor
+     */
+    constructor() {
+        super("youtube");
         this.element = $("<div id=\"yt-frame\"></div>");
         this.element.appendTo($("body"));
 
 
-        // 2. This code loads the IFrame Player API code asynchronously.
+        // load the IFrame Player API code asynchronously
         var ytscript = document.createElement('script');
         ytscript.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(ytscript, firstScriptTag);
 
-        // 3. This function creates an <iframe> (and YouTube player)
-        //    after the API code downloads.
         this.player = null;
         this.settings = {playing: false, volume: 100}
         this.playerReady = false;
     }
 
-
-
-    // 4. The API will call this function when the video player is ready.
-    YoutubePlayer.prototype.onPlayerReady = function (event) {
+    /**
+     *  The API calls this function when the video player is ready
+     */
+    onPlayerReady() {
         ytPlayerInstance.playerReady = true;
         ytPlayerInstance.setVolume(100);
-        console.log(ytPlayerInstance.settings.playing);
-        if(ytPlayerInstance.settings.playing) {
+
+        if (ytPlayerInstance.settings.playing) {
             ytPlayerInstance.play();
         }
     }
 
-    YoutubePlayer.prototype.onPlayerStateChange = function (event) {
-        if (event.data == YT.PlayerState.ENDED ){
+    /**
+     * Called by the Youtube API if the player state changes
+     * @param event {object}
+     */
+    onPlayerStateChange(event) {
+        // unload the player if the video ended
+        if (event.data == YT.PlayerState.ENDED) {
             ytPlayerInstance.unload();
             Central.getPlayer().nextSong();
-            //setTimeout(stopVideo, 6000);
-        }else if(event.data == YT.PlayerState.PAUSED){
+            // update the pause/play button if pause was pressed in the iframe
+        } else if (event.data == YT.PlayerState.PAUSED) {
             ytPlayerInstance.settings.playing = false;
             var song = Central.getPlayer().getCurrentSong();
             Central.getPlayer().getPlayQueue().notifyListeners(song);
-        }else if(event.data == YT.PlayerState.PLAYING){
+            // update the pause/play button if play was pressed in the iframe
+        } else if (event.data == YT.PlayerState.PLAYING) {
             ytPlayerInstance.settings.playing = true;
             var song = Central.getPlayer().getCurrentSong();
             Central.getPlayer().getPlayQueue().notifyListeners(song);
@@ -54,24 +68,40 @@ $(document).ready(function() {
 
 
     }
-    YoutubePlayer.prototype.pause = function () {
+
+    /**
+     * Pauses the song
+     * @override
+     */
+    pause() {
         this.settings.playing = false;
-        if(this.player != null && this.playerReady) {
+        if (this.player != null && this.playerReady) {
             this.player.pauseVideo();
         }
     }
-    YoutubePlayer.prototype.play = function(){
+
+    /**
+     * Plays the song
+     * @override
+     */
+    play() {
         this.settings.playing = true;
-        if(this.player != null && this.playerReady) {
+        if (this.player != null && this.playerReady) {
             this.player.playVideo();
         }
     }
-    YoutubePlayer.prototype.load = function(videoid){
-        if(this.player != null){
+
+    /**
+     * Loads a song
+     * @param videoid {string}
+     * @override
+     */
+    load(videoid) {
+        if (this.player != null) {
             $("#yt-frame").show();
             this.player.loadVideoById(videoid);
 
-        }else {
+        } else {
             this.playerReady = false;
             this.player = new YT.Player('yt-frame', {
                 //default 640x360
@@ -82,22 +112,24 @@ $(document).ready(function() {
                 events: {
                     'onReady': this.onPlayerReady,
                     'onStateChange': this.onPlayerStateChange,
-                    'onError': function(err){
-                        var errStr = ""+err;
-                        if(err == 2)errStr = "invalid videoId";
-                        if(err == 100) errStr = "video removed by user";
-                        if(err == 101 || err == 150) errStr = "embedding video not allowed"
+                    'onError': function (err) {
+                        var errStr = "" + err;
+                        if (err == 2) errStr = "invalid videoId";
+                        if (err == 100) errStr = "video removed by user";
+                        if (err == 101 || err == 150) errStr = "embedding video not allowed"
                         Log.error("Youtube: " + errStr);
                     }
                 }
             });
         }
     }
-    YoutubePlayer.prototype.stop = function(){
-        this.unload();
-    }
-    YoutubePlayer.prototype.unload = function(){
-        if(this.playerReady && this.player != null) {
+
+    /**
+     * Stops and unloads the player
+     * @override
+     */
+    stop() {
+        if (this.playerReady && this.player != null) {
             this.player.stopVideo();
 
         }
@@ -105,99 +137,120 @@ $(document).ready(function() {
         this.settings.playing = false;
     }
 
-    YoutubePlayer.prototype.setVolume = function(percent){
-        if(this.playerReady) {
+    /**
+     * Sets the volume
+     * @param percent {number} 0-100
+     * @override
+     */
+    setVolume(percent) {
+        if (this.playerReady) {
             this.player.setVolume(percent);
         }
         this.settings.volume = percent;
     }
 
-    YoutubePlayer.prototype.getTime = function(){
-        if(this.playerReady) {
+    /**
+     * Returns the current time of the song
+     * @return {number} in seconds
+     */
+    getTime() {
+        if (this.playerReady) {
             return this.player.getCurrentTime();
-        }else{
+        } else {
             return 0;
         }
     }
 
-    YoutubePlayer.prototype.getDuration = function(){
-        if(this.playerReady) {
+    /**
+     * Returns the duration of the current song
+     * @return {number} in seconds
+     */
+    getDuration() {
+        if (this.playerReady) {
             return this.player.getDuration();
-        }else{
+        } else {
             return 0;
         }
     }
-    YoutubePlayer.prototype.tryLoadSource = function(source, callback){
-    /*    var elem = $("<div style='visibility: hidden'></div>");
-        // TODO: check if neccessary
-        elem.appendTo("body");
+
+    // TODO: tryLoadSource
+}
+
+ytPlayerInstance = new YoutubePlayer();
+
+/**
+ * Called by the Youtube API when it is ready to load videos
+ */
+function onYouTubeIframeAPIReady() {
+    Central.getPlayer().addPlugin(ytPlayerInstance);
+}
 
 
-
-        var player = new YT.Player(elem,{
-            height: '180',
-            width: '320',
-            videoId: source,
-            playerVars: {'autoplay': 0, 'controls': 0},
-            events: {
-                'onReady': function(){},
-                'onStateChange': function(){
-
-                }
-            }
-        });*/
-        callback(true);
-
+/**
+ * BaseUrlPreview for Youtube URLs
+ * see /js/models/PluginBase for more details
+ */
+class YoutubePreview extends BaseUrlPreview {
+    /**
+     * @constructor
+     */
+    constructor() {
+        super("youtube");
     }
 
-    ytPlayerInstance = extend(BaseMusicPlayer, YoutubePlayer, "youtube");
-
-
-    function YoutubePreview() {
-
+    /**
+     * Checks if the url is a youtube url
+     * @param url {string}
+     * @return {boolean}
+     */
+    supportsUrl(url) {
+        if (url.search("youtube.com\/watch") >= 0) return true;
+        if (url.search("youtu.be") >= 0) return true;
     }
 
-    YoutubePreview.prototype.supportsUrl = function(url){
-        if(url.search("youtube.com\/watch") >= 0) return true;
-        if(url.search("youtu.be") >= 0) return true;
-    }
-
-    YoutubePreview.prototype.preview = function(element, url, callback){
+    /**
+     * Loads a preview image into a jQuery HTMLElement and calls the callback with the song data.
+     * @param element {HTMLElement} jQuery HTMLElement or id
+     * @param url {string} youtube video url
+     * @param callback {function(Object)}
+     */
+    preview(element, url, callback) {
         this.element = $(element);
-        var videoid = "";
+        let videoid = "";
 
-        if(url.startsWith("www")){
-            url = "https://"+url;
+        if (url.startsWith("www")) {
+            url = "https://" + url;
         }
-        if(url.startsWith("http://")){
+        if (url.startsWith("http://")) {
             url = "https://" + url.substring(7);
         }
 
-        if(url.search("youtube.com/watch") >= 0){
+        if (url.search("youtube.com/watch") >= 0) {
             videoid = getParameterByName("v", url);
-        }else{
-            var split = url.split(".be/");
+        } else {
+            let split = url.split(".be/");
             videoid = split[1];
         }
         const title = $('<div>loading title...</div>');
         title.appendTo(this.element);
 
-        const imgUrl = "http://img.youtube.com/vi/"+videoid+"/0.jpg";
-        const img = $('<img src="'+imgUrl+'"/>');
+        // load the title image of the video
+        const imgUrl = "http://img.youtube.com/vi/" + videoid + "/0.jpg";
+        const img = $('<img src="' + imgUrl + '"/>');
         img.appendTo(this.element);
 
-
-        LocalComm.newMessage({command: "get url",url: url},
-            Message.Components.GUI, function(data){
-                if(typeof data.answer !== 'undefined' && data.answer !== null){
-                    var html = data.answer;
-                    // todo remove scripts from html
+        // Load the html of the page using the backend
+        LocalComm.newMessage({command: "get url", url: url},
+            Message.Components.GUI, function (data) {
+                if (typeof data.answer !== 'undefined' && data.answer !== null) {
+                    let html = data.answer;
+                    // TODO: remove everything but the header (rest is not needed)
                     const doc = document.implementation.createHTMLDocument('yt');
                     doc.documentElement.innerHTML = html;
 
-                    var vidname = doc.title;
+                    let vidname = doc.title;
                     // remove " - YouTube"
-                    title.html(vidname.substring(0, vidname.length-10));
+                    title.html(vidname.substring(0, vidname.length - 10));
 
                     // remove unneccesary information
                     vidname = vidname.replace(" - YouTube", "");
@@ -211,48 +264,22 @@ $(document).ready(function() {
                     vidname = vidname.replace(" (Lyric)", "");
                     vidname = vidname.replace(" (lyric)", "");
 
-
-                    var song = {title: vidname, type: "youtube", value: videoid};
-                    var split = vidname.split("-");
-                    if(split.length >= 2){
+                    let song = {title: vidname, type: "youtube", value: videoid};
+                    let split = vidname.split("-");
+                    if (split.length >= 2) {
                         song.artist = split[0].trim();
                         song.title = split[1].trim();
                     }
 
                     callback(song);
-                }else{
+                } else {
                     Log.error("Youtube: invalid answer from GUI: " + JSON.stringify(data));
                 }
             });
     }
-
-    Central.getUrlPreview().addPlugin(extend(BaseUrlPreview, YoutubePreview, "youtube"));
-
-
-/*
-    function YoutubeSearch(){
-        //this.apikey = "AIzaSyAvxru3VA2YzJxmx1R403Y6KeTPwHrLR_w";
-    }
-
-    YoutubeSearch.prototype.search = function(query, callback){
-        var retval =  [{
-            artist: "Martin Garrix & Bebe Rexha",
-            title: "In the Name of Love",
-            sources: [{
-                plugin: "youtube",
-                source: "AeGfss2vsZg"
-            }]
-        }];
-
-        callback(retval);
-    }
-
-    ytSearchInstance = extend(BaseSearchEngine, YoutubeSearch, "youtube");
-    Central.getSearch().addPlugin(ytSearchInstance);*/
-
-});
-
-// called by youtube api
-function onYouTubeIframeAPIReady() {
-    Central.getPlayer().addPlugin(ytPlayerInstance);
 }
+
+Central.getUrlPreview().addPlugin(new YoutubePreview());
+
+
+

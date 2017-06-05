@@ -3,18 +3,6 @@
  * Copyright 2017 Fixl Stefan
  */
 
-var mouseX = 0;
-var mouseY = 0;
-
-// listen to mouse moves
-jQuery(document).ready(function () {
-    $(document).mousemove(function (e) {
-        var bodyOffsets = document.body.getBoundingClientRect();
-        mouseX = e.pageX - bodyOffsets.left;
-        mouseY = e.pageY;
-    });
-})
-
 /**
  * Loads the config from config.json
  * @constructor

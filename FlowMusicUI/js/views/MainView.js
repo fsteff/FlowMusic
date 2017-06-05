@@ -3,12 +3,20 @@
  * Copyright 2017 Fixl Stefan
  */
 
+/**
+ * Class for the main page view
+ * @constructor
+ */
 function MainView(){
     const self = this;
     this.element = $("#mainview");
     this.tabs = [];
 
-    function search(data){
+    /**
+     * Called when search is submitted
+     * @return {boolean} false to disable further input form processing
+     */
+    function search(){
         const input = $("#mainview-search-form > input[type=text][name=query]");
         const query = input.val();
         input.val("");
@@ -33,7 +41,9 @@ function MainView(){
         self.newTab(EditSettings, "Settings");
     });
 }
-
+/**
+ * Resizes the page
+ */
 MainView.prototype.resize = function(){
     var margin = 0;
     if(PageView.getInstance().sidepanel.opened){
@@ -45,10 +55,15 @@ MainView.prototype.resize = function(){
     for(var i = 0; i < this.tabs.length; i++){
         this.tabs[i].resize();
     }
-
-
 }
 
+/**
+ * Creates a MainView Page and a SidePanel Tab for it
+ * @param type {Subclass of MainTab}
+ * @param name {string} display name
+ * @param close {boolean} true if the tab should have a close button
+ * @return {Subclass of MainTab} instance of [type]
+ */
 MainView.prototype.newTab = function(type, name, close){
     if(close == null){
         close = true;
@@ -59,6 +74,7 @@ MainView.prototype.newTab = function(type, name, close){
     const tab = extend(MainTab, type, elem, elem);
     this.tabs.push(tab);
 
+    // if the tab is a playlist, add it to the playlists section
     if(type == PlaylistView){
         tab.tabIndex = PageView.getInstance().sidepanel.addPlaylist(tab, name);
     }else {
@@ -67,12 +83,19 @@ MainView.prototype.newTab = function(type, name, close){
     return tab;
 }
 
+/**
+ * Hides all tabs
+ */
 MainView.prototype.hideAllTabs = function(){
     for(var i = 0; i < this.tabs.length; i++){
         this.tabs[i].hide();
     }
 }
 
+/**
+ * Closes a tab
+ * @param element {MainTab}
+ */
 MainView.prototype.closeTab = function(element){
     var index = -1;
     for(var i = 0; i < this.tabs.length && index < 0; i++){
@@ -88,18 +111,34 @@ MainView.prototype.closeTab = function(element){
     $(element.element).remove();
 }
 // ------------------------------------------------------------ CLASS MainTab ------------------------------------------
+/**
+ * Base Class for MainTab tabs
+ * @param element {HTMLElement} jQuery HTMLElement or id
+ * @constructor
+ */
 function MainTab(element){
     this.element = $(element);
-    //this.resize();
 }
+
+/**
+ * Resizes the MainTab to fit the page
+ */
 MainTab.prototype.resize = function(){
     $(this.element).height($("#mainview").height() - $("#mainview-header").height());
     $(this.element).width($("#mainview").width());
 }
 
+/**
+ * Hides the MainTab
+ */
 MainTab.prototype.hide = function(){
     this.element.hide();
 }
+
+/**
+ * Shows the MainTab
+ * @param update {boolean} if true, the data model is updated
+ */
 MainTab.prototype.show = function(update){
     if(update == null){
         update = true;
@@ -110,19 +149,32 @@ MainTab.prototype.show = function(update){
     }
 }
 
-MainTab.prototype.cleanUp = function(){
-    
-}
-
+/**
+ * Default function for cleanUp
+ */
+MainTab.prototype.cleanUp = function(){}
+/**
+ * Default function for update
+ */
 MainTab.prototype.update = function(){}
 
 
 // ------------------------------------------------------------- CLASS PlayQueue ----------------------------------------
-
+/**
+ * Class for the PlayQueue View
+ * @param element {HTMLElement} jQuery HTMLELement or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function PlayQueueView(element){
-    this.element = element;
+    this.element = $(element);
     var playlist = Central.getPlayer().getPlayQueue();
 
+    /**
+     * Function called instead of creating the default context menu
+     * @param elem
+     * @return {boolean}
+     */
     this.onElementRightClick = function(elem){
         const ctx = new ContextMenu(null);
         ctx.addProperty(
@@ -142,11 +194,11 @@ function PlayQueueView(element){
                 Central.getPlayer().getPlayQueue().removeSongNr(song);
             }
         );
-
+        // disable the default context menu
         return false;
     }
 
-    var table = new Table(
+    let table = new Table(
         this.element,
         ["Artist", "Title"],
         {
@@ -170,18 +222,27 @@ function PlayQueueView(element){
         table.draw();
 
     });
-
-
 }
 
 
 //------------------------------------------------------- CLASS SearchView ---------------------------------------------
+/**
+ * Class for the Search result view
+ * @param element {HTMLElement} jQuery HTMLElement or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function SearchView(element){
-    this.element = element;
+    this.element = $(element);
     this.element.html("Seaching...");
     this.data = null;
 }
-
+/**
+ * Updates the data (called when the search results are updated)
+ * and creates a SongTable containing the search results
+ * @param query {string}
+ * @param data {SongArray}
+ */
 SearchView.prototype.setData = function(query, data){
     this.data = data;
     this.table = new SongTable(
@@ -205,7 +266,12 @@ SearchView.prototype.setData = function(query, data){
 }
 
 //------------------------------------------------------------- CLASS AddSong ------------------------------------------
-
+/**
+ * MainTab class for adding a song (opened when clicking the large plus at the right top)
+ * @param element {HTMLElement} jQuery HTMLElement or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function AddSong(element){
     const self = this;
     this.element = $(element);
@@ -234,11 +300,13 @@ function AddSong(element){
             urlInput.val("");
         }
     });
+
     const songdata = {
         title: null,
         artist: null,
         sources: null
     }
+
     urlInput.on("input", function(){
         var url = urlInput.val().trim();
         if(url == ""){
@@ -248,6 +316,7 @@ function AddSong(element){
         submitButton.val("save");
         artistInput.val("artist name");
         titleInput.val("song title");
+        // try to load the url
         var valid = Central.getUrlPreview().preview(preview, url, function(data){
             songdata.sources = [{type: data.type, value: data.value}];
             if(typeof data.artist == "string"){
@@ -266,7 +335,7 @@ function AddSong(element){
     });
 
 
-
+    // on submit button click:
     form.submit(function(event){
         event.preventDefault();
         var msg = {
@@ -284,6 +353,12 @@ function AddSong(element){
 
 //------------------------------------------------------------- CLASS EditSettings -------------------------------------
 
+/**
+ * MainTab page for editing the settings
+ * @param element {HTMLElement} jQuery HTMLElement or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function EditSettings(element){
     const self = this;
     this.element = $(element);
@@ -291,6 +366,10 @@ function EditSettings(element){
     this.dirBox = $("<div class='settingsBox'></div>")
     this.dirBox.appendTo(this.element);
 
+    /**
+     * Called when the message from the central containing the settings arrives
+     * @param msg {object}
+     */
     this.render = function(msg){
         var d = [];
         if(typeof msg.config === 'object'
@@ -309,14 +388,17 @@ function EditSettings(element){
             box.appendTo(self.dirBox);
 
             const num = i;
+            // opens a JFileChooser from the backend
             choose.click(function(){
                 LocalComm.newMessage({command: "browse directory", number: num},
                     Message.Components.GUI);
             });
 
+            // removes a folder entirely
             remove.click(function(){
                 dirs.splice(num, 1);
                 cfg.MusicDirectories = dirs;
+                // update the config (-> answer to this the listener)
                 LocalComm.newMessage({command: "set config",
                     config: cfg}, Message.Components.CENTRAL);
             });
@@ -336,15 +418,24 @@ function EditSettings(element){
         {command: "get config"},
         Message.Components.CENTRAL, this.render);
 
+    // on every change of the settings, update the view:
     LocalComm.registerListener("config changed", this.renderCallable);
 }
-
+/**
+ * Removes the listener when the page is destroyed
+ */
 EditSettings.prototype.cleanUp = function () {
     LocalComm.unregisterListener(this.renderCallable);
 }
 
 //------------------------------------------------------------- CLASS PlaylistView -------------------------------------
 
+/**
+ * MainTab subclass that displays a playlist
+ * @param element {HTMLElement} jQuery element or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function PlaylistView(element){
     this.element = $(element);
     this.element.html("Loading...");
@@ -354,19 +445,25 @@ function PlaylistView(element){
     this.songTable = null;
     this.tableElement = $("<div></div>");
 }
-
+/**
+ * Initializes the playlist
+ * @param id {number} playlist id
+ * @param name {string} playlist name
+ */
 PlaylistView.prototype.setPlaylist = function(id, name){
     const self = this;
     this.playlistId = id;
     this.playlistName = name;
     this.songs = null;
-    this.songTable = new SongTable(this.tableElement, /*this.playlistName*/ null);
+    this.songTable = new SongTable(this.tableElement, null, null);
 
     this.element.html("");
 
     $("<h3>"+this.playlistName+"</h3>").appendTo(this.element);
     const playButton = $("<div class='playlistPlayAll'><img src='/img/play.png'/> Play all</div>");
     playButton.appendTo(this.element);
+    // on button click, the entire playlist is added to the PlayQueue and the first song is played
+    // TODO: little bug see /js/models/Player.js
     playButton.click(function(){
         if(self.songs !== null){
             Central.getPlayer().getPlayQueue().removeAll();
@@ -386,11 +483,14 @@ PlaylistView.prototype.setPlaylist = function(id, name){
     this.update();
 }
 
+/**
+ * Update the page
+ * @override
+ */
 PlaylistView.prototype.update = function(){
     const self = this;
     if(this.playlistId == null){
         return;
-        //Log.error("PlaylistView: no playlistId set");
     }
 
     const onAnswer = function(msg){
@@ -398,7 +498,7 @@ PlaylistView.prototype.update = function(){
         self.songTable.update(self.songs);
     }
 
-
+    // get the song entries from the db
     LocalComm.newMessage({
         command: "get",
         what: "ViewPlaylistSongs",
@@ -409,17 +509,21 @@ PlaylistView.prototype.update = function(){
 }
 
 //------------------------------------------------------------- CLASS PlaylistOverView ---------------------------------
-
+/**
+ * Provides an overview over all playlists - this is created on document.ready in /js/views/PageView.js
+ * @param element {HTMLElement] jQuery element or id
+ * @extends MainTab (by using MainView.newTab)
+ * @constructor
+ */
 function PlaylistOverview(element){
     this.element = $(element);
     this.element.html("Loading...");
     this.playlists = [];
     this.playlistTabs = [];
-
-    //this.update();
-
 }
-
+/**
+ * Called when the "create new playlist" button is clicked
+ */
 PlaylistOverview.prototype.createPlaylist = function () {
     // this is called from elsewhere, therefore "this" is something different
     const self = PageView.getInstance().sidepanel.playlists.page;
@@ -429,12 +533,17 @@ PlaylistOverview.prototype.createPlaylist = function () {
     const ctx = new ContextMenu();
     ctx.addLabel("New Playlist:");
     ctx.addElement(input, function(){});
+    // if the "create" button is clicked save the playlist
     ctx.addElement(submit, function(){
         const name = input.val();
         LocalComm.newMessage({
             command: "insertPlaylist",
             name: name
         }, Message.Components.DATABASE, function(msg){
+            /**
+             * The id of the newly created playlist
+             * @type {Number}
+             */
             const answer = parseInt(msg.answer);
             if(! isNaN(answer)){
                 const view = PageView.getInstance().mainview.newTab(PlaylistView, name, true);
@@ -447,12 +556,31 @@ PlaylistOverview.prototype.createPlaylist = function () {
         ctx.close();
     })
 }
-
+/**
+ * Updates the playlist overview
+ * @override
+ */
 PlaylistOverview.prototype.update = function(){
     // this is called from elsewhere, therefore "this" is something different
     const self = PageView.getInstance().sidepanel.playlists.page;
 
+    /**
+     * Called when the answer from the database arrives
+     * @param msg {object}
+     */
     const onAnswer = function(msg){
+        let answer = msg.answer;
+        if(typeof answer == 'undefined' || answer == null){
+            answer = [];
+        }
+
+        // sort the playlist entries by their modification time
+        answer = answer.sort(function(a,b){
+            let cha = Date.parse(a.timestamp);
+            let chb = Date.parse(b.timestamp);
+            return chb - cha;
+        });
+
         self.element.html("<h3>Playlists</h3>");
 
         const addPlaylist = $("<div class='addPlaylist'><div class='add'>+</div>Create a new Playlist</div>");
@@ -463,36 +591,22 @@ PlaylistOverview.prototype.update = function(){
 
         const openTab = PageView.getInstance().sidepanel.openTabNum;
         const sidepanel = PageView.getInstance().sidepanel;
-        for(var i = 0; i < self.playlistTabs.length; i++) {
-            var num = sidepanel.getTabNumByPage(self.playlistTabs[i]);
-            if(num >= 0 && typeof sidepanel.openTabs[num].close == 'function'){
+
+        // close the currently open tab (it is opened again afterwards)
+        for(let i = 0; i < self.playlistTabs.length; i++) {
+            let num = sidepanel.getTabNumByPage(self.playlistTabs[i]);
+            if(num >= 0 && typeof sidepanel.openTabs[num].close === 'function'){
                 sidepanel.openTabs[num].close();
             }else{
                 Log.error("could not find open tab");
             }
         }
+
         self.playlistTabs = [];
-
-        var answer = msg.answer;
-        if(typeof answer == 'undefined' || answer == null){
-            answer = [];
-        }
-
-        answer = answer.sort(function(a,b){
-            var cha = Date.parse(a.timestamp);
-            var chb = Date.parse(b.timestamp);
-           /*var cha = parseInt(a.lastchanged);
-           var chb = parseInt(b.lastchanged);
-           if(isNaN(cha)){
-               cha = 0;
-           }
-           if(isNaN(chb)){
-                chb = 0;
-           }*/
-           return chb - cha;
-        });
-
         self.playlists = [];
+
+        // ------------- Update the MainTab Page: --------------------
+
         const list = $("<ul></ul>");
         list.appendTo(self.element);
         for(var i = 0; i < answer.length; i++){
@@ -505,14 +619,19 @@ PlaylistOverview.prototype.update = function(){
 
             const elem = $("<li class='playlistEntry'>"+answer[i].name + " (" + answer[i].entries + " Songs)</li>");
             elem.appendTo(list);
+
+            // on click open the playlist - creates a new PlaylistView only if necessary
             elem.click(function(){
                 var found = false;
+                // first search the open tabs for the playlist
                 for(var i2 = 0; i2 < self.playlistTabs.length && !found; i2++){
                     const plView = self.playlistTabs[i2];
-                    if(plView.playlistId == id){
+                    if(plView.playlistId === id){
+                        // views a tab if it exists - returns true if it was found, false if not
                         found = PageView.getInstance().sidepanel.openTabByPage(plView, true);
                     }
                 }
+                // if the playlist was not already opened, do it now
                 if(! found) {
                     const view = PageView.getInstance().mainview.newTab(PlaylistView, name, true);
                     view.setPlaylist(id, name);
@@ -521,6 +640,7 @@ PlaylistOverview.prototype.update = function(){
             });
         }
 
+        // --------- load the 3 last used playlists and view them in the sidebar ------------
         for(var i = 0; i < answer.length && i < 3; i++) {
             const name = answer[i].name;
             const id = answer[i].playlistid;
@@ -529,9 +649,11 @@ PlaylistOverview.prototype.update = function(){
             self.playlistTabs.push(view);
         }
 
+        // re-open the previously closed MainTab
         PageView.getInstance().sidepanel.openTab(openTab, false);
     }
 
+    // get a list of all playlists
     LocalComm.newMessage({
             command: "get",
             what: "ViewPlaylistSongs",
@@ -542,7 +664,18 @@ PlaylistOverview.prototype.update = function(){
 }
 
 // ------------------------------------------------------------ CLASS Table --------------------------------------------
-
+/**
+ * Class for dynamically creating a general purpose table.
+ * (for tables of songs there exists the class SongTable, which works similar to this one)
+ * @param element {HTMLElement} jQuery element or id
+ * @param head {Array} table head (array of strings)
+ * @param options {object} of the form:
+ * {
+ *      visiblility: [] true or false per column
+ *      onElementRightClick: function creating the contextMenu
+ * }
+ * @constructor
+ */
 function Table(element, head, options){
 
     this.element = $(element);
@@ -550,7 +683,9 @@ function Table(element, head, options){
     this.head = head;
     this.options = options;
 }
-
+/**
+ * (Re-)Draws the table
+ */
 Table.prototype.draw = function(){
     var classname = this.options.className;
     var html = "<table class='w3-table "+classname+"'><tr>";
@@ -570,7 +705,7 @@ Table.prototype.draw = function(){
             }
         }
         rowelem.html(html);
-        if(this.options.onElementRightClick != null){
+        if(this.options.onElementRightClick !== null){
             const data = this.data[row];
             const table = this;
             $(rowelem).contextmenu(function(){
@@ -583,13 +718,37 @@ Table.prototype.draw = function(){
 
 
 }
-
+/**
+ * Update the data
+ * @param data {Array} 2d-Array containing the rows and columns [][]
+ */
 Table.prototype.setData = function(data){
     this.data = data;
 }
 
 //---------------------------------------------- CLASS ContextMenu -----------------------------------------------------
+
+
+// global variables containing the mouse moves - needed by ContextMenu
+var mouseX = 0;
+var mouseY = 0;
+
+// listen to mouse moves
+jQuery(document).ready(function () {
+    $(document).mousemove(function (e) {
+        var bodyOffsets = document.body.getBoundingClientRect();
+        mouseX = e.pageX - bodyOffsets.left;
+        mouseY = e.pageY;
+    });
+})
+
+/**
+ * Class for creating a right-click context menu.
+ * Usage:  $(element).contextmenu( ... new ContextMenu() ...)
+ * @constructor
+ */
 function ContextMenu(){
+    // if already an other context menu is open, destroy it first
     if(ContextMenu.instance != null){
         ContextMenu.instance.close();
     }
@@ -605,8 +764,13 @@ function ContextMenu(){
 
     const self = this;
 
+    /**
+     * Called on every click onto the document
+     * @param event
+     */
     this.closeHandler = function(event){
         var target = $(event.target);
+        // if the target is inside the context menu, call the handler of the clicked element
         for(let i = 0; i < self.properties.length; i++){
             let prop = self.properties[i];
             if(target[0] == prop.element[0]){
@@ -614,20 +778,21 @@ function ContextMenu(){
                 return;
             }
         }
-
+        // if the target was outside the context menu, close it
         self.close();
     }
 
-    this.close = function(){
-        self.element.remove();
-        $(document).unbind("click", this.closeHandler);
-        ContextMenu.instance = null;
-    }
-
-    $(document).bind("click", this.closeHandler); //.click(this.closeHandler);
+    $(document).bind("click", this.closeHandler);
     ContextMenu.instance = this;
 }
 
+ContextMenu.instance = null;
+
+/**
+ * Adds a label to the context menu.
+ * A label is displayed a bit darker and has no click handler.
+ * @param html {string} displayed content
+ */
 ContextMenu.prototype.addLabel = function(html){
     const label = $("<div class='label'>"+html+"</div>");
     label.appendTo(this.element);
@@ -636,7 +801,12 @@ ContextMenu.prototype.addLabel = function(html){
         handler: function(){}
     });
 }
-
+/**
+ * Adds a property to the context menu (standard use)
+ * After the click handler is called, the context menu is closed.
+ * @param html {string} displayed content
+ * @param handler {function} called on click
+ */
 ContextMenu.prototype.addProperty = function(html, handler){
     const self = this;
     var elem = $("<div class='property'>"+html+"</div>");
@@ -650,7 +820,12 @@ ContextMenu.prototype.addProperty = function(html, handler){
         }
     });
 }
-
+/**
+ * Adds a special element.
+ * A click onto this does not close the context menu.
+ * @param element {HTMLElement} can be plain text or html code
+ * @param handler {function} called on click
+ */
 ContextMenu.prototype.addElement = function(element, handler){
     element.appendTo(this.element);
 
@@ -660,106 +835,15 @@ ContextMenu.prototype.addElement = function(element, handler){
     });
 }
 
-ContextMenu.instance = null;
 
-ContextMenu.prototype.close = function () {
-    this.closeHandler({target: $(document)});
-}
 /**
- * Adds a preconfigured property, thought to be used within a song table
- * "addToPlayQueue" - adds an "add to playqueue" property
- * "playNow" - adds an "play now" property
- * @param {string} property template name
- * @param {Array} has to have following structure: [0]: artist, [1]: title, [2] sources {array}
+ * Closes the context menu
  */
-ContextMenu.prototype.addPredefinedProperty = function(name, elem){
-    const self = this;
-    switch(name){
-        case "addToPlayQueue":
-            this.addProperty(
-                "<div>add to playQueue</div>",
-                function() {
-                    const playable = [];
-                    const src = elem[2];
-                    for(var i = 0; i < src.length; i++){
-                        const ci = i;
-                        playable[i] = null;
-                        Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
-                            playable[ci] = valid;
-                            var waiting = false;
-                            for(var i2 = 0; i2 < src.length && !waiting; i2++){
-                                if(playable[i2] === null){
-                                    waiting = true;
-                                }
-                            }
-
-                            if(!waiting){
-                                var chosen = -1;
-                                for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
-                                    if(playable[i2] === true){
-                                        chosen = i2;
-                                    }
-                                }
-                                if(chosen >= 0) {
-                                    Central.getPlayer().getPlayQueue().add({
-                                        artist: elem[0],
-                                        title: elem[1],
-                                        plugin: elem[2][chosen].plugin,
-                                        source: elem[2][chosen].source
-                                    });
-                                }else{
-                                    Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
-                                }
-                            }
-                        });
-                    }
-
-                });
-            break;
-        case "playNow":
-            this.addProperty(
-                "<div>play now</div>",
-                function() {
-                    const playable = [];
-                    const src = elem[2];
-                    for(var i = 0; i < src.length; i++){
-                        const ci = i;
-                        playable[i] = null;
-                        Central.getPlayer().tryLoadSource(src[i].plugin, src[i].source, function(valid){
-                            playable[ci] = valid;
-                            var waiting = false;
-                            for(var i2 = 0; i2 < src.length && !waiting; i2++){
-                                if(playable[i2] === null){
-                                    waiting = true;
-                                }
-                            }
-
-                            if(!waiting){
-                                var chosen = -1;
-                                for(var i2 = 0; i2 < src.length && chosen < 0; i2++){
-                                    if(playable[i2] === true){
-                                        chosen = i2;
-                                    }
-                                }
-                                if(chosen >= 0) {
-                                    var song = {
-                                        artist: elem[0],
-                                        title: elem[1],
-                                        plugin: elem[2][chosen].plugin,
-                                        source: elem[2][chosen].source
-                                    };
-                                    Central.getPlayer().getPlayQueue().add(song);
-                                    Central.getPlayer().playSong(song);
-                                }else{
-                                    Log.warning("Cannnot get a valid source for "+JSON.stringify(elem));
-                                }
-                            }
-                        });
-                    }
-
-                });
-            break;
-    }
+ContextMenu.prototype.close = function () {
+    this.element.remove();
+    $(document).unbind("click", this.closeHandler);
+    ContextMenu.instance = null;
 }
+
 
 
