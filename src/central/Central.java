@@ -313,6 +313,8 @@ public class Central extends ThreadedComponent
 					+ "config.json");
 		}
 
+		System.out.println("This opens a chrome window - if not go to http:\\\\localhost:8080");
+
 		// start it all up!
 		Central central = new Central(configPath);
 		Gui gui = new Gui(central);
