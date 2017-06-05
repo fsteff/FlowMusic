@@ -21,7 +21,6 @@
     <link rel="stylesheet" href="./lib/w3.css">
     <link rel="stylesheet" href="./css/main.css">
 
-<!--    <script src="./lib/modernizr-2.8.3.min.js"></script> -->
 </head>
 <body>
 <div id="sidepanel" class="w3-sidebar w3-bar-block w3-card w3-card w3-green">
@@ -55,6 +54,30 @@
 <script src="./js/views/MainView.js"></script>
 <script src="./js/views/PageView.js"></script>
 <script src="./js/views/SongTable.js"></script>
+
+<script>
+    function isChrome() {
+        var isChromium = window.chrome,
+            winNav = window.navigator,
+            vendorName = winNav.vendor,
+            isOpera = winNav.userAgent.indexOf("OPR") > -1,
+            isIEedge = winNav.userAgent.indexOf("Edge") > -1,
+            isIOSChrome = winNav.userAgent.match("CriOS");
+
+        if(isIOSChrome){
+            return true;
+        } else if(isChromium !== null && isChromium !== undefined && vendorName === "Google Inc." && isOpera == false && isIEedge == false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    if(!isChrome()){
+        alert("Sorry, FlowMusic is only stable on Chrome!");
+    }
+
+</script>
 
 </body>
 </html>
