@@ -72,7 +72,7 @@ Config.comparePluginRowing = function(first, second){
             return -1;
         }
         if(second === self.plugins[i].name){
-            return -1;
+            return 1;
         }
     }
     Log.info("Config.comparePluginRowing: no plugin matches the loaded ones");

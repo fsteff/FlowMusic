@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Handler;
 
 import org.h2.store.fs.FileUtils;
 import org.json.JSONArray;
@@ -28,6 +29,8 @@ import crawler.Crawler;
 import database.Database;
 import webserver.Gui;
 import webserver.Webserver;
+
+import javax.swing.*;
 
 /**
  * Main Class that controls all the other components.
@@ -288,15 +291,7 @@ public class Central extends ThreadedComponent
 			central.sendMessage(Component.GUI, json,
 					msg -> logger.info("gui started"));
 
-            if (System.getProperty("os.name").toLowerCase()
-                    .contains("windows"))
-            {
-                startBrowser();
-            }
-            else
-            {
-                startDefaultBrowser();
-            }
+			startBrowser();
 
 			// start crawler 5s later to make the startup faster
 			Thread.sleep(5000);
@@ -312,6 +307,7 @@ public class Central extends ThreadedComponent
 
 	}
 
+	/*
 	private static void startDefaultBrowser()
 	{
 		if (Desktop.isDesktopSupported()
@@ -329,7 +325,7 @@ public class Central extends ThreadedComponent
 						"Could not open standard browser", e.getMessage());
 			}
 		}
-	}
+	}*/
 
 	/**
 	 * Starts the Chromium Browser and terminates the application if the
@@ -344,7 +340,7 @@ public class Central extends ThreadedComponent
 
 			if (!Files.exists(Paths.get(f.getAbsolutePath())))
 			{
-				startDefaultBrowser();
+                startChrome(chromiumParam);
 			}
 			else
 			{
@@ -368,6 +364,27 @@ public class Central extends ThreadedComponent
 
 		t.start();
 	}
+
+	private static void startChrome(String param){
+        try {
+            if (System.getProperty("os.name").toLowerCase()
+                    .contains("windows")) {
+                Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start chrome "+param});
+
+            } else {
+                // should work on POSIX systems that have chromium installed:
+                Runtime.getRuntime().exec(new String[]{"chromium", param});
+            }
+        }catch(Exception e){
+            logger.error("",e);
+
+            JOptionPane.showMessageDialog(null, "Could not find chrome on this computer\n" +
+                            "please install chrome or chromium!\n" +
+                            "If you actually have installed it, open http:\\\\localhost:8080"
+                    , "Chrome not found",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
 	@Override
 	protected JSONObject onMessage(Component sender, JSONObject msg)

@@ -377,7 +377,7 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
             chosen = options[0].index;
         }else if(options.length > 1){
             // sort by the plugin rowing (based on the order in config.json)
-            options.sort(function(a,b){
+            options = options.sort(function(a,b){
                return Config.comparePluginRowing(a.type, b.type);
             });
             chosen = options[0].index;
