@@ -29,8 +29,9 @@ function SoundCloudPlayer() {
         + 'height="180px"'
         + 'scrolling="no"'
         + 'frameborder="no"'
-            // throws an error, but works anyway - can´t find a fix for it
-        + 'src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/">');
+            // have to load an arbitrary song first...
+        + 'src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/' +
+        'dj-toxic-waste/freedom-2k14-original-mix">');
     this.element.appendTo("body");
 
 

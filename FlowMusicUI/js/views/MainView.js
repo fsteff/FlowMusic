@@ -478,16 +478,18 @@ PlaylistOverview.prototype.update = function(){
             answer = [];
         }
 
-        answer.sort(function(a,b){
-           var cha = parseInt(a.lastchanged);
+        answer = answer.sort(function(a,b){
+            var cha = Date.parse(a.timestamp);
+            var chb = Date.parse(b.timestamp);
+           /*var cha = parseInt(a.lastchanged);
            var chb = parseInt(b.lastchanged);
            if(isNaN(cha)){
                cha = 0;
            }
            if(isNaN(chb)){
                 chb = 0;
-           }
-           return cha - chb;
+           }*/
+           return chb - cha;
         });
 
         self.playlists = [];
@@ -501,7 +503,7 @@ PlaylistOverview.prototype.update = function(){
                 id: id
             });
 
-            const elem = $("<li>"+answer[i].name+"</li>");
+            const elem = $("<li class='playlistEntry'>"+answer[i].name + " (" + answer[i].entries + " Songs)</li>");
             elem.appendTo(list);
             elem.click(function(){
                 var found = false;

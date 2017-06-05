@@ -392,6 +392,14 @@ html, body{
     border: darkgrey solid 1px;
 }
 
+.playlistEntry{
+    border-bottom: #72817f solid 1px;
+    list-style-type: none;
+    width: 300px;
+    padding: 7px;
+    cursor: pointer;
+}
+
 .addSong{
     padding: 5px;
 }
@@ -411,6 +419,7 @@ html, body{
     font-size: large;
     font-weight: bold;
 }
+
 
 
 

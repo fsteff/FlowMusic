@@ -354,7 +354,7 @@ MusicPlayer.prototype.tryLoadSource = function(plugin, source, callback){
 }
 
 /**
- * Adds a song to the queue and chooses a source
+ * Adds a song to the queue and chooses a source if there are multiple available
  * @param song {Song}
  * @param play {Boolean}
  */
@@ -376,6 +376,7 @@ MusicPlayer.prototype.addToQueue = function (song, play) {
         if(options.length == 1){
             chosen = options[0].index;
         }else if(options.length > 1){
+            // sort by the plugin rowing (based on the order in config.json)
             options.sort(function(a,b){
                return Config.comparePluginRowing(a.type, b.type);
             });

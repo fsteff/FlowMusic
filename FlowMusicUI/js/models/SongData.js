@@ -1,11 +1,35 @@
 /**
  * @author Fixl Stefan
  * Copyright 2017 Fixl Stefan
+ *
+ * Note to this file: this is ECMAScript 6
+ * Only modern browsers support this!
+ * (Most parts of the project are conventional javascript - this was created later)
  */
 
+/**
+ * Class that represents a song
+ */
 class Song{
+    /**
+     * Initializes the class
+     * @param id {number|string} id or string containing the id
+     * @param title {string} song title
+     * @param artist {string} artist name
+     * @param sources {SourceArray} array of sources
+     * @param albums {AlbumArray} array of albums
+     * @param tags {TagArray} array of tags
+     * @param year {number|string} year of creation, or string containing it
+     * @constructor
+     */
     constructor(id, title, artist, sources, albums, tags, year) {
+        /**
+         * @type {Number}
+         */
         this.id = parseInt(id);
+        /**
+         * @type {Number}
+         */
         this.year = parseInt(year);
         /**
          * @type {string}
@@ -30,8 +54,16 @@ class Song{
 
     }
 }
-
+/**
+ * Represents an audio source
+ */
 class Source{
+    /**
+     * Initializes the source
+     * @param type {string} music player plugin name
+     * @param value {*} url, song/video Id ,...
+     * @constructor
+     */
     constructor(type, value){
         /**
          * @type {string}
@@ -44,8 +76,15 @@ class Source{
     }
 }
 
-
+/**
+ * Represents an album
+ */
 class Album{
+    /**
+     * Initalizes the class
+     * @param value {string|object} either only album name or object of thre form
+     * {artist: (name of the artist), name (album name)}
+     */
     constructor(value) {
         if (typeof value == 'string') {
             this.artist = null;
@@ -56,6 +95,10 @@ class Album{
         }
     }
 
+    /**
+     * Creates a single string describing the album
+     * @return {string}
+     */
     toOneString(){
         if(this.artist != null){
             return this.artist + ": " + this.name;
@@ -64,8 +107,16 @@ class Album{
         }
     }
 }
-
+/**
+ * Array containing Song instances
+ * @extends Array
+ */
 class SongArray extends Array{
+    /**
+     * Initializes the SongArray
+     * @param arr {Array} in the form it is sent by the DATABASE component
+     * @constructor
+     */
     constructor(arr){
         super();
         const self = this;
@@ -89,6 +140,11 @@ class SongArray extends Array{
         });
     }
 
+    /**
+     * Getter that does return null instead of 'undefined' elements if not found
+     * @param index {number}
+     * @return {Song}
+     */
     get(index){
         if(this[index] instanceof Song){
             return this[index];
@@ -97,6 +153,11 @@ class SongArray extends Array{
         }
     }
 
+    /**
+     * Sorts the array either by title, artist or album
+     * @param by {string} "title" | "artist" | "album"
+     * @return {SongArray}
+     */
     sortBy(by){
         let type = 0;
         switch(by){
@@ -139,8 +200,15 @@ class SongArray extends Array{
     }
 }
 
-
+/**
+ * Array of Source instances
+ * @extends Array
+ */
 class SourceArray extends Array{
+    /**
+     * Initializes the SourceArray
+     * @param sources {Array} in the form it is sent by the DATABASE component
+     */
     constructor(sources){
         super();
         const self = this;
@@ -151,6 +219,7 @@ class SourceArray extends Array{
 
         sources.forEach(function(entry){
             if(typeof entry.type === 'string' && entry.type.toLowerCase() === 'local'){
+                // for sources of type local do not use the path but the source id
                 self.push(new Source(entry.type, entry.sourceid));
             }else{
                 self.push(new Source(entry.type, entry.value));
@@ -158,6 +227,11 @@ class SourceArray extends Array{
         });
     }
 
+    /**
+     * Getter that returns null instead of 'undefined' if not found
+     * @param index {number}
+     * @return {Source}
+     */
     get(index){
         if(this[index] instanceof Source){
             return this[index];
@@ -167,10 +241,15 @@ class SourceArray extends Array{
     }
 }
 
-
+/**
+ * Array of Album instances
+ * @extends Array
+ */
 class AlbumArray extends Array{
-
-
+    /**
+     * Initializes the AlbumArray
+     * @param arr {Array} as returned by the DATABASE component
+     */
     constructor(arr){
         super();
         const self = this;
@@ -185,6 +264,11 @@ class AlbumArray extends Array{
         });
     }
 
+    /**
+     * Getter that returns null instead of 'undefined' if not found
+     * @param index {number}
+     * @return {Album}
+     */
     get(index){
         if(this[index] instanceof Album){
             return this[index];
@@ -193,14 +277,20 @@ class AlbumArray extends Array{
         }
     }
 
+    /**
+     * Returns a string representation of Albums in the Array
+     * @return {string}
+     */
     toOneString(){
         if(this.oneString === null) {
             let str = "";
             this.forEach(function (album, index) {
-                if (index != 0) {
-                    str += ", ";
+                if(album !== null && album.toOneString().trim() !== "") {
+                    if (index != 0) {
+                        str += ", ";
+                    }
+                    str += album.toOneString();
                 }
-                str += album.toOneString();
             });
             this.oneString = str;
         }
@@ -208,7 +298,14 @@ class AlbumArray extends Array{
     }
 }
 
+/**
+ * Array of tags (tags are simply strings(fow now))
+ */
 class TagArray extends Array{
+    /**
+     * Initializes the TagArray
+     * @param arr {Array} array of strings
+     */
     constructor(arr){
         super();
 
@@ -225,6 +322,11 @@ class TagArray extends Array{
         });
     }
 
+    /**
+     * Getter that returns null instead of 'undefined' if not found
+     * @param index
+     * @return {*}
+     */
     get(index){
         if(typeof this[index] == 'string'){
             return this[index];

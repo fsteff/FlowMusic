@@ -154,19 +154,21 @@ Central.getInstance = function () {
     return Central.instance;
 }
 /**
+ * Static getter for MusicPlayer
  * @returns {MusicPlayer}
  */
 Central.getPlayer = function () {
     return Central.getInstance().player;
 }
 /**
+ * Static getter for SearchEngine
  * @returns {SearchEngine}
  */
 Central.getSearch = function(){
     return Central.getInstance().search;
 }
 /**
- *
+ * Static getter for UrlPreview
  * @returns {UrlPreview}
  */
 Central.getUrlPreview = function(){
