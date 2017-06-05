@@ -39,6 +39,9 @@ import javax.swing.*;
  */
 public class Central extends ThreadedComponent
 {
+    /**
+     * Constants for the communication with this component.
+     */
 	public static class Messages
 	{
 		public final static String GET_CONFIG = "get config";
@@ -48,12 +51,21 @@ public class Central extends ThreadedComponent
 		public final static String ANSWER = "answer";
 		public final static String CONFIG_CHANGED = "config changed";
 
+        /**
+         * Generates a "get config" message
+         * @return JSONObject message to send to the Central
+         */
 		public static JSONObject getConfig()
 		{
 			return new JSONObject(
 					"{\"" + COMMAND + "\":\"" + GET_CONFIG + "\"}");
 		}
 
+        /**
+         * Generates a "set config" message
+         * @param cfg new config
+         * @return JSONObject message to send to the Central
+         */
 		public static JSONObject setConfig(JSONObject cfg)
 		{
 			JSONObject obj = new JSONObject();
@@ -63,12 +75,16 @@ public class Central extends ThreadedComponent
 		}
 	}
 
+    /**
+     * Constants for convenience use
+     */
 	public static class Config
 	{
 		public final static String DB_LOCATION = "DBLocation";
 		public final static String MUSIC_DIRS = "MusicDirectories";
 	}
 
+	// load the logger:
 	static
 	{
 		LoggerContext loggerContext = (LoggerContext) LoggerFactory
@@ -97,6 +113,11 @@ public class Central extends ThreadedComponent
 	private JSONObject config;
 	private File configFile = null;
 
+    /**
+     * Constructor
+     * Loads the config file or creates a new one if it does not exist
+     * @param configFile path to the config file
+     */
 	Central(File configFile)
 	{
 		super(Component.CENTRAL, null);
@@ -150,6 +171,9 @@ public class Central extends ThreadedComponent
 		}
 	}
 
+    /**
+     * Checks if the config is valid and fix it if that is not the case
+     */
 	void checkAndFixConfig()
 	{
 		if (this.config == null)
@@ -195,6 +219,9 @@ public class Central extends ThreadedComponent
 		this.config.put(Config.MUSIC_DIRS, dirs);
 	}
 
+    /**
+     * Writes the config to the file
+     */
 	void writeConfig()
 	{
 		try
@@ -212,6 +239,11 @@ public class Central extends ThreadedComponent
 		}
 	}
 
+    /**
+     * Called when the config was chenged.
+     * Writes the new config to the file and sends a message to all components.
+     * @throws InterruptedException
+     */
 	void configChanged() throws InterruptedException
 	{
 		checkAndFixConfig();
@@ -224,6 +256,12 @@ public class Central extends ThreadedComponent
 		{});
 	}
 
+    /**
+     * Called by ThreadedComponent in sendMessage.
+     * This sends a message to its recipient(s)
+     * @param msg Message to send
+     * @throws InterruptedException
+     */
 	void newMessage(Message msg) throws InterruptedException
 	{
 		ThreadedComponent comp = components.get(msg.recipient);
@@ -242,14 +280,19 @@ public class Central extends ThreadedComponent
 		}
 	}
 
+    /**
+     * Adds a component to the message queue
+     * @param component
+     */
 	void addComponent(ThreadedComponent component)
 	{
 		this.components.put(component.componentType, component);
 	}
 
-	// TODO: implement good system for component loading
 	/**
-	 * @param args
+     * Main entry point
+     * If args.length == 0, the path is [UserHome]/.FlowMusic/config.json
+	 * @param args argument[0] is the path to the config file (relative or absolute, can be null)
 	 */
 	public static void main(String[] args)
 	{
@@ -269,6 +312,8 @@ public class Central extends ThreadedComponent
 			configPath = new File(parentFolder.getPath() + File.separator
 					+ "config.json");
 		}
+
+		// start it all up!
 		Central central = new Central(configPath);
 		Gui gui = new Gui(central);
 		Webserver webserver = new Webserver(central, gui);
@@ -307,29 +352,10 @@ public class Central extends ThreadedComponent
 
 	}
 
-	/*
-	private static void startDefaultBrowser()
-	{
-		if (Desktop.isDesktopSupported()
-				&& Desktop.getDesktop().isSupported(Action.OPEN))
-		{
-			try
-			{
-				Desktop.getDesktop()
-						.browse(new URL("http://localhost:8080").toURI());
-			}
-			catch (IOException | URISyntaxException e)
-			{
-				e.printStackTrace();
-				ExceptionHandler.showErrorDialog(
-						"Could not open standard browser", e.getMessage());
-			}
-		}
-	}*/
-
 	/**
 	 * Starts the Chromium Browser and terminates the application if the
 	 * browser gets closed.
+     * For this to work there has to be a chromium browser in ./chromium/chrome.exe
 	 */
 	private static void startBrowser()
 	{
@@ -338,7 +364,9 @@ public class Central extends ThreadedComponent
 			final String chromiumParam = "--app=\"http:\\\\localhost:8080\"";
 			final File f = new File("chromium/chrome.exe");
 
-			if (!Files.exists(Paths.get(f.getAbsolutePath())))
+			// only can start chrome.exe if os is windows and if the file exists
+			if (! System.getProperty("os.name").toLowerCase().contains("windows")
+                    || ! Files.exists(Paths.get(f.getAbsolutePath())))
 			{
                 startChrome(chromiumParam);
 			}
@@ -365,6 +393,10 @@ public class Central extends ThreadedComponent
 		t.start();
 	}
 
+    /**
+     * Starts chrome with the given parameter
+     * @param param program argument(s)
+     */
 	private static void startChrome(String param){
         try {
             if (System.getProperty("os.name").toLowerCase()

@@ -71,7 +71,7 @@ public abstract class ThreadedComponent
 								answer = new JSONObject();
 							}
 
-							// TODO: implement multi-message communication without callbacks
+							// Possible enhancement: implement multi-message communication without callbacks
 							if(msg.answerTo == 0) {
 								// return answer message
 								self.central.newMessage(

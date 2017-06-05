@@ -100,8 +100,8 @@ public class MyHandler extends AbstractHandler
 		String method = baseRequest.getMethod();
 		boolean handeld = false;
 
-		System.out.println("Method: " + method);
-		System.out.println("Target: " + target);
+		//System.out.println("Method: " + method);
+		//System.out.println("Target: " + target);
 		if (method.equals(GET))
 		{
 			handeld = handleGet(target, baseRequest, request, response);
