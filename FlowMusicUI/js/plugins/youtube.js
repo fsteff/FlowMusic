@@ -52,7 +52,7 @@ class YoutubePlayer extends BaseMusicPlayer {
     onPlayerStateChange(event) {
         // unload the player if the video ended
         if (event.data == YT.PlayerState.ENDED) {
-            ytPlayerInstance.unload();
+            ytPlayerInstance.stop();
             Central.getPlayer().nextSong();
             // update the pause/play button if pause was pressed in the iframe
         } else if (event.data == YT.PlayerState.PAUSED) {
