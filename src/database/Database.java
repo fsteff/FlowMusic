@@ -377,17 +377,18 @@ public class Database extends ThreadedComponent {
 	 * @return Gets a JSONArray with a JSONObject of all Songinformation of the
 	 *         found songs.
 	 */
-    // TODO: search for albums does not work, better solution?
 	private JSONArray search(String search) {
-		String get = "SELECT " + DBTables.Song + ".*, " + DBTables.Artist + "." + DBAttributes.ARTIST_NAME /*+ ", "
-				+ DBTables.Album + "." + DBAttributes.ALBUM_NAME */
-				+ " FROM " + DBTables.Song + ", " + DBTables.Artist  /*+ "," + DBTables.Album*/
+		String get = "SELECT " + DBTables.Song + ".*, " + DBTables.Artist + "." + DBAttributes.ARTIST_NAME + ", "
+				+ DBTables.Album + "." + DBAttributes.ALBUM_NAME
+				+ " FROM " + DBTables.Song + ", " + DBTables.Artist  + ", " + DBTables.Album + ", " + DBTables.AlbumEntry
 				+ " WHERE " + DBTables.Artist + "." + DBAttributes.ARTIST_ID + " = "
 				+ DBTables.Song + "." + DBAttributes.ARTIST_ID
-				+ " AND (LOWER(" + DBTables.Song + "."
+				+ " AND " + DBTables.AlbumEntry + "." + DBAttributes.SONG_ID + " = " + DBTables.Song + "." + DBAttributes.SONG_ID 
+				+ " AND " + DBTables.AlbumEntry + "." + DBAttributes.ALBUM_ID + " = " + DBTables.Album + "." + DBAttributes.ALBUM_ID 
+				+ " AND ((LOWER(" + DBTables.Song + "."
 						+ DBAttributes.TITLE + ") LIKE '%" + search.toLowerCase() + "%' OR LOWER(" + DBTables.Artist + "."
-						+ DBAttributes.ARTIST_NAME + ") LIKE '%" + search.toLowerCase() + "%')"; /* OR LOWER(" + DBTables.Album + "."
-						+ DBAttributes.ALBUM_NAME + ") LIKE '%" + search.toLowerCase() + "%' )"; */
+						+ DBAttributes.ARTIST_NAME + ") LIKE '%" + search.toLowerCase() + "%') OR LOWER(" + DBTables.Album + "."
+						+ DBAttributes.ALBUM_NAME + ") LIKE '%" + search.toLowerCase() + "%' )";
 		return getAllInfo(get);
 	}
 
