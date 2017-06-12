@@ -145,7 +145,9 @@ class SongTable {
                                 command: "addSongToPlaylist",
                                 songid: song.id,
                                 playlistid: playlist.id
-                            }, Message.Components.DATABASE);
+                            }, Message.Components.DATABASE, function(){
+                                overview.update();
+                            });
                         });
                     });
                 }
