@@ -59,7 +59,7 @@ PlayQueue.prototype.prev = function(){
     }
 
     //this.notifyListeners(this.songs[this.currentPos]);
-    if(lastSong > 0 && lastSong < this.songs.length) {
+    if(lastSong >= 0 && lastSong < this.songs.length) {
         return this.songs[lastSong];
     }else{
         return null;
@@ -298,7 +298,7 @@ MusicPlayer.prototype.addPlugin = function (player) {
  * @param song (at least {artist, title})
  */
 MusicPlayer.prototype.playSong = function (song, addToHistory) {
-    if(addToHistory !== false){
+    if(addToHistory === true){
         this.playQueue.addCurrentToHistory();
     }
     song = this.playQueue.playSong(song);
