@@ -86,7 +86,7 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
-			<version>9.4.3.v20170317</version>
+			<version>9.4.11.v20180605</version>
 		</dependency>
 		<dependency>
 		  <groupId>ch.qos.logback</groupId>
@@ -96,7 +96,7 @@
 		<dependency>
   		     <groupId>org.eclipse.jetty</groupId>
    			 <artifactId>jetty-servlet</artifactId>
-   			 <version>9.4.4.v20170414</version>
+   			 <version>9.4.11.v20180605</version>
 		</dependency>
 		<!--
 		<dependency>
